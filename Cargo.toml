@@ -1,0 +1,12 @@
+[package]
+
+name = "libusb"
+version = "0.0.1"
+authors = ["David Cuddeback <david.cuddeback@gmail.com>"]
+
+[dependencies]
+libusb-sys = "0.0.1"
+
+[dev-dependencies]
+rand = "0.2.0"
+regex = "0.1.18"
