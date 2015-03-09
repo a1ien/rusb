@@ -1,0 +1,11 @@
+[package]
+
+name = "libusb-sys"
+version = "0.0.1"
+authors = ["David Cuddeback <david.cuddeback@gmail.com>"]
+
+build = "build.rs"
+links = "usb-1.0"
+
+[build-dependencies]
+pkg-config = "0.3.0"
