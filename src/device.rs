@@ -50,6 +50,9 @@ pub struct Device {
   vendor_id: u16,
   product_id: u16,
   device_version: u16,
+  //manufacturer_index: u8,
+  //product_index: u8,
+  //serial_number_index: u8,
   configurations: Vec<Configuration>
 }
 
@@ -130,6 +133,9 @@ pub fn from_libusb(device: &::ffi::libusb_device_descriptor, configs: Vec<Config
     vendor_id:        device.idVendor,
     product_id:       device.idProduct,
     device_version:   device.bcdDevice,
+    //manufacturer_index:  device.iManufacturer,
+    //product_index:       device.iProduct,
+    //serial_number_index: device.iSerialNumber,
     configurations:   configs
   }
 }

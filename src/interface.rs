@@ -30,6 +30,7 @@ pub struct InterfaceSetting {
   interface_class: u8,
   interface_sub_class: u8,
   interface_protocol: u8,
+  //description_index: u8,
   endpoints: Vec<Endpoint>
 }
 
@@ -80,6 +81,7 @@ pub fn from_libusb(interface: &::ffi::libusb_interface) -> Interface {
         interface_class:     setting.bInterfaceClass,
         interface_sub_class: setting.bInterfaceSubClass,
         interface_protocol:  setting.bInterfaceProtocol,
+        //description_index:   0,
         endpoints:           endpoints.iter().map(|endpoint| ::endpoint::from_libusb(&endpoint)).collect()
       }
     }).collect()
