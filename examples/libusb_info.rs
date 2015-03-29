@@ -1,4 +1,4 @@
-extern crate "libusb-sys" as ffi;
+extern crate libusb_sys as ffi;
 
 use std::mem;
 use std::str;

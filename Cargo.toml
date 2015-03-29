@@ -12,4 +12,4 @@ build = "build.rs"
 links = "usb-1.0"
 
 [build-dependencies]
-pkg-config = "0.3.0"
+pkg-config = "0.3.2"

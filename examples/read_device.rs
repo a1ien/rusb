@@ -1,6 +1,6 @@
 #![feature(core,libc,old_io)]
 
-extern crate "libusb-sys" as ffi;
+extern crate libusb_sys as ffi;
 extern crate libc;
 
 use libc::{c_int,c_uint,c_uchar};
@@ -9,7 +9,7 @@ use std::mem;
 use std::slice;
 
 use std::str::FromStr;
-use std::old_io::MemReader;
+use std::old_io::{MemReader,Reader};
 
 #[derive(Debug)]
 struct Endpoint {
@@ -95,7 +95,7 @@ fn print_device_tree(device: *mut ::ffi::libusb_device) -> usize {
   let parent = unsafe { ::ffi::libusb_get_parent(device) };
   let depth = print_device_tree(parent);
 
-  for _ in range(0, depth) {
+  for _ in (0..depth) {
     print!("  ");
   }
 
@@ -127,7 +127,7 @@ fn get_language_ids(handle: *mut ::ffi::libusb_device_handle) -> Vec<u16> {
         Err(_) => return languages
       }
 
-      for _ in range(0, num_languages) {
+      for _ in (0..num_languages) {
         match reader.read_le_u16() {
           Ok(n) => languages.push(n),
           Err(_) => return languages
@@ -147,7 +147,7 @@ fn find_readable_endpoint(device: *mut ::ffi::libusb_device, transfer_type: u8) 
 
   match unsafe { ::ffi::libusb_get_device_descriptor(device, &mut device_descriptor) } {
     0 => {
-      for i in range(0, device_descriptor.bNumConfigurations) {
+      for i in (0..device_descriptor.bNumConfigurations) {
         let mut config_ptr: *const ::ffi::libusb_config_descriptor = unsafe { mem::uninitialized() };
 
         match unsafe { ::ffi::libusb_get_config_descriptor(device, i, &mut config_ptr) } {

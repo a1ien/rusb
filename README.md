@@ -51,12 +51,12 @@ Add `libusb-sys` as a dependency in `Cargo.toml`:
 libusb-sys = "0.0.1"
 ```
 
-Import the `libusb-sys` crate and use the functions as they're defined in the native `libusb`
+Import the `libusb_sys` crate and use the functions as they're defined in the native `libusb`
 library. See the [`libusb` 1.0 API documention](http://libusb.sourceforge.net/api-1.0/) for more
 usage information.
 
 ```rust
-extern crate "libusb-sys" as ffi;
+extern crate libusb_sys as ffi;
 
 fn main() {
   let version = unsafe { ffi::libusb_get_version() };

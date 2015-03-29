@@ -1,6 +1,6 @@
 #![feature(core,libc)]
 
-extern crate "libusb-sys" as ffi;
+extern crate libusb_sys as ffi;
 extern crate libc;
 
 use libc::{c_int,c_uchar};
@@ -95,7 +95,7 @@ fn display_device(dev: &*mut ::ffi::libusb_device) {
   if has_descriptor {
     print_device_descriptor(handle, &descriptor);
 
-    for i in range(0, descriptor.bNumConfigurations) {
+    for i in (0..descriptor.bNumConfigurations) {
       let mut descriptor: *const ::ffi::libusb_config_descriptor = unsafe { mem::uninitialized() };
 
       match unsafe { ::ffi::libusb_get_config_descriptor(*dev, i, &mut descriptor) } {
@@ -344,7 +344,7 @@ fn get_string_descriptor(handle: *mut ::ffi::libusb_device_handle, desc_index: u
   }
 
   let mut vec = Vec::<u8>::with_capacity(256);
-  let ptr = vec.as_mut_slice().as_mut_ptr();
+  let ptr = (&mut vec[..]).as_mut_ptr();
 
   let len = unsafe { ::ffi::libusb_get_string_descriptor_ascii(handle, desc_index, ptr as *mut c_uchar, vec.capacity() as c_int) };
 
