@@ -7,6 +7,8 @@ description = "Rust library for accessing USB devices."
 license = "MIT"
 homepage = "https://github.com/dcuddeback/libusb-rs"
 repository = "https://github.com/dcuddeback/libusb-rs.git"
+readme = "README.md"
+keywords = ["usb", "libusb", "hardware", "bindings"]
 
 [dependencies]
 libusb-sys = "0.0.2"
