@@ -1,6 +1,6 @@
 //! This crate provides a safe wrapper around the native `libusb` library.
 
-#![feature(std_misc,core,libc,unsafe_destructor)]
+#![feature(std_misc,libc,unsafe_destructor)]
 
 extern crate libusb_sys as ffi;
 extern crate libc;

@@ -1,4 +1,4 @@
-#![feature(core,std_misc)]
+#![feature(std_misc,convert)]
 
 extern crate libusb;
 
@@ -23,8 +23,8 @@ fn main() {
     return;
   }
 
-  let vid: u16 = FromStr::from_str(args[1].as_slice()).unwrap();
-  let pid: u16 = FromStr::from_str(args[2].as_slice()).unwrap();
+  let vid: u16 = FromStr::from_str(args[1].as_ref()).unwrap();
+  let pid: u16 = FromStr::from_str(args[2].as_ref()).unwrap();
 
   match libusb::Context::new() {
     Ok(mut context) => {

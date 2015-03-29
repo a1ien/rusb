@@ -65,7 +65,7 @@ macro_rules! interface_descriptor {
         bInterfaceSubClass: 0,
         bInterfaceProtocol: 0,
         iInterface:         0,
-        endpoint:           endpoints.as_slice().as_ptr(),
+        endpoint:           (&endpoints[..]).as_ptr(),
         extra:              $crate::test_helpers::ptr::null(),
         extra_length:       0
       }
@@ -119,7 +119,7 @@ macro_rules! config_descriptor {
         iConfiguration:      0,
         bmAttributes:        0x00,
         bMaxPower:           10,
-        interface:           interfaces.as_slice().as_ptr(),
+        interface:           (&interfaces[..]).as_ptr(),
         extra:               $crate::test_helpers::ptr::null(),
         extra_length:        0
       }

@@ -1,4 +1,4 @@
-#![feature(core,collections)]
+#![feature(collections,convert)]
 
 extern crate regex;
 
@@ -21,7 +21,7 @@ impl CompileResult {
 
     let mut errors = Vec::<CompileError>::new();
 
-    for capture in re.captures_iter(stderr.as_slice()) {
+    for capture in re.captures_iter(stderr.as_ref()) {
       let file = capture.name("file").unwrap();
       let line: usize = FromStr::from_str(capture.name("line").unwrap()).unwrap();
       let message = capture.name("message").unwrap();
@@ -108,7 +108,7 @@ fn compile(file: &str) -> CompileResult {
     Command::new("rustc").
       arg("-L").arg("target/debug").
       arg("-L").arg("target/debug/deps").
-      arg(format!("tests/compile-tests/{}", file).as_slice()).
+      arg(&format!("tests/compile-tests/{}", file)[..]).
       arg("--out-dir").arg("target/debug/compile-tests").
       output().unwrap()
   )

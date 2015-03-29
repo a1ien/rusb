@@ -114,7 +114,7 @@ impl Device {
 
   /// Returns a collection of the device's configurations.
   pub fn configurations(&self) -> &[Configuration] {
-    self.configurations.as_slice()
+    &self.configurations[..]
   }
 }
 

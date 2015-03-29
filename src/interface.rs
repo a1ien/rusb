@@ -18,7 +18,7 @@ impl Interface {
 
   /// Returns a collection of the interface's alternate settings.
   pub fn settings(&self) -> &[InterfaceSetting] {
-    self.settings.as_slice()
+    &self.settings[..]
   }
 }
 
@@ -57,7 +57,7 @@ impl InterfaceSetting {
 
   /// Returns a collection of the interface's endpoints.
   pub fn endpoints(&self) -> &[Endpoint] {
-    self.endpoints.as_slice()
+    &self.endpoints[..]
   }
 }
 

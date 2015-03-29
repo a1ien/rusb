@@ -36,7 +36,7 @@ impl Configuration {
 
   /// Returns a collection of the configuration's interfaces.
   pub fn interfaces(&self) -> &[Interface] {
-    self.interfaces.as_slice()
+    &self.interfaces[..]
   }
 }
 
