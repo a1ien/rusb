@@ -9,7 +9,7 @@ homepage = "https://github.com/dcuddeback/libusb-rs"
 repository = "https://github.com/dcuddeback/libusb-rs.git"
 
 [dependencies]
-libusb-sys = "0.0.1"
+libusb-sys = "0.0.2"
 
 [dev-dependencies]
 regex = "0.1.18"
