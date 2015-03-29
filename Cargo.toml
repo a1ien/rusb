@@ -1,7 +1,7 @@
 [package]
 
 name = "libusb"
-version = "0.0.1"
+version = "0.0.2"
 authors = ["David Cuddeback <david.cuddeback@gmail.com>"]
 description = "Rust library for accessing USB devices."
 license = "MIT"
