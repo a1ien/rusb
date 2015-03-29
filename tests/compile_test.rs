@@ -75,7 +75,7 @@ const ERR_LIFETIME: &'static str = "does not live long enough";
 macro_rules! assert_compile_success {
   ($file:expr) => ({
     let result = compile($file);
-    assert!(result.success(), "expected compilation of {:?} to success, got: {:?}", $file, result);
+    assert!(result.success(), "expected compilation of {:?} to succeed, got: {:?}", $file, result);
     result
   })
 }
@@ -106,10 +106,10 @@ macro_rules! assert_compile_error {
 fn compile(file: &str) -> CompileResult {
   CompileResult::new(
     Command::new("rustc").
-      arg("-L").arg("target").
-      arg("-L").arg("target/deps").
+      arg("-L").arg("target/debug").
+      arg("-L").arg("target/debug/deps").
       arg(format!("tests/compile-tests/{}", file).as_slice()).
-      arg("--out-dir").arg("target/compile-tests").
+      arg("--out-dir").arg("target/debug/compile-tests").
       output().unwrap()
   )
 }
