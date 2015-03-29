@@ -57,19 +57,14 @@ pub fn from_libusb(configuration: &::ffi::libusb_config_descriptor) -> Configura
 
 #[cfg(test)]
 mod test {
-  extern crate rand;
-
   #[test]
   fn it_has_number() {
-    let n = rand::random();
-    assert_eq!(n, ::configuration::from_libusb(&config_descriptor!(bConfigurationValue: n)).number());
+    assert_eq!(42, ::configuration::from_libusb(&config_descriptor!(bConfigurationValue: 42)).number());
   }
 
   #[test]
   fn it_has_max_power() {
-    let n: u8 = rand::random();
-    let max_power = n as u16 * 2;
-    assert_eq!(max_power, ::configuration::from_libusb(&config_descriptor!(bMaxPower: n)).max_power());
+    assert_eq!(42, ::configuration::from_libusb(&config_descriptor!(bMaxPower: 21)).max_power());
   }
 
   #[test]
@@ -87,12 +82,12 @@ mod test {
   #[test]
   fn it_has_interfaces() {
     let interface = interface!(interface_descriptor!(
-      bInterfaceNumber:   rand::random(),
-      bAlternateSetting:  rand::random(),
-      bInterfaceClass:    rand::random(),
-      bInterfaceSubClass: rand::random(),
-      bInterfaceProtocol: rand::random(),
-      iInterface:         rand::random()
+      bInterfaceNumber:   1,
+      bAlternateSetting:  2,
+      bInterfaceClass:    3,
+      bInterfaceSubClass: 4,
+      bInterfaceProtocol: 5,
+      iInterface:         6
     ));
 
     assert_eq!(

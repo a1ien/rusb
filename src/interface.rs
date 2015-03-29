@@ -91,44 +91,37 @@ pub fn from_libusb(interface: &::ffi::libusb_interface) -> Interface {
 
 #[cfg(test)]
 mod test {
-  extern crate rand;
-
   #[test]
   fn it_has_interface_number() {
-    let n = rand::random();
-    assert_eq!(n, ::interface::from_libusb(&interface!(interface_descriptor!(bInterfaceNumber: n))).number());
+    assert_eq!(42, ::interface::from_libusb(&interface!(interface_descriptor!(bInterfaceNumber: 42))).number());
   }
 
   #[test]
   fn it_has_alternate_setting_number() {
-    let n = rand::random();
-    assert_eq!(vec!(n), ::interface::from_libusb(&interface!(interface_descriptor!(bAlternateSetting: n))).settings().iter().map(|setting| setting.number()).collect());
+    assert_eq!(vec!(42), ::interface::from_libusb(&interface!(interface_descriptor!(bAlternateSetting: 42))).settings().iter().map(|setting| setting.number()).collect());
   }
 
   #[test]
   fn it_has_class_code() {
-    let n = rand::random();
-    assert_eq!(vec!(n), ::interface::from_libusb(&interface!(interface_descriptor!(bInterfaceClass: n))).settings().iter().map(|setting| setting.class_code()).collect());
+    assert_eq!(vec!(42), ::interface::from_libusb(&interface!(interface_descriptor!(bInterfaceClass: 42))).settings().iter().map(|setting| setting.class_code()).collect());
   }
 
   #[test]
   fn it_has_sub_class_code() {
-    let n = rand::random();
-    assert_eq!(vec!(n), ::interface::from_libusb(&interface!(interface_descriptor!(bInterfaceSubClass: n))).settings().iter().map(|setting| setting.sub_class_code()).collect());
+    assert_eq!(vec!(42), ::interface::from_libusb(&interface!(interface_descriptor!(bInterfaceSubClass: 42))).settings().iter().map(|setting| setting.sub_class_code()).collect());
   }
 
   #[test]
   fn it_has_protocol_code() {
-    let n = rand::random();
-    assert_eq!(vec!(n), ::interface::from_libusb(&interface!(interface_descriptor!(bInterfaceProtocol: n))).settings().iter().map(|setting| setting.protocol_code()).collect());
+    assert_eq!(vec!(42), ::interface::from_libusb(&interface!(interface_descriptor!(bInterfaceProtocol: 42))).settings().iter().map(|setting| setting.protocol_code()).collect());
   }
 
   #[test]
   fn it_has_endpoints() {
     let endpoint = endpoint_descriptor!(
-      bEndpointAddress: rand::random() & 0x87,
-      bmAttributes:     rand::random() & 0x03,
-      wMaxPacketSize:   rand::random()
+      bEndpointAddress: 0x87,
+      bmAttributes:     0x03,
+      wMaxPacketSize:   42
     );
 
     assert_eq!(

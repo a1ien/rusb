@@ -143,20 +143,16 @@ pub fn from_libusb(device: &::ffi::libusb_device_descriptor, configs: Vec<Config
 
 #[cfg(test)]
 mod test {
-  extern crate rand;
-
   use super::Speed;
 
   #[test]
   fn it_has_bus_number() {
-    let n = rand::random();
-    assert_eq!(n, ::device::from_libusb(&device_descriptor!(bDeviceClass: 0), vec![], n, 0, 0).bus_number());
+    assert_eq!(42, ::device::from_libusb(&device_descriptor!(bDeviceClass: 0), vec![], 42, 0, 0).bus_number());
   }
 
   #[test]
   fn it_has_address() {
-    let n = rand::random();
-    assert_eq!(n, ::device::from_libusb(&device_descriptor!(bDeviceClass: 0), vec![], 0, n, 0).address());
+    assert_eq!(42, ::device::from_libusb(&device_descriptor!(bDeviceClass: 0), vec![], 0, 42, 0).address());
   }
 
   #[test]
@@ -171,59 +167,41 @@ mod test {
 
   #[test]
   fn it_has_usb_version() {
-    let v1 = rand::random() % 10;
-    let v2 = rand::random() % 10;
-    let v3 = rand::random() % 10;
-    let v4 = rand::random() % 10;
-
-    let v: u16 = v1 << 12 | v2 << 8 | v3 << 4 | v4;
-    assert_eq!(::Version::from_bcd(v), ::device::from_libusb(&device_descriptor!(bcdUSB: v), vec![], 0, 0, 0).usb_version());
+    assert_eq!(::Version::from_bcd(0x1234), ::device::from_libusb(&device_descriptor!(bcdUSB: 0x1234), vec![], 0, 0, 0).usb_version());
   }
 
   #[test]
   fn it_has_device_version() {
-    let v1 = rand::random() % 10;
-    let v2 = rand::random() % 10;
-    let v3 = rand::random() % 10;
-    let v4 = rand::random() % 10;
-
-    let v: u16 = v1 << 12 | v2 << 8 | v3 << 4 | v4;
-    assert_eq!(::Version::from_bcd(v), ::device::from_libusb(&device_descriptor!(bcdDevice: v), vec![], 0, 0, 0).device_version());
+    assert_eq!(::Version::from_bcd(0x1234), ::device::from_libusb(&device_descriptor!(bcdDevice: 0x1234), vec![], 0, 0, 0).device_version());
   }
 
   #[test]
   fn it_has_class_code() {
-    let n = rand::random();
-    assert_eq!(n, ::device::from_libusb(&device_descriptor!(bDeviceClass: n), vec![], 0, 0, 0).class_code());
+    assert_eq!(42, ::device::from_libusb(&device_descriptor!(bDeviceClass: 42), vec![], 0, 0, 0).class_code());
   }
 
   #[test]
   fn it_has_sub_class_code() {
-    let n = rand::random();
-    assert_eq!(n, ::device::from_libusb(&device_descriptor!(bDeviceSubClass: n), vec![], 0, 0, 0).sub_class_code());
+    assert_eq!(42, ::device::from_libusb(&device_descriptor!(bDeviceSubClass: 42), vec![], 0, 0, 0).sub_class_code());
   }
 
   #[test]
   fn it_has_protocol_code() {
-    let n = rand::random();
-    assert_eq!(n, ::device::from_libusb(&device_descriptor!(bDeviceProtocol: n), vec![], 0, 0, 0).protocol_code());
+    assert_eq!(42, ::device::from_libusb(&device_descriptor!(bDeviceProtocol: 42), vec![], 0, 0, 0).protocol_code());
   }
 
   #[test]
   fn it_has_vendor_id() {
-    let n = rand::random();
-    assert_eq!(n, ::device::from_libusb(&device_descriptor!(idVendor: n), vec![], 0, 0, 0).vendor_id());
+    assert_eq!(42, ::device::from_libusb(&device_descriptor!(idVendor: 42), vec![], 0, 0, 0).vendor_id());
   }
 
   #[test]
   fn it_has_product_id() {
-    let n = rand::random();
-    assert_eq!(n, ::device::from_libusb(&device_descriptor!(idProduct: n), vec![], 0, 0, 0).product_id());
+    assert_eq!(42, ::device::from_libusb(&device_descriptor!(idProduct: 42), vec![], 0, 0, 0).product_id());
   }
 
   #[test]
   fn it_has_max_packet_size() {
-    let n = rand::random();
-    assert_eq!(n, ::device::from_libusb(&device_descriptor!(bMaxPacketSize0: n), vec![], 0, 0, 0).max_packet_size());
+    assert_eq!(42, ::device::from_libusb(&device_descriptor!(bMaxPacketSize0: 42), vec![], 0, 0, 0).max_packet_size());
   }
 }
