@@ -149,9 +149,6 @@ pub fn from_libusb(endpoint: &::ffi::libusb_endpoint_descriptor) -> Endpoint {
 mod test {
   use super::{Direction,TransferType,SyncType,UsageType};
 
-  use std::ptr;
-
-
   #[test]
   fn it_interprets_number_for_output_endpoints() {
     assert_eq!(0, ::endpoint::from_libusb(&endpoint_descriptor!(bEndpointAddress: 0b0000_0000)).number());

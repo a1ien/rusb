@@ -93,8 +93,6 @@ pub fn from_libusb(interface: &::ffi::libusb_interface) -> Interface {
 mod test {
   extern crate rand;
 
-  use std::ptr;
-
   #[test]
   fn it_has_interface_number() {
     let n = rand::random();

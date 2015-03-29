@@ -1,3 +1,5 @@
+pub use std::ptr;
+
 macro_rules! merge {
   ($default:expr => $($field:ident : $value:expr),*) => {
     {
@@ -22,7 +24,7 @@ macro_rules! endpoint_descriptor {
         bInterval:        1,
         bRefresh:         1,
         bSynchAddress:    0,
-        extra:            ptr::null(),
+        extra:            $crate::test_helpers::ptr::null(),
         extra_length:     0
       } => $($key: $value),*
     )
@@ -43,8 +45,8 @@ macro_rules! interface_descriptor {
         bInterfaceSubClass: 0,
         bInterfaceProtocol: 0,
         iInterface:         0,
-        endpoint:           ptr::null(),
-        extra:              ptr::null(),
+        endpoint:           $crate::test_helpers::ptr::null(),
+        extra:              $crate::test_helpers::ptr::null(),
         extra_length:       0
       } => $($key: $value),*
     )
@@ -64,7 +66,7 @@ macro_rules! interface_descriptor {
         bInterfaceProtocol: 0,
         iInterface:         0,
         endpoint:           endpoints.as_slice().as_ptr(),
-        extra:              ptr::null(),
+        extra:              $crate::test_helpers::ptr::null(),
         extra_length:       0
       }
     }
@@ -98,8 +100,8 @@ macro_rules! config_descriptor {
         iConfiguration:      0,
         bmAttributes:        0x00,
         bMaxPower:           10,
-        interface:           ptr::null(),
-        extra:               ptr::null(),
+        interface:           $crate::test_helpers::ptr::null(),
+        extra:               $crate::test_helpers::ptr::null(),
         extra_length:        0
       } => $($key: $value),*
     )
@@ -118,7 +120,7 @@ macro_rules! config_descriptor {
         bmAttributes:        0x00,
         bMaxPower:           10,
         interface:           interfaces.as_slice().as_ptr(),
-        extra:               ptr::null(),
+        extra:               $crate::test_helpers::ptr::null(),
         extra_length:        0
       }
     }

@@ -59,8 +59,6 @@ pub fn from_libusb(configuration: &::ffi::libusb_config_descriptor) -> Configura
 mod test {
   extern crate rand;
 
-  use std::ptr;
-
   #[test]
   fn it_has_number() {
     let n = rand::random();
