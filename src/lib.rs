@@ -2,7 +2,7 @@
 
 #![feature(std_misc,core,libc,unsafe_destructor)]
 
-extern crate "libusb-sys" as ffi;
+extern crate libusb_sys as ffi;
 extern crate libc;
 
 

@@ -34,7 +34,7 @@ impl<'a> DeviceRef<'a> {
 
     let mut configurations = Vec::<Configuration>::with_capacity(descriptor.bNumConfigurations as usize);
 
-    for i in range(0, descriptor.bNumConfigurations) {
+    for i in (0..descriptor.bNumConfigurations) {
       let mut ptr: *const ::ffi::libusb_config_descriptor = unsafe { mem::uninitialized() };
 
       match unsafe { ::ffi::libusb_get_config_descriptor(self.device, i, &mut ptr) } {

@@ -114,7 +114,7 @@ fn read_endpoint(handle: &mut libusb::DeviceHandle, endpoint: Endpoint, transfer
   match configure_endpoint(handle, &endpoint) {
     Ok(mut iface) => {
       let mut vec = Vec::<u8>::with_capacity(256);
-      let mut buf = unsafe { slice::from_raw_parts_mut(vec.as_mut_slice().as_mut_ptr(), vec.capacity()) };
+      let mut buf = unsafe { slice::from_raw_parts_mut((&mut vec[..]).as_mut_ptr(), vec.capacity()) };
 
       let timeout = Duration::milliseconds(1000);
 
