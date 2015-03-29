@@ -1,4 +1,4 @@
-#![feature(core,libc,old_io)]
+#![feature(core,libc,old_io,convert)]
 
 extern crate libusb_sys as ffi;
 extern crate libc;
@@ -27,8 +27,8 @@ fn main() {
     return;
   }
 
-  let vid: u16 = FromStr::from_str(args[1].as_slice()).unwrap();
-  let pid: u16 = FromStr::from_str(args[2].as_slice()).unwrap();
+  let vid: u16 = FromStr::from_str(args[1].as_ref()).unwrap();
+  let pid: u16 = FromStr::from_str(args[2].as_ref()).unwrap();
 
   let mut context: *mut ::ffi::libusb_context = unsafe { mem::uninitialized() };
   let mut device_list: *const *mut ::ffi::libusb_device = unsafe { mem::uninitialized() };
@@ -109,7 +109,7 @@ fn print_device_tree(device: *mut ::ffi::libusb_device) -> usize {
 
 fn get_language_ids(handle: *mut ::ffi::libusb_device_handle) -> Vec<u16> {
   let mut buf = Vec::<u8>::with_capacity(255);
-  let len = unsafe { ::ffi::libusb_get_string_descriptor(handle, 0, 0, buf.as_slice().as_ptr() as *mut c_uchar, buf.capacity() as c_int) };
+  let len = unsafe { ::ffi::libusb_get_string_descriptor(handle, 0, 0, (&buf[..]).as_ptr() as *mut c_uchar, buf.capacity() as c_int) };
 
   let mut languages = Vec::<u16>::new();
 
@@ -225,7 +225,7 @@ fn read_endpoint(handle: *mut ::ffi::libusb_device_handle, device: *mut ::ffi::l
 
               match transfer_type {
                 ::ffi::LIBUSB_TRANSFER_TYPE_INTERRUPT => {
-                  match unsafe { ::ffi::libusb_interrupt_transfer(handle, endpoint.address as c_uchar, vec.as_slice().as_ptr() as *mut c_uchar, vec.capacity() as c_int, &mut transferred, timeout) } {
+                  match unsafe { ::ffi::libusb_interrupt_transfer(handle, endpoint.address as c_uchar, (&vec[..]).as_ptr() as *mut c_uchar, vec.capacity() as c_int, &mut transferred, timeout) } {
                     0 => {
                       unsafe { vec.set_len(transferred as usize) };
                       println!(" - read: {:?}", vec);
@@ -234,7 +234,7 @@ fn read_endpoint(handle: *mut ::ffi::libusb_device_handle, device: *mut ::ffi::l
                   }
                 },
                 ::ffi::LIBUSB_TRANSFER_TYPE_BULK => {
-                  match unsafe { ::ffi::libusb_bulk_transfer(handle, endpoint.address as c_uchar, vec.as_slice().as_ptr() as *mut c_uchar, vec.capacity() as c_int, &mut transferred, timeout) } {
+                  match unsafe { ::ffi::libusb_bulk_transfer(handle, endpoint.address as c_uchar, (&vec[..]).as_ptr() as *mut c_uchar, vec.capacity() as c_int, &mut transferred, timeout) } {
                     0 => {
                       unsafe { vec.set_len(transferred as usize) };
                       println!(" - read: {:?}", vec);
