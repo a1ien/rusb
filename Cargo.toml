@@ -1,12 +1,14 @@
 [package]
 
 name = "libusb-sys"
-version = "0.0.1"
+version = "0.0.2"
 authors = ["David Cuddeback <david.cuddeback@gmail.com>"]
 description = "Rust bindings for libusb 1.0."
 license = "MIT"
 homepage = "https://github.com/dcuddeback/libusb-sys"
 repository = "https://github.com/dcuddeback/libusb-sys.git"
+readme = "README.md"
+keywords = ["usb", "libusb", "hardware", "bindings"]
 
 build = "build.rs"
 links = "usb-1.0"
