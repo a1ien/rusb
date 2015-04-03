@@ -92,7 +92,7 @@ mod test {
 
     assert_eq!(
       vec!(&::interface::from_libusb(&interface)),
-      ::configuration::from_libusb(&config_descriptor!(interface)).interfaces().iter().collect()
+      ::configuration::from_libusb(&config_descriptor!(interface)).interfaces().iter().collect::<Vec<_>>()
     );
   }
 }

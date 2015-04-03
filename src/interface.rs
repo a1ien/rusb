@@ -98,22 +98,22 @@ mod test {
 
   #[test]
   fn it_has_alternate_setting_number() {
-    assert_eq!(vec!(42), ::interface::from_libusb(&interface!(interface_descriptor!(bAlternateSetting: 42))).settings().iter().map(|setting| setting.number()).collect());
+    assert_eq!(vec!(42), ::interface::from_libusb(&interface!(interface_descriptor!(bAlternateSetting: 42))).settings().iter().map(|setting| setting.number()).collect::<Vec<_>>());
   }
 
   #[test]
   fn it_has_class_code() {
-    assert_eq!(vec!(42), ::interface::from_libusb(&interface!(interface_descriptor!(bInterfaceClass: 42))).settings().iter().map(|setting| setting.class_code()).collect());
+    assert_eq!(vec!(42), ::interface::from_libusb(&interface!(interface_descriptor!(bInterfaceClass: 42))).settings().iter().map(|setting| setting.class_code()).collect::<Vec<_>>());
   }
 
   #[test]
   fn it_has_sub_class_code() {
-    assert_eq!(vec!(42), ::interface::from_libusb(&interface!(interface_descriptor!(bInterfaceSubClass: 42))).settings().iter().map(|setting| setting.sub_class_code()).collect());
+    assert_eq!(vec!(42), ::interface::from_libusb(&interface!(interface_descriptor!(bInterfaceSubClass: 42))).settings().iter().map(|setting| setting.sub_class_code()).collect::<Vec<_>>());
   }
 
   #[test]
   fn it_has_protocol_code() {
-    assert_eq!(vec!(42), ::interface::from_libusb(&interface!(interface_descriptor!(bInterfaceProtocol: 42))).settings().iter().map(|setting| setting.protocol_code()).collect());
+    assert_eq!(vec!(42), ::interface::from_libusb(&interface!(interface_descriptor!(bInterfaceProtocol: 42))).settings().iter().map(|setting| setting.protocol_code()).collect::<Vec<_>>());
   }
 
   #[test]
@@ -126,7 +126,7 @@ mod test {
 
     assert_eq!(
       vec!(&::endpoint::from_libusb(&endpoint)),
-      ::interface::from_libusb(&interface!(interface_descriptor!(endpoint))).settings()[0].endpoints().iter().collect()
+      ::interface::from_libusb(&interface!(interface_descriptor!(endpoint))).settings()[0].endpoints().iter().collect::<Vec<_>>()
     );
   }
 }
