@@ -1,4 +1,4 @@
-#![feature(std_misc,convert)]
+#![feature(std_misc)]
 
 extern crate libusb;
 

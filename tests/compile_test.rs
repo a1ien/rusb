@@ -1,4 +1,4 @@
-#![feature(collections,convert)]
+#![feature(collections)]
 
 extern crate regex;
 
