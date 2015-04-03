@@ -1,4 +1,4 @@
-#![feature(core,libc,old_io,convert)]
+#![feature(core,libc)]
 
 extern crate libusb_sys as ffi;
 extern crate libc;
@@ -8,8 +8,8 @@ use libc::{c_int,c_uint,c_uchar};
 use std::mem;
 use std::slice;
 
+use std::io::{Read,Cursor};
 use std::str::FromStr;
-use std::old_io::{MemReader,Reader};
 
 #[derive(Debug)]
 struct Endpoint {
@@ -109,7 +109,7 @@ fn print_device_tree(device: *mut ::ffi::libusb_device) -> usize {
 
 fn get_language_ids(handle: *mut ::ffi::libusb_device_handle) -> Vec<u16> {
   let mut buf = Vec::<u8>::with_capacity(255);
-  let len = unsafe { ::ffi::libusb_get_string_descriptor(handle, 0, 0, (&buf[..]).as_ptr() as *mut c_uchar, buf.capacity() as c_int) };
+  let len = unsafe { ::ffi::libusb_get_string_descriptor(handle, 0, 0, (&mut buf[..]).as_mut_ptr() as *mut c_uchar, buf.capacity() as c_int) };
 
   let mut languages = Vec::<u16>::new();
 
@@ -120,16 +120,24 @@ fn get_language_ids(handle: *mut ::ffi::libusb_device_handle) -> Vec<u16> {
       let num_languages = (buf.len() - 2) / 2;
       languages.reserve(num_languages);
 
-      let mut reader = MemReader::new(buf);
-
-      match reader.read_le_u16() {
-        Ok(_) => (),
-        Err(_) => return languages
-      }
+      let mut cursor = Cursor::new(buf);
+      cursor.set_position(2);
 
       for _ in (0..num_languages) {
-        match reader.read_le_u16() {
-          Ok(n) => languages.push(n),
+        let mut bytes = Vec::<u8>::with_capacity(2);
+
+        match cursor.read(unsafe { slice::from_raw_parts_mut((&mut bytes[..]).as_mut_ptr(), bytes.capacity()) }) {
+          Ok(len) => {
+            if len == 2 {
+              unsafe { bytes.set_len(len) };
+
+              let langid = (bytes[1] as u16) << 8 | (bytes[0] as u16);
+              languages.push(langid)
+            }
+            else {
+              return languages;
+            }
+          },
           Err(_) => return languages
         }
       }
