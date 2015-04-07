@@ -5,11 +5,8 @@ all acquired resources are released when they're no longer needed, and Rust life
 resources are released in a proper order.
 
 ## Dependencies
-In order to use the `libusb` crate, you must have:
-
-* The native `libusb` library installed where it can be found by `pkg-config`.
-* A Rust runtime with the `libc` crate. Since the `libc` crate's interface is considered unstable,
-  you must install Rust from the nightly builds or from the latest source.
+In order to use the `libusb` crate, you must have the native `libusb` library installed where it can
+be found by `pkg-config`.
 
 All systems supported by the native `libusb` library are also supported by the `libusb` crate. It's
 been tested on Linux, OS X, and Windows.
