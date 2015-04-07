@@ -5,11 +5,8 @@ The `libusb-sys` crate provides declarations and linkage for the `libusb` C libr
 the native `libusb` library functions.
 
 ## Dependencies
-In order to use the `libusb-sys` crate, you must have:
-
-* The `libusb` library installed where it can be found by `pkg-config`.
-* A Rust runtime with the `libc` crate. Since the `libc` crate's interface is considered unstable,
-  you must install Rust from the nightly builds or from the latest source.
+In order to use the `libusb-sys` crate, you must have the `libusb` library installed where it can be
+found by `pkg-config`.
 
 All systems supported by `libusb` are also supported by the `libusb-sys` crate. It's been tested on
 Linux, OS X, and Windows.
