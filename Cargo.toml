@@ -13,5 +13,8 @@ keywords = ["usb", "libusb", "hardware", "bindings"]
 build = "build.rs"
 links = "usb-1.0"
 
+[dependencies]
+libc = "0.1.5"
+
 [build-dependencies]
 pkg-config = "0.3.2"

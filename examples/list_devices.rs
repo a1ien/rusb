@@ -1,4 +1,4 @@
-#![feature(core,libc)]
+#![feature(core)]
 
 extern crate libusb_sys as ffi;
 extern crate libc;
