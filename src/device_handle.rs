@@ -13,7 +13,6 @@ pub struct DeviceHandle<'a> {
   handle: *mut ::ffi::libusb_device_handle
 }
 
-#[unsafe_destructor]
 impl<'a> Drop for DeviceHandle<'a> {
   /// Closes the device.
   fn drop(&mut self) {

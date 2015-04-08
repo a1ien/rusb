@@ -11,7 +11,6 @@ pub struct DeviceList<'a> {
   len: usize
 }
 
-#[unsafe_destructor]
 impl<'a> Drop for DeviceList<'a> {
   /// Frees the device list.
   fn drop(&mut self) {

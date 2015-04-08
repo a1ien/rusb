@@ -13,7 +13,6 @@ pub struct InterfaceHandle<'a> {
   iface: c_int
 }
 
-#[unsafe_destructor]
 impl<'a> Drop for InterfaceHandle<'a> {
   /// Releases the interface.
   fn drop(&mut self) {

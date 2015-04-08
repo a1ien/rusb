@@ -13,7 +13,6 @@ pub struct DeviceRef<'a> {
   device: *mut ::ffi::libusb_device
 }
 
-#[unsafe_destructor]
 impl<'a> Drop for DeviceRef<'a> {
   /// Releases the device reference.
   fn drop(&mut self) {
