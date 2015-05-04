@@ -4,7 +4,7 @@
 /// `M` is the minor version, and `N` is the sub minor version. A version is constructed by
 /// providing the fields in the same order to the tuple. For example:
 ///
-/// ```ignore
+/// ```
 /// libusb::Version(0, 2, 1);
 /// ```
 ///
