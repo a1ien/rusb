@@ -1,5 +1,3 @@
-#![feature(collections)]
-
 extern crate regex;
 
 use regex::Regex;
@@ -61,9 +59,9 @@ struct CompileError {
 impl CompileError {
   fn new(file: &str, line: usize, message: &str) -> Self {
     CompileError {
-      file: String::from_str(file),
+      file: file.to_string(),
       line: line,
-      message: String::from_str(message)
+      message: message.to_string()
     }
   }
 }
