@@ -1,5 +1,3 @@
-#![feature(core)]
-
 extern crate libusb_sys as ffi;
 extern crate libc;
 
@@ -160,7 +158,7 @@ fn find_readable_endpoint(device: *mut ::ffi::libusb_device, transfer_type: u8) 
 
         match unsafe { ::ffi::libusb_get_config_descriptor(device, i, &mut config_ptr) } {
           0 => {
-            let config_descriptor = unsafe { config_ptr.as_ref() }.unwrap();
+            let config_descriptor = unsafe { &*config_ptr };
             let interfaces = unsafe { slice::from_raw_parts(config_descriptor.interface, config_descriptor.bNumInterfaces as usize) };
 
             for iface in interfaces {

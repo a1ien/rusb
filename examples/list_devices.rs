@@ -1,5 +1,3 @@
-#![feature(core)]
-
 extern crate libusb_sys as ffi;
 extern crate libc;
 
@@ -100,7 +98,7 @@ fn display_device(dev: &*mut ::ffi::libusb_device) {
 
       match unsafe { ::ffi::libusb_get_config_descriptor(*dev, i, &mut descriptor) } {
         0 => {
-          let config = unsafe { descriptor.as_ref() }.unwrap();
+          let config = unsafe { &*descriptor };
           let interfaces = unsafe { slice::from_raw_parts(config.interface, config.bNumInterfaces as usize) };
 
           print_config_descriptor(handle, config);
