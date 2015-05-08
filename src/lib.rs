@@ -1,10 +1,8 @@
 //! This crate provides a safe wrapper around the native `libusb` library.
 
-#![feature(std_misc)]
-
 extern crate libusb_sys as ffi;
 extern crate libc;
-
+extern crate time;
 
 pub use ::version::{LibraryVersion,version};
 pub use ::error::{UsbResult,UsbError};

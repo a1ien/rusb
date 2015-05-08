@@ -1,8 +1,7 @@
 use std::mem;
 
-use std::time::duration::Duration;
-
 use libc::{c_int,c_uint,c_uchar};
+use time::Duration;
 
 use ::error::UsbResult;
 

@@ -1,11 +1,10 @@
-#![feature(std_misc)]
-
 extern crate libusb;
+extern crate time;
 
 use std::slice;
-
 use std::str::FromStr;
-use std::time::duration::Duration;
+
+use time::Duration;
 
 #[derive(Debug)]
 struct Endpoint {
