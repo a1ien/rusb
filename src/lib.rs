@@ -206,6 +206,20 @@ pub const LIBUSB_ISO_USAGE_TYPE_FEEDBACK: u8 = 1;
 pub const LIBUSB_ISO_USAGE_TYPE_IMPLICIT: u8 = 2;
 
 
+// libusb_request_type
+pub const LIBUSB_REQUEST_TYPE_STANDARD: u8 = 0x00 << 5;
+pub const LIBUSB_REQUEST_TYPE_CLASS:    u8 = 0x01 << 5;
+pub const LIBUSB_REQUEST_TYPE_VENDOR:   u8 = 0x02 << 5;
+pub const LIBUSB_REQUEST_TYPE_RESERVED: u8 = 0x03 << 5;
+
+
+// libusb_request_recipient
+pub const LIBUSB_RECIPIENT_DEVICE:    u8 = 0x00;
+pub const LIBUSB_RECIPIENT_INTERFACE: u8 = 0x01;
+pub const LIBUSB_RECIPIENT_ENDPOINT:  u8 = 0x02;
+pub const LIBUSB_RECIPIENT_OTHER:     u8 = 0x03;
+
+
 // libusb_standard_request
 pub const LIBUSB_REQUEST_GET_STATUS:        u8 = 0x00;
 pub const LIBUSB_REQUEST_CLEAR_FEATURE:     u8 = 0x01;
