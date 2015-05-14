@@ -1,11 +1,12 @@
 use std::mem;
 
-use libc::{c_int};
+use libc::{c_int,c_uint,c_uchar};
+use time::Duration;
 
 use ::error::UsbResult;
 use ::context::Context;
 use ::interface_handle::InterfaceHandle;
-
+use ::request::ControlRequest;
 
 /// A handle to an open USB device.
 pub struct DeviceHandle<'a> {
@@ -95,8 +96,23 @@ impl<'a> DeviceHandle<'a> {
       e => Err(::error::from_libusb(e))
     }
   }
-}
 
+  /// Performs a control transfer on the device.
+  pub fn control_transfer(&mut self, request_type: ControlRequest, request: u8, value: u16, index: u16, data: &mut [u8], timeout: Duration) -> UsbResult<usize> {
+    let buf = data.as_mut_ptr() as *mut c_uchar;
+    let len = data.len() as u16;
+    let timeout_ms = timeout.num_milliseconds() as c_uint;
+
+    let res = unsafe { ::ffi::libusb_control_transfer(self.handle, request_type.to_u8(), request, value, index, buf, len, timeout_ms) };
+
+    // LIBUSB_ERROR are negative integers
+    if res < 0 {
+      Err(::error::from_libusb(res))
+    } else {
+      Ok(res as usize)
+    }
+  }
+}
 
 // Not exported outside the crate.
 pub fn from_libusb<'a>(context: &'a Context, handle: *mut ::ffi::libusb_device_handle) -> DeviceHandle<'a> {
