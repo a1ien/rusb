@@ -58,7 +58,7 @@ extern crate libusb_sys as ffi;
 fn main() {
   let version = unsafe { ffi::libusb_get_version() };
 
-  println!("libusb v{}.{}.{}.{}", version.major, version.minor, version.mirco, version.nano);
+  println!("libusb v{}.{}.{}.{}", version.major, version.minor, version.micro, version.nano);
 }
 ```
 
