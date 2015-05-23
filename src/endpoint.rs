@@ -1,13 +1,4 @@
-/// An endpoint's direction.
-#[derive(Debug,PartialEq)]
-pub enum Direction {
-  /// An input endpoint (device to host).
-  In,
-
-  /// An output endpoint (host to device).
-  Out
-}
-
+use ::request::Direction;
 
 /// An endpoint's transfer type.
 #[derive(Debug,PartialEq)]
@@ -147,7 +138,8 @@ pub fn from_libusb(endpoint: &::ffi::libusb_endpoint_descriptor) -> Endpoint {
 
 #[cfg(test)]
 mod test {
-  use super::{Direction,TransferType,SyncType,UsageType};
+  use super::{TransferType,SyncType,UsageType};
+  use ::request::Direction;
 
   #[test]
   fn it_interprets_number_for_output_endpoints() {

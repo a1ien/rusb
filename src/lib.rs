@@ -10,14 +10,15 @@ pub use ::error::{UsbResult,UsbError};
 pub use ::context::{Context,LogLevel};
 pub use ::device_list::{DeviceList};
 pub use ::device_ref::{DeviceRef};
-pub use ::device_handle::{DeviceHandle};
+pub use ::device_handle::DeviceHandle;
 pub use ::interface_handle::{InterfaceHandle};
 
 pub use ::fields::{Version};
 pub use ::device::{Device,Speed};
 pub use ::configuration::{Configuration};
 pub use ::interface::{Interface,InterfaceSetting};
-pub use ::endpoint::{Endpoint,Direction,TransferType,SyncType,UsageType};
+pub use ::endpoint::{Endpoint,TransferType,SyncType,UsageType};
+pub use ::request::{Direction,RequestType,Recipient,ControlRequest};
 
 
 #[cfg(test)]
@@ -38,3 +39,4 @@ mod device;
 mod configuration;
 mod interface;
 mod endpoint;
+mod request;
