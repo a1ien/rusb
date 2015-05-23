@@ -1,7 +1,9 @@
 language: rust
 rust:
+  - 1.0.0
+  - stable
+  - beta
   - nightly
-  - 1.0.0-beta
 
 before_install:
   - sudo rm /etc/apt/sources.list.d/*.list
