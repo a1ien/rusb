@@ -30,7 +30,7 @@ pub struct InterfaceSetting {
   interface_class: u8,
   interface_sub_class: u8,
   interface_protocol: u8,
-  //description_index: u8,
+  description_index: Option<u8>,
   endpoints: Vec<Endpoint>
 }
 
@@ -53,6 +53,11 @@ impl InterfaceSetting {
   /// Returns the interface's protocol code.
   pub fn protocol_code(&self) -> u8 {
     self.interface_protocol
+  }
+
+  /// Returns the index of the string descriptor that describes the interface.
+  pub fn description_string_index(&self) -> Option<u8> {
+    self.description_index
   }
 
   /// Returns a collection of the interface's endpoints.
@@ -81,7 +86,10 @@ pub fn from_libusb(interface: &::ffi::libusb_interface) -> Interface {
         interface_class:     setting.bInterfaceClass,
         interface_sub_class: setting.bInterfaceSubClass,
         interface_protocol:  setting.bInterfaceProtocol,
-        //description_index:   0,
+        description_index:   match setting.iInterface {
+          0 => None,
+          n => Some(n)
+        },
         endpoints:           endpoints.iter().map(|endpoint| ::endpoint::from_libusb(&endpoint)).collect()
       }
     }).collect()
@@ -114,6 +122,16 @@ mod test {
   #[test]
   fn it_has_protocol_code() {
     assert_eq!(vec!(42), ::interface::from_libusb(&interface!(interface_descriptor!(bInterfaceProtocol: 42))).settings().iter().map(|setting| setting.protocol_code()).collect::<Vec<_>>());
+  }
+
+  #[test]
+  fn it_has_description_string_index() {
+    assert_eq!(vec!(Some(42)), ::interface::from_libusb(&interface!(interface_descriptor!(iInterface: 42))).settings().iter().map(|setting| setting.description_string_index()).collect::<Vec<_>>());
+  }
+
+  #[test]
+  fn it_handles_missing_description_string_index() {
+    assert_eq!(vec!(None), ::interface::from_libusb(&interface!(interface_descriptor!(iInterface: 0))).settings().iter().map(|setting| setting.description_string_index()).collect::<Vec<_>>());
   }
 
   #[test]

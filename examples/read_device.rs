@@ -61,7 +61,20 @@ fn open_device(context: &mut libusb::Context, vid: u16, pid: u16) -> Option<(lib
 
 fn read_device(device: &libusb::Device, handle: &mut libusb::DeviceHandle) -> libusb::UsbResult<()> {
   try!(handle.reset());
+
+  let timeout = Duration::seconds(1);
+  let languages = try!(handle.read_languages(timeout));
+
   println!("Active configuration: {}", try!(handle.active_configuration()));
+  println!("Languages: {:?}", languages);
+
+  if languages.len() > 0 {
+      let language = languages[0];
+
+      println!("Manufacturer: {:?}", handle.read_manufacturer_string(language, device, timeout).ok());
+      println!("Product: {:?}", handle.read_product_string(language, device, timeout).ok());
+      println!("Serial Number: {:?}", handle.read_serial_number_string(language, device, timeout).ok());
+  }
 
   match find_readable_endpoint(&device, libusb::TransferType::Interrupt) {
     Some(endpoint) => read_endpoint(handle, endpoint, libusb::TransferType::Interrupt),

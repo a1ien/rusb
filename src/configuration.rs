@@ -7,7 +7,7 @@ use ::interface::Interface;
 #[derive(Debug)]
 pub struct Configuration {
   number: u8,
-  description_index: u8,
+  description_index: Option<u8>,
   attributes: u8,
   max_power: u8,
   interfaces: Vec<Interface>
@@ -34,6 +34,11 @@ impl Configuration {
     self.attributes & 0x20 != 0
   }
 
+  /// Returns the index of the string descriptor that describes the configuration.
+  pub fn description_string_index(&self) -> Option<u8> {
+    self.description_index
+  }
+
   /// Returns a collection of the configuration's interfaces.
   pub fn interfaces(&self) -> &[Interface] {
     &self.interfaces[..]
@@ -47,7 +52,10 @@ pub fn from_libusb(configuration: &::ffi::libusb_config_descriptor) -> Configura
 
   Configuration {
     number:            configuration.bConfigurationValue,
-    description_index: 0,
+    description_index: match configuration.iConfiguration {
+      0 => None,
+      n => Some(n)
+    },
     attributes:        configuration.bmAttributes,
     max_power:         configuration.bMaxPower,
     interfaces:        interfaces.iter().map(|interface| ::interface::from_libusb(&interface)).collect()
@@ -77,6 +85,16 @@ mod test {
   fn it_interprets_remote_wakeup_bit_in_attributes() {
     assert_eq!(false, ::configuration::from_libusb(&config_descriptor!(bmAttributes: 0b0000_0000)).remote_wakeup());
     assert_eq!(true,  ::configuration::from_libusb(&config_descriptor!(bmAttributes: 0b0010_0000)).remote_wakeup());
+  }
+
+  #[test]
+  fn it_has_description_string_index() {
+    assert_eq!(Some(42), ::configuration::from_libusb(&config_descriptor!(iConfiguration: 42)).description_string_index());
+  }
+
+  #[test]
+  fn it_handles_missing_description_string_index() {
+    assert_eq!(None, ::configuration::from_libusb(&config_descriptor!(iConfiguration: 0),).description_string_index());
   }
 
   #[test]

@@ -1,4 +1,5 @@
 use std::mem;
+use std::slice;
 
 use libc::{c_int,c_uint,c_uchar};
 use time::Duration;
@@ -6,7 +7,11 @@ use time::Duration;
 use ::error::UsbResult;
 use ::context::Context;
 use ::interface_handle::InterfaceHandle;
-use ::request::ControlRequest;
+use ::device::Device;
+use ::configuration::Configuration;
+use ::interface::InterfaceSetting;
+use ::request::{ControlRequest,Direction,RequestType,Recipient};
+use ::language::Language;
 
 /// A handle to an open USB device.
 pub struct DeviceHandle<'a> {
@@ -110,6 +115,94 @@ impl<'a> DeviceHandle<'a> {
       Err(::error::from_libusb(res))
     } else {
       Ok(res as usize)
+    }
+  }
+
+  /// Reads the languages supported by the device's string descriptors.
+  ///
+  /// This function returns a list of languages that can be used to read the device's string
+  /// descriptors.
+  pub fn read_languages(&mut self, timeout: Duration) -> UsbResult<Vec<Language>> {
+    let mut buf = Vec::<u8>::with_capacity(256);
+
+    let request = ControlRequest::new(Direction::In, RequestType::Standard, Recipient::Device);
+    let mut buf_slice = unsafe {
+      slice::from_raw_parts_mut((&mut buf[..]).as_mut_ptr(), buf.capacity())
+    };
+
+    let len = try!(self.control_transfer(request, ::ffi::LIBUSB_REQUEST_GET_DESCRIPTOR, (::ffi::LIBUSB_DT_STRING as u16) << 8, 0, buf_slice, timeout));
+
+    unsafe {
+      buf.set_len(len);
+    }
+
+    Ok(buf.chunks(2).skip(1).map(|chunk| {
+      let lang_id = chunk[0] as u16 | (chunk[1] as u16) << 8;
+      ::language::from_lang_id(lang_id)
+    }).collect())
+  }
+
+  /// Reads a string descriptor from the device.
+  ///
+  /// `language` should be one of the languages returned from [`read_languages`](#method.read_languages).
+  pub fn read_string_descriptor(&mut self, language: Language, index: u8, timeout: Duration) -> UsbResult<String> {
+    let mut buf = Vec::<u8>::with_capacity(256);
+
+    let request = ControlRequest::new(Direction::In, RequestType::Standard, Recipient::Device);
+    let mut buf_slice = unsafe {
+      slice::from_raw_parts_mut((&mut buf[..]).as_mut_ptr(), buf.capacity())
+    };
+
+    let len = try!(self.control_transfer(request, ::ffi::LIBUSB_REQUEST_GET_DESCRIPTOR, (::ffi::LIBUSB_DT_STRING as u16) << 8 | index as u16, language.lang_id(), buf_slice, timeout));
+
+    unsafe {
+      buf.set_len(len);
+    }
+
+    let utf16: Vec<u16> = buf.chunks(2).skip(1).map(|chunk| {
+      chunk[0] as u16 | (chunk[1] as u16) << 8
+    }).collect();
+
+    String::from_utf16(&utf16[..]).map_err(|_| ::error::UsbError::Other)
+  }
+
+  /// Reads the device's manufacturer string descriptor.
+  pub fn read_manufacturer_string(&mut self, language: Language, device: &Device, timeout: Duration) -> UsbResult<String> {
+    match device.manufacturer_string_index() {
+      None => Err(::error::UsbError::InvalidParam),
+      Some(n) => self.read_string_descriptor(language, n, timeout)
+    }
+  }
+
+  /// Reads the device's product string descriptor.
+  pub fn read_product_string(&mut self, language: Language, device: &Device, timeout: Duration) -> UsbResult<String> {
+    match device.product_string_index() {
+      None => Err(::error::UsbError::InvalidParam),
+      Some(n) => self.read_string_descriptor(language, n, timeout)
+    }
+  }
+
+  /// Reads the device's serial number string descriptor.
+  pub fn read_serial_number_string(&mut self, language: Language, device: &Device, timeout: Duration) -> UsbResult<String> {
+    match device.serial_number_string_index() {
+      None => Err(::error::UsbError::InvalidParam),
+      Some(n) => self.read_string_descriptor(language, n, timeout)
+    }
+  }
+
+  /// Reads the string descriptor for a configuration's description.
+  pub fn read_configuration_string(&mut self, language: Language, configuration: &Configuration, timeout: Duration) -> UsbResult<String> {
+    match configuration.description_string_index() {
+      None => Err(::error::UsbError::InvalidParam),
+      Some(n) => self.read_string_descriptor(language, n, timeout)
+    }
+  }
+
+  /// Reads the string descriptor for a interface's description.
+  pub fn read_interface_string(&mut self, language: Language, interface: &InterfaceSetting, timeout: Duration) -> UsbResult<String> {
+    match interface.description_string_index() {
+      None => Err(::error::UsbError::InvalidParam),
+      Some(n) => self.read_string_descriptor(language, n, timeout)
     }
   }
 }

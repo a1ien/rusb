@@ -1,10 +1,22 @@
 extern crate libusb;
+extern crate time;
+
+use time::Duration;
+
+struct UsbDevice<'a> {
+  handle: libusb::DeviceHandle<'a>,
+  language: libusb::Language,
+  timeout: Duration
+}
+
 
 fn main() {
   list_devices().unwrap();
 }
 
 fn list_devices() -> libusb::UsbResult<()> {
+  let timeout = Duration::seconds(1);
+
   let mut context = try!(libusb::Context::new());
 
   for mut device_ref in try!(context.devices()).iter() {
@@ -13,15 +25,38 @@ fn list_devices() -> libusb::UsbResult<()> {
       Err(_) => continue
     };
 
+    let mut usb_device = {
+      match device_ref.open() {
+        Ok(mut h) => {
+          match h.read_languages(timeout) {
+            Ok(l) => {
+              if l.len() > 0 {
+                Some(UsbDevice {
+                  handle: h,
+                  language: l[0],
+                  timeout: timeout
+                })
+              }
+              else {
+                None
+              }
+            },
+            Err(_) => None
+          }
+        },
+        Err(_) => None
+      }
+    };
+
     println!("Bus {:03} Device {:03} ID {:04x}:{:04x} {}", device.bus_number(), device.address(), device.vendor_id(), device.product_id(), get_speed(device.speed()));
-    print_device(&device);
+    print_device(&device, &mut usb_device);
 
     for config in device.configurations() {
-      print_config(&config);
+      print_config(&config, &mut usb_device);
 
       for interface in config.interfaces() {
         for setting in interface.settings() {
-          print_interface(&setting, interface.number());
+          print_interface(&setting, interface.number(), &mut usb_device);
 
           for endpoint in setting.endpoints() {
             print_endpoint(&endpoint);
@@ -34,7 +69,7 @@ fn list_devices() -> libusb::UsbResult<()> {
   Ok(())
 }
 
-fn print_device(device: &libusb::Device) {
+fn print_device(device: &libusb::Device, handle: &mut Option<UsbDevice>) {
   println!("Device Descriptor:");
   println!("  bcdUSB             {:2}.{}{}", device.usb_version().major(), device.usb_version().minor(), device.usb_version().sub_minor());
   println!("  bDeviceClass        {:#04x}", device.class_code());
@@ -44,20 +79,32 @@ fn print_device(device: &libusb::Device) {
   println!("  idVendor          {:#06x}", device.vendor_id());
   println!("  idProduct         {:#06x}", device.product_id());
   println!("  bcdDevice          {:2}.{}{}", device.device_version().major(), device.device_version().minor(), device.device_version().sub_minor());
+  println!("  iManufacturer        {:3} {}",
+           device.manufacturer_string_index().unwrap_or(0),
+           handle.as_mut().map_or(String::new(), |h| h.handle.read_manufacturer_string(h.language, device, h.timeout).unwrap_or(String::new())));
+  println!("  iProduct             {:3} {}",
+           device.product_string_index().unwrap_or(0),
+           handle.as_mut().map_or(String::new(), |h| h.handle.read_product_string(h.language, device, h.timeout).unwrap_or(String::new())));
+  println!("  iSerialNumber        {:3} {}",
+           device.serial_number_string_index().unwrap_or(0),
+           handle.as_mut().map_or(String::new(), |h| h.handle.read_serial_number_string(h.language, device, h.timeout).unwrap_or(String::new())));
   println!("  bNumConfigurations   {:3}", device.configurations().len());
 }
 
-fn print_config(config: &libusb::Configuration) {
+fn print_config(config: &libusb::Configuration, handle: &mut Option<UsbDevice>) {
   println!("  Config Descriptor:");
   println!("    bNumInterfaces       {:3}", config.interfaces().len());
   println!("    bConfigurationValue  {:3}", config.number());
+  println!("    iConfiguration       {:3} {}",
+           config.description_string_index().unwrap_or(0),
+           handle.as_mut().map_or(String::new(), |h| h.handle.read_configuration_string(h.language, config, h.timeout).unwrap_or(String::new())));
   println!("    bmAttributes:");
   println!("      Self Powered     {:>5}", config.self_powered());
   println!("      Remote Wakeup    {:>5}", config.remote_wakeup());
   println!("    bMaxPower           {:4}mW", config.max_power());
 }
 
-fn print_interface(setting: &libusb::InterfaceSetting, iface: u8) {
+fn print_interface(setting: &libusb::InterfaceSetting, iface: u8, handle: &mut Option<UsbDevice>) {
   println!("    Interface Descriptor:");
   println!("      bInterfaceNumber     {:3}", iface);
   println!("      bAlternateSetting    {:3}", setting.number());
@@ -65,6 +112,9 @@ fn print_interface(setting: &libusb::InterfaceSetting, iface: u8) {
   println!("      bInterfaceClass     {:#04x}", setting.class_code());
   println!("      bInterfaceSubClass  {:#04x}", setting.sub_class_code());
   println!("      bInterfaceProtocol  {:#04x}", setting.protocol_code());
+  println!("      iInterface           {:3} {}",
+           setting.description_string_index().unwrap_or(0),
+           handle.as_mut().map_or(String::new(), |h| h.handle.read_interface_string(h.language, setting, h.timeout).unwrap_or(String::new())));
 }
 
 fn print_endpoint(endpoint: &libusb::Endpoint) {

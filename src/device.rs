@@ -50,9 +50,9 @@ pub struct Device {
   vendor_id: u16,
   product_id: u16,
   device_version: u16,
-  //manufacturer_index: u8,
-  //product_index: u8,
-  //serial_number_index: u8,
+  manufacturer_index: Option<u8>,
+  product_index: Option<u8>,
+  serial_number_index: Option<u8>,
   configurations: Vec<Configuration>
 }
 
@@ -80,6 +80,21 @@ impl Device {
   /// Returns the manufacturer's version of the device.
   pub fn device_version(&self) -> Version {
     Version::from_bcd(self.device_version)
+  }
+
+  /// Returns the index of the string descriptor that contains the manufacturer name.
+  pub fn manufacturer_string_index(&self) -> Option<u8> {
+      self.manufacturer_index
+  }
+
+  /// Returns the index of the string descriptor that contains the product name.
+  pub fn product_string_index(&self) -> Option<u8> {
+      self.product_index
+  }
+
+  /// Returns the index of the string descriptor that contains the device's serial number.
+  pub fn serial_number_string_index(&self) -> Option<u8> {
+      self.serial_number_index
   }
 
   /// Returns the device's class code.
@@ -133,10 +148,19 @@ pub fn from_libusb(device: &::ffi::libusb_device_descriptor, configs: Vec<Config
     vendor_id:        device.idVendor,
     product_id:       device.idProduct,
     device_version:   device.bcdDevice,
-    //manufacturer_index:  device.iManufacturer,
-    //product_index:       device.iProduct,
-    //serial_number_index: device.iSerialNumber,
-    configurations:   configs
+    manufacturer_index: match device.iManufacturer {
+      0 => None,
+      n => Some(n)
+    },
+    product_index: match device.iProduct {
+      0 => None,
+      n => Some(n)
+    },
+    serial_number_index: match device.iSerialNumber {
+      0 => None,
+      n => Some(n)
+    },
+    configurations: configs
   }
 }
 
@@ -173,6 +197,36 @@ mod test {
   #[test]
   fn it_has_device_version() {
     assert_eq!(::Version::from_bcd(0x1234), ::device::from_libusb(&device_descriptor!(bcdDevice: 0x1234), vec![], 0, 0, 0).device_version());
+  }
+
+  #[test]
+  fn it_has_manufacturer_string_index() {
+    assert_eq!(Some(42), ::device::from_libusb(&device_descriptor!(iManufacturer: 42), vec![], 0, 0, 0).manufacturer_string_index());
+  }
+
+  #[test]
+  fn it_handles_missing_manufacturer_string_index() {
+    assert_eq!(None, ::device::from_libusb(&device_descriptor!(iManufacturer: 0), vec![], 0, 0, 0).manufacturer_string_index());
+  }
+
+  #[test]
+  fn it_has_product_string_index() {
+    assert_eq!(Some(42), ::device::from_libusb(&device_descriptor!(iProduct: 42), vec![], 0, 0, 0).product_string_index());
+  }
+
+  #[test]
+  fn it_handles_missing_product_string_index() {
+    assert_eq!(None, ::device::from_libusb(&device_descriptor!(iProduct: 0), vec![], 0, 0, 0).product_string_index());
+  }
+
+  #[test]
+  fn it_has_serial_number_string_index() {
+    assert_eq!(Some(42), ::device::from_libusb(&device_descriptor!(iSerialNumber: 42), vec![], 0, 0, 0).serial_number_string_index());
+  }
+
+  #[test]
+  fn it_handles_missing_serial_number_string_index() {
+    assert_eq!(None, ::device::from_libusb(&device_descriptor!(iSerialNumber: 0), vec![], 0, 0, 0).serial_number_string_index());
   }
 
   #[test]
