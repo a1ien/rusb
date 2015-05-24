@@ -19,6 +19,7 @@ pub use ::configuration::{Configuration};
 pub use ::interface::{Interface,InterfaceSetting};
 pub use ::endpoint::{Endpoint,TransferType,SyncType,UsageType};
 pub use ::request::{Direction,RequestType,Recipient,ControlRequest};
+pub use ::language::{Language,PrimaryLanguage,SubLanguage};
 
 
 #[cfg(test)]
@@ -40,3 +41,4 @@ mod configuration;
 mod interface;
 mod endpoint;
 mod request;
+mod language;
