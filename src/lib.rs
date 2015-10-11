@@ -5,7 +5,7 @@ extern crate libc;
 extern crate time;
 
 pub use ::version::{LibraryVersion,version};
-pub use ::error::{UsbResult,UsbError};
+pub use ::error::{Result,Error};
 
 pub use ::context::{Context,LogLevel};
 pub use ::device_list::{DeviceList};

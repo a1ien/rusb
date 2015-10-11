@@ -2,7 +2,6 @@ use std::mem;
 
 use libc::{c_int};
 
-use ::error::UsbResult;
 use ::device_list::DeviceList;
 
 
@@ -41,7 +40,7 @@ impl Drop for Context {
 
 impl Context {
   /// Opens a new `libusb` context.
-  pub fn new() -> UsbResult<Self> {
+  pub fn new() -> ::Result<Self> {
     let mut context: *mut ::ffi::libusb_context = unsafe { mem::uninitialized() };
 
     match unsafe { ::ffi::libusb_init(&mut context) } {
@@ -87,7 +86,7 @@ impl Context {
   }
 
   /// Returns a list of the current USB devices. The context must outlive the device list.
-  pub fn devices<'a>(&'a mut self) -> UsbResult<DeviceList<'a>> {
+  pub fn devices<'a>(&'a mut self) -> ::Result<DeviceList<'a>> {
     let mut list: *const *mut ::ffi::libusb_device = unsafe { mem::uninitialized() };
 
     let n = unsafe { ::ffi::libusb_get_device_list(self.context, &mut list) };

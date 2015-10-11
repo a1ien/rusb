@@ -14,7 +14,7 @@ fn main() {
   list_devices().unwrap();
 }
 
-fn list_devices() -> libusb::UsbResult<()> {
+fn list_devices() -> libusb::Result<()> {
   let timeout = Duration::seconds(1);
 
   let mut context = try!(libusb::Context::new());

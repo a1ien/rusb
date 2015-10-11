@@ -1,18 +1,17 @@
 use std::fmt;
-
-use std::error::Error;
-use std::fmt::{Display,Formatter};
+use std::error::Error as StdError;
+use std::result::Result as StdResult;
 
 use libc::{c_int};
 
 
-/// A result of a function that may return a `UsbError`.
-pub type UsbResult<T> = Result<T, UsbError>;
+/// A result of a function that may return a `Error`.
+pub type Result<T> = StdResult<T, Error>;
 
 
 /// Errors returned by the `libusb` library.
 #[derive(Debug)]
-pub enum UsbError {
+pub enum Error {
   /// Success (no error).
   Success,
 
@@ -56,56 +55,56 @@ pub enum UsbError {
   Other
 }
 
-impl UsbError {
+impl Error {
   /// Returns a description of an error suitable for display to an end user.
   pub fn strerror(&self) -> &'static str {
     match *self {
-      UsbError::Success      => "Success",
-      UsbError::Io           => "Input/Output Error",
-      UsbError::InvalidParam => "Invalid parameter",
-      UsbError::Access       => "Access denied (insufficient permissions)",
-      UsbError::NoDevice     => "No such device (it may have been disconnected)",
-      UsbError::NotFound     => "Entity not found",
-      UsbError::Busy         => "Resource busy",
-      UsbError::Timeout      => "Operation timed out",
-      UsbError::Overflow     => "Overflow",
-      UsbError::Pipe         => "Pipe error",
-      UsbError::Interrupted  => "System call interrupted (perhaps due to signal)",
-      UsbError::NoMem        => "Insufficient memory",
-      UsbError::NotSupported => "Operation not supported or unimplemented on this platform",
-      UsbError::Other        => "Other error"
+      Error::Success      => "Success",
+      Error::Io           => "Input/Output Error",
+      Error::InvalidParam => "Invalid parameter",
+      Error::Access       => "Access denied (insufficient permissions)",
+      Error::NoDevice     => "No such device (it may have been disconnected)",
+      Error::NotFound     => "Entity not found",
+      Error::Busy         => "Resource busy",
+      Error::Timeout      => "Operation timed out",
+      Error::Overflow     => "Overflow",
+      Error::Pipe         => "Pipe error",
+      Error::Interrupted  => "System call interrupted (perhaps due to signal)",
+      Error::NoMem        => "Insufficient memory",
+      Error::NotSupported => "Operation not supported or unimplemented on this platform",
+      Error::Other        => "Other error"
     }
   }
 }
 
-impl Display for UsbError {
-  fn fmt(&self, fmt: &mut Formatter) -> Result<(), fmt::Error> {
+impl fmt::Display for Error {
+  fn fmt(&self, fmt: &mut fmt::Formatter) -> StdResult<(), fmt::Error> {
     fmt.write_str(self.strerror())
   }
 }
 
-impl Error for UsbError {
+impl StdError for Error {
   fn description(&self) -> &'static str {
     self.strerror()
   }
 }
 
 
-pub fn from_libusb(err: c_int) -> UsbError {
+pub fn from_libusb(err: c_int) -> Error {
   match err {
-    ::ffi::LIBUSB_SUCCESS             => UsbError::Success,
-    ::ffi::LIBUSB_ERROR_IO            => UsbError::Io,
-    ::ffi::LIBUSB_ERROR_INVALID_PARAM => UsbError::InvalidParam,
-    ::ffi::LIBUSB_ERROR_ACCESS        => UsbError::Access,
-    ::ffi::LIBUSB_ERROR_NO_DEVICE     => UsbError::NoDevice,
-    ::ffi::LIBUSB_ERROR_NOT_FOUND     => UsbError::NotFound,
-    ::ffi::LIBUSB_ERROR_BUSY          => UsbError::Busy,
-    ::ffi::LIBUSB_ERROR_TIMEOUT       => UsbError::Timeout,
-    ::ffi::LIBUSB_ERROR_OVERFLOW      => UsbError::Overflow,
-    ::ffi::LIBUSB_ERROR_PIPE          => UsbError::Pipe,
-    ::ffi::LIBUSB_ERROR_INTERRUPTED   => UsbError::Interrupted,
-    ::ffi::LIBUSB_ERROR_NO_MEM        => UsbError::NoMem,
-    ::ffi::LIBUSB_ERROR_NOT_SUPPORTED => UsbError::NotSupported,
-    ::ffi::LIBUSB_ERROR_OTHER | _     => UsbError::Other
+    ::ffi::LIBUSB_SUCCESS             => Error::Success,
+    ::ffi::LIBUSB_ERROR_IO            => Error::Io,
+    ::ffi::LIBUSB_ERROR_INVALID_PARAM => Error::InvalidParam,
+    ::ffi::LIBUSB_ERROR_ACCESS        => Error::Access,
+    ::ffi::LIBUSB_ERROR_NO_DEVICE     => Error::NoDevice,
+    ::ffi::LIBUSB_ERROR_NOT_FOUND     => Error::NotFound,
+    ::ffi::LIBUSB_ERROR_BUSY          => Error::Busy,
+    ::ffi::LIBUSB_ERROR_TIMEOUT       => Error::Timeout,
+    ::ffi::LIBUSB_ERROR_OVERFLOW      => Error::Overflow,
+    ::ffi::LIBUSB_ERROR_PIPE          => Error::Pipe,
+    ::ffi::LIBUSB_ERROR_INTERRUPTED   => Error::Interrupted,
+    ::ffi::LIBUSB_ERROR_NO_MEM        => Error::NoMem,
+    ::ffi::LIBUSB_ERROR_NOT_SUPPORTED => Error::NotSupported,
+    ::ffi::LIBUSB_ERROR_OTHER | _     => Error::Other
   }
 }

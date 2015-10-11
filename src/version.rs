@@ -59,4 +59,3 @@ pub fn version() -> LibraryVersion {
     describe: str::from_utf8(unsafe { CStr::from_ptr(v.describe) }.to_bytes()).unwrap_or("")
   }
 }
-

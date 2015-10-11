@@ -4,7 +4,6 @@ use std::slice;
 use libc::{c_int,c_uint,c_uchar};
 use time::Duration;
 
-use ::error::UsbResult;
 use ::context::Context;
 use ::interface_handle::InterfaceHandle;
 use ::device::Device;
@@ -28,7 +27,7 @@ impl<'a> Drop for DeviceHandle<'a> {
 
 impl<'a> DeviceHandle<'a> {
   /// Returns the active configuration number.
-  pub fn active_configuration(&mut self) -> UsbResult<u8> {
+  pub fn active_configuration(&mut self) -> ::Result<u8> {
     let mut config: c_int = unsafe { mem::uninitialized() };
 
     match unsafe { ::ffi::libusb_get_configuration(self.handle, &mut config) } {
@@ -38,7 +37,7 @@ impl<'a> DeviceHandle<'a> {
   }
 
   /// Sets the device's active configuration.
-  pub fn set_active_configuration(&mut self, config: u8) -> UsbResult<()> {
+  pub fn set_active_configuration(&mut self, config: u8) -> ::Result<()> {
     match unsafe { ::ffi::libusb_set_configuration(self.handle, config as c_int) } {
       0 => Ok(()),
       e => Err(::error::from_libusb(e))
@@ -46,7 +45,7 @@ impl<'a> DeviceHandle<'a> {
   }
 
   /// Puts the device in an unconfigured state.
-  pub fn unconfigure(&mut self) -> UsbResult<()> {
+  pub fn unconfigure(&mut self) -> ::Result<()> {
     match unsafe { ::ffi::libusb_set_configuration(self.handle, -1) } {
       0 => Ok(()),
       e => Err(::error::from_libusb(e))
@@ -54,7 +53,7 @@ impl<'a> DeviceHandle<'a> {
   }
 
   /// Resets the device.
-  pub fn reset(&mut self) -> UsbResult<()> {
+  pub fn reset(&mut self) -> ::Result<()> {
     match unsafe { ::ffi::libusb_reset_device(self.handle) } {
       0 => Ok(()),
       e => Err(::error::from_libusb(e))
@@ -64,7 +63,7 @@ impl<'a> DeviceHandle<'a> {
   /// Indicates whether the device has an attached kernel driver.
   ///
   /// This method is not supported on all platforms.
-  pub fn kernel_driver_active(&mut self, iface: u8) -> UsbResult<bool> {
+  pub fn kernel_driver_active(&mut self, iface: u8) -> ::Result<bool> {
     match unsafe { ::ffi::libusb_kernel_driver_active(self.handle, iface as c_int) } {
       0 => Ok(false),
       1 => Ok(true),
@@ -75,7 +74,7 @@ impl<'a> DeviceHandle<'a> {
   /// Detaches an attached kernel driver from the device.
   ///
   /// This method is not supported on all platforms.
-  pub fn detach_kernel_driver(&mut self, iface: u8) -> UsbResult<()> {
+  pub fn detach_kernel_driver(&mut self, iface: u8) -> ::Result<()> {
     match unsafe { ::ffi::libusb_detach_kernel_driver(self.handle, iface as c_int) } {
       0 => Ok(()),
       e => Err(::error::from_libusb(e))
@@ -85,7 +84,7 @@ impl<'a> DeviceHandle<'a> {
   /// Attaches a kernel driver to the device.
   ///
   /// This method is not supported on all platforms.
-  pub fn attach_kernel_driver(&mut self, iface: u8) -> UsbResult<()> {
+  pub fn attach_kernel_driver(&mut self, iface: u8) -> ::Result<()> {
     match unsafe { ::ffi::libusb_attach_kernel_driver(self.handle, iface as c_int) } {
       0 => Ok(()),
       e => Err(::error::from_libusb(e))
@@ -95,7 +94,7 @@ impl<'a> DeviceHandle<'a> {
   /// Claims one of the device's interfaces.
   ///
   /// An interface must be claimed before operating on it.
-  pub fn claim_interface<'b>(&'b mut self, iface: u8) -> UsbResult<InterfaceHandle<'b>> {
+  pub fn claim_interface<'b>(&'b mut self, iface: u8) -> ::Result<InterfaceHandle<'b>> {
     match unsafe { ::ffi::libusb_claim_interface(self.handle, iface as c_int) } {
       0 => Ok(::interface_handle::from_libusb(&self.handle, iface as c_int)),
       e => Err(::error::from_libusb(e))
@@ -103,7 +102,7 @@ impl<'a> DeviceHandle<'a> {
   }
 
   /// Performs a control transfer on the device.
-  pub fn control_transfer(&mut self, request_type: ControlRequest, request: u8, value: u16, index: u16, data: &mut [u8], timeout: Duration) -> UsbResult<usize> {
+  pub fn control_transfer(&mut self, request_type: ControlRequest, request: u8, value: u16, index: u16, data: &mut [u8], timeout: Duration) -> ::Result<usize> {
     let buf = data.as_mut_ptr() as *mut c_uchar;
     let len = data.len() as u16;
     let timeout_ms = timeout.num_milliseconds() as c_uint;
@@ -122,7 +121,7 @@ impl<'a> DeviceHandle<'a> {
   ///
   /// This function returns a list of languages that can be used to read the device's string
   /// descriptors.
-  pub fn read_languages(&mut self, timeout: Duration) -> UsbResult<Vec<Language>> {
+  pub fn read_languages(&mut self, timeout: Duration) -> ::Result<Vec<Language>> {
     let mut buf = Vec::<u8>::with_capacity(256);
 
     let request = ControlRequest::new(Direction::In, RequestType::Standard, Recipient::Device);
@@ -145,7 +144,7 @@ impl<'a> DeviceHandle<'a> {
   /// Reads a string descriptor from the device.
   ///
   /// `language` should be one of the languages returned from [`read_languages`](#method.read_languages).
-  pub fn read_string_descriptor(&mut self, language: Language, index: u8, timeout: Duration) -> UsbResult<String> {
+  pub fn read_string_descriptor(&mut self, language: Language, index: u8, timeout: Duration) -> ::Result<String> {
     let mut buf = Vec::<u8>::with_capacity(256);
 
     let request = ControlRequest::new(Direction::In, RequestType::Standard, Recipient::Device);
@@ -163,45 +162,45 @@ impl<'a> DeviceHandle<'a> {
       chunk[0] as u16 | (chunk[1] as u16) << 8
     }).collect();
 
-    String::from_utf16(&utf16[..]).map_err(|_| ::error::UsbError::Other)
+    String::from_utf16(&utf16[..]).map_err(|_| ::error::Error::Other)
   }
 
   /// Reads the device's manufacturer string descriptor.
-  pub fn read_manufacturer_string(&mut self, language: Language, device: &Device, timeout: Duration) -> UsbResult<String> {
+  pub fn read_manufacturer_string(&mut self, language: Language, device: &Device, timeout: Duration) -> ::Result<String> {
     match device.manufacturer_string_index() {
-      None => Err(::error::UsbError::InvalidParam),
+      None => Err(::error::Error::InvalidParam),
       Some(n) => self.read_string_descriptor(language, n, timeout)
     }
   }
 
   /// Reads the device's product string descriptor.
-  pub fn read_product_string(&mut self, language: Language, device: &Device, timeout: Duration) -> UsbResult<String> {
+  pub fn read_product_string(&mut self, language: Language, device: &Device, timeout: Duration) -> ::Result<String> {
     match device.product_string_index() {
-      None => Err(::error::UsbError::InvalidParam),
+      None => Err(::error::Error::InvalidParam),
       Some(n) => self.read_string_descriptor(language, n, timeout)
     }
   }
 
   /// Reads the device's serial number string descriptor.
-  pub fn read_serial_number_string(&mut self, language: Language, device: &Device, timeout: Duration) -> UsbResult<String> {
+  pub fn read_serial_number_string(&mut self, language: Language, device: &Device, timeout: Duration) -> ::Result<String> {
     match device.serial_number_string_index() {
-      None => Err(::error::UsbError::InvalidParam),
+      None => Err(::error::Error::InvalidParam),
       Some(n) => self.read_string_descriptor(language, n, timeout)
     }
   }
 
   /// Reads the string descriptor for a configuration's description.
-  pub fn read_configuration_string(&mut self, language: Language, configuration: &Configuration, timeout: Duration) -> UsbResult<String> {
+  pub fn read_configuration_string(&mut self, language: Language, configuration: &Configuration, timeout: Duration) -> ::Result<String> {
     match configuration.description_string_index() {
-      None => Err(::error::UsbError::InvalidParam),
+      None => Err(::error::Error::InvalidParam),
       Some(n) => self.read_string_descriptor(language, n, timeout)
     }
   }
 
   /// Reads the string descriptor for a interface's description.
-  pub fn read_interface_string(&mut self, language: Language, interface: &InterfaceSetting, timeout: Duration) -> UsbResult<String> {
+  pub fn read_interface_string(&mut self, language: Language, interface: &InterfaceSetting, timeout: Duration) -> ::Result<String> {
     match interface.description_string_index() {
-      None => Err(::error::UsbError::InvalidParam),
+      None => Err(::error::Error::InvalidParam),
       Some(n) => self.read_string_descriptor(language, n, timeout)
     }
   }

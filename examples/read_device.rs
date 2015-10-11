@@ -59,7 +59,7 @@ fn open_device(context: &mut libusb::Context, vid: u16, pid: u16) -> Option<(lib
   None
 }
 
-fn read_device(device: &libusb::Device, handle: &mut libusb::DeviceHandle) -> libusb::UsbResult<()> {
+fn read_device(device: &libusb::Device, handle: &mut libusb::DeviceHandle) -> libusb::Result<()> {
   try!(handle.reset());
 
   let timeout = Duration::seconds(1);
@@ -160,7 +160,7 @@ fn read_endpoint(handle: &mut libusb::DeviceHandle, endpoint: Endpoint, transfer
   }
 }
 
-fn configure_endpoint<'a>(handle: &'a mut libusb::DeviceHandle, endpoint: &Endpoint) -> libusb::UsbResult<libusb::InterfaceHandle<'a>> {
+fn configure_endpoint<'a>(handle: &'a mut libusb::DeviceHandle, endpoint: &Endpoint) -> libusb::Result<libusb::InterfaceHandle<'a>> {
   try!(handle.set_active_configuration(endpoint.config));
 
   let mut iface = try!(handle.claim_interface(endpoint.iface));

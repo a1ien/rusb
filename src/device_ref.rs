@@ -1,6 +1,5 @@
 use std::mem;
 
-use ::error::UsbResult;
 use ::context::Context;
 use ::device_handle::DeviceHandle;
 use ::device::Device;
@@ -22,7 +21,7 @@ impl<'a> Drop for DeviceRef<'a> {
 
 impl<'a> DeviceRef<'a> {
   /// Reads information about the device.
-  pub fn read_device(&mut self) -> UsbResult<Device> {
+  pub fn read_device(&mut self) -> ::Result<Device> {
     let mut descriptor: ::ffi::libusb_device_descriptor = unsafe { mem::uninitialized() };
 
     // since libusb 1.0.16, this function always succeeds
@@ -57,7 +56,7 @@ impl<'a> DeviceRef<'a> {
   }
 
   /// Opens the device.
-  pub fn open(&mut self) -> UsbResult<DeviceHandle<'a>> {
+  pub fn open(&mut self) -> ::Result<DeviceHandle<'a>> {
     let mut handle: *mut ::ffi::libusb_device_handle = unsafe { mem::uninitialized() };
 
     match unsafe { ::ffi::libusb_open(self.device, &mut handle) } {
