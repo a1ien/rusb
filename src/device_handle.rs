@@ -1,3 +1,4 @@
+use std::marker::PhantomData;
 use std::mem;
 use std::slice;
 use std::time::Duration;
@@ -14,8 +15,8 @@ use ::language::Language;
 
 /// A handle to an open USB device.
 pub struct DeviceHandle<'a> {
-    _context: &'a Context,
-    handle: *mut ::libusb::libusb_device_handle
+    _context: PhantomData<&'a Context>,
+    handle: *mut ::libusb::libusb_device_handle,
 }
 
 impl<'a> Drop for DeviceHandle<'a> {
@@ -196,9 +197,9 @@ impl<'a> DeviceHandle<'a> {
 }
 
 #[doc(hidden)]
-pub fn from_libusb<'a>(context: &'a Context, handle: *mut ::libusb::libusb_device_handle) -> DeviceHandle<'a> {
+pub fn from_libusb<'a>(context: PhantomData<&'a Context>, handle: *mut ::libusb::libusb_device_handle) -> DeviceHandle<'a> {
     DeviceHandle {
         _context: context,
-        handle: handle
+        handle: handle,
     }
 }

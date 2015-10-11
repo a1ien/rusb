@@ -1,3 +1,4 @@
+use std::marker::PhantomData;
 use std::slice;
 
 use ::context::Context;
@@ -6,9 +7,9 @@ use ::device_ref::DeviceRef;
 
 /// A list of detected USB devices.
 pub struct DeviceList<'a> {
-    _context: &'a Context,
+    context: PhantomData<&'a Context>,
     list: *const *mut ::libusb::libusb_device,
-    len: usize
+    len: usize,
 }
 
 impl<'a> Drop for DeviceList<'a> {
@@ -31,9 +32,9 @@ impl<'a> DeviceList<'a> {
     /// The iterator yields a sequence of `DeviceRef` objects.
     pub fn iter<'b>(&'b self) -> Iter<'a, 'b> {
         Iter {
-            _context: self._context,
+            context: self.context,
             devices: unsafe { slice::from_raw_parts(self.list, self.len) },
-            index: 0
+            index: 0,
         }
     }
 }
@@ -41,9 +42,9 @@ impl<'a> DeviceList<'a> {
 
 /// Iterates over detected USB devices.
 pub struct Iter<'a, 'b> {
-    _context: &'a Context,
+    context: PhantomData<&'a Context>,
     devices: &'b [*mut ::libusb::libusb_device],
-    index: usize
+    index: usize,
 }
 
 impl<'a, 'b> Iterator for Iter<'a, 'b> {
@@ -54,7 +55,7 @@ impl<'a, 'b> Iterator for Iter<'a, 'b> {
             let device = self.devices[self.index];
 
             self.index += 1;
-            Some(::device_ref::from_libusb(self._context, device))
+            Some(::device_ref::from_libusb(self.context, device))
         }
         else {
             None
@@ -69,10 +70,10 @@ impl<'a, 'b> Iterator for Iter<'a, 'b> {
 
 
 #[doc(hidden)]
-pub fn from_libusb<'a>(context: &'a Context, list: *const *mut ::libusb::libusb_device, len: usize,) -> DeviceList<'a> {
+pub fn from_libusb<'a>(_context: &'a Context, list: *const *mut ::libusb::libusb_device, len: usize,) -> DeviceList<'a> {
     DeviceList {
-        _context: context,
+        context: PhantomData,
         list: list,
-        len: len
+        len: len,
     }
 }

@@ -1,3 +1,4 @@
+use std::marker::PhantomData;
 use std::mem;
 
 use ::context::Context;
@@ -8,7 +9,7 @@ use ::configuration::Configuration;
 
 /// A reference to a USB device.
 pub struct DeviceRef<'a> {
-    _context: &'a Context,
+    context: PhantomData<&'a Context>,
     device: *mut ::libusb::libusb_device
 }
 
@@ -60,16 +61,16 @@ impl<'a> DeviceRef<'a> {
 
         try_unsafe!(::libusb::libusb_open(self.device, &mut handle));
 
-        Ok(::device_handle::from_libusb(self._context, handle))
+        Ok(::device_handle::from_libusb(self.context, handle))
     }
 }
 
 #[doc(hidden)]
-pub fn from_libusb<'a>(context: &'a Context, device: *mut ::libusb::libusb_device) -> DeviceRef<'a> {
+pub fn from_libusb<'a>(context: PhantomData<&'a Context>, device: *mut ::libusb::libusb_device) -> DeviceRef<'a> {
     unsafe { ::libusb::libusb_ref_device(device) };
 
     DeviceRef {
-        _context: context,
-        device: device
+        context: context,
+        device: device,
     }
 }
