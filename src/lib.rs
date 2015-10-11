@@ -6,13 +6,19 @@ use libc::{c_void,c_int,c_uint,c_char,c_uchar,ssize_t};
 
 
 #[repr(C)]
-pub struct libusb_context;
+pub struct libusb_context {
+    __private: c_void
+}
 
 #[repr(C)]
-pub struct libusb_device;
+pub struct libusb_device {
+    __private: c_void
+}
 
 #[repr(C)]
-pub struct libusb_device_handle;
+pub struct libusb_device_handle {
+    __private: c_void
+}
 
 #[repr(C)]
 pub struct libusb_version {
