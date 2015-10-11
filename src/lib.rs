@@ -243,7 +243,7 @@ pub const LIBUSB_SET_ISOCH_DELAY:           u8 = 0x31;
 
 
 extern "C" {
-  pub fn libusb_get_version() -> &'static libusb_version;
+  pub fn libusb_get_version() -> *const libusb_version;
   pub fn libusb_has_capability(capability: u32) -> c_int;
 
   pub fn libusb_init(context: *mut *mut libusb_context) -> c_int;
