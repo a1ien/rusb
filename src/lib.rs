@@ -1,6 +1,6 @@
 //! This crate provides a safe wrapper around the native `libusb` library.
 
-extern crate libusb_sys as ffi;
+extern crate libusb_sys as libusb;
 extern crate libc;
 extern crate time;
 

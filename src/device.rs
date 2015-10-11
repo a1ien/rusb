@@ -26,11 +26,12 @@ pub enum Speed {
 impl Speed {
     fn from_libusb(n: c_int) -> Speed {
         match n {
-            ::ffi::LIBUSB_SPEED_SUPER => Speed::Super,
-            ::ffi::LIBUSB_SPEED_HIGH  => Speed::High,
-            ::ffi::LIBUSB_SPEED_FULL  => Speed::Full,
-            ::ffi::LIBUSB_SPEED_LOW   => Speed::Low,
-            _                         => Speed::Unknown
+            ::libusb::LIBUSB_SPEED_SUPER => Speed::Super,
+            ::libusb::LIBUSB_SPEED_HIGH  => Speed::High,
+            ::libusb::LIBUSB_SPEED_FULL  => Speed::Full,
+            ::libusb::LIBUSB_SPEED_LOW   => Speed::Low,
+
+            _ => Speed::Unknown
         }
     }
 }
@@ -135,7 +136,7 @@ impl Device {
 
 
 #[doc(hidden)]
-pub fn from_libusb(device: &::ffi::libusb_device_descriptor, configs: Vec<Configuration>, bus: u8, address: u8, speed: c_int) -> Device {
+pub fn from_libusb(device: &::libusb::libusb_device_descriptor, configs: Vec<Configuration>, bus: u8, address: u8, speed: c_int) -> Device {
     Device {
         bus_number:       bus,
         address:          address,
@@ -181,11 +182,11 @@ mod test {
 
     #[test]
     fn it_has_speed() {
-        assert_eq!(Speed::Super,   ::device::from_libusb(&device_descriptor!(bDeviceClass: 0), vec![], 0, 0, ::ffi::LIBUSB_SPEED_SUPER).speed());
-        assert_eq!(Speed::High,    ::device::from_libusb(&device_descriptor!(bDeviceClass: 0), vec![], 0, 0, ::ffi::LIBUSB_SPEED_HIGH).speed());
-        assert_eq!(Speed::Full,    ::device::from_libusb(&device_descriptor!(bDeviceClass: 0), vec![], 0, 0, ::ffi::LIBUSB_SPEED_FULL).speed());
-        assert_eq!(Speed::Low,     ::device::from_libusb(&device_descriptor!(bDeviceClass: 0), vec![], 0, 0, ::ffi::LIBUSB_SPEED_LOW).speed());
-        assert_eq!(Speed::Unknown, ::device::from_libusb(&device_descriptor!(bDeviceClass: 0), vec![], 0, 0, ::ffi::LIBUSB_SPEED_UNKNOWN).speed());
+        assert_eq!(Speed::Super,   ::device::from_libusb(&device_descriptor!(bDeviceClass: 0), vec![], 0, 0, ::libusb::LIBUSB_SPEED_SUPER).speed());
+        assert_eq!(Speed::High,    ::device::from_libusb(&device_descriptor!(bDeviceClass: 0), vec![], 0, 0, ::libusb::LIBUSB_SPEED_HIGH).speed());
+        assert_eq!(Speed::Full,    ::device::from_libusb(&device_descriptor!(bDeviceClass: 0), vec![], 0, 0, ::libusb::LIBUSB_SPEED_FULL).speed());
+        assert_eq!(Speed::Low,     ::device::from_libusb(&device_descriptor!(bDeviceClass: 0), vec![], 0, 0, ::libusb::LIBUSB_SPEED_LOW).speed());
+        assert_eq!(Speed::Unknown, ::device::from_libusb(&device_descriptor!(bDeviceClass: 0), vec![], 0, 0, ::libusb::LIBUSB_SPEED_UNKNOWN).speed());
         assert_eq!(Speed::Unknown, ::device::from_libusb(&device_descriptor!(bDeviceClass: 0), vec![], 0, 0, 42).speed());
     }
 

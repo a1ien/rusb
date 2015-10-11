@@ -68,7 +68,7 @@ impl InterfaceSetting {
 
 
 #[doc(hidden)]
-pub fn from_libusb(interface: &::ffi::libusb_interface) -> Interface {
+pub fn from_libusb(interface: &::libusb::libusb_interface) -> Interface {
     let settings = unsafe { slice::from_raw_parts(interface.altsetting, interface.num_altsetting as usize) };
     debug_assert!(settings.len() > 0);
 

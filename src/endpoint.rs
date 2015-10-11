@@ -73,19 +73,19 @@ impl Endpoint {
 
     /// Returns the endpoint's direction.
     pub fn direction(&self) -> Direction {
-        match self.address & ::ffi::LIBUSB_ENDPOINT_DIR_MASK {
-            ::ffi::LIBUSB_ENDPOINT_OUT    => Direction::Out,
-            ::ffi::LIBUSB_ENDPOINT_IN | _ => Direction::In
+        match self.address & ::libusb::LIBUSB_ENDPOINT_DIR_MASK {
+            ::libusb::LIBUSB_ENDPOINT_OUT    => Direction::Out,
+            ::libusb::LIBUSB_ENDPOINT_IN | _ => Direction::In
         }
     }
 
     /// Returns the endpoint's transfer type.
     pub fn transfer_type(&self) -> TransferType {
-        match self.attributes & ::ffi::LIBUSB_TRANSFER_TYPE_MASK {
-            ::ffi::LIBUSB_TRANSFER_TYPE_CONTROL       => TransferType::Control,
-            ::ffi::LIBUSB_TRANSFER_TYPE_ISOCHRONOUS   => TransferType::Isochronous,
-            ::ffi::LIBUSB_TRANSFER_TYPE_BULK          => TransferType::Bulk,
-            ::ffi::LIBUSB_TRANSFER_TYPE_INTERRUPT | _ => TransferType::Interrupt
+        match self.attributes & ::libusb::LIBUSB_TRANSFER_TYPE_MASK {
+            ::libusb::LIBUSB_TRANSFER_TYPE_CONTROL       => TransferType::Control,
+            ::libusb::LIBUSB_TRANSFER_TYPE_ISOCHRONOUS   => TransferType::Isochronous,
+            ::libusb::LIBUSB_TRANSFER_TYPE_BULK          => TransferType::Bulk,
+            ::libusb::LIBUSB_TRANSFER_TYPE_INTERRUPT | _ => TransferType::Interrupt
         }
     }
 
@@ -93,11 +93,11 @@ impl Endpoint {
     ///
     /// The return value of this method is only valid for isochronous endpoints.
     pub fn sync_type(&self) -> SyncType {
-        match (self.attributes & ::ffi::LIBUSB_ISO_SYNC_TYPE_MASK) >> 2 {
-            ::ffi::LIBUSB_ISO_SYNC_TYPE_NONE     => SyncType::NoSync,
-            ::ffi::LIBUSB_ISO_SYNC_TYPE_ASYNC    => SyncType::Asynchronous,
-            ::ffi::LIBUSB_ISO_SYNC_TYPE_ADAPTIVE => SyncType::Adaptive,
-            ::ffi::LIBUSB_ISO_SYNC_TYPE_SYNC | _ => SyncType::Synchronous
+        match (self.attributes & ::libusb::LIBUSB_ISO_SYNC_TYPE_MASK) >> 2 {
+            ::libusb::LIBUSB_ISO_SYNC_TYPE_NONE     => SyncType::NoSync,
+            ::libusb::LIBUSB_ISO_SYNC_TYPE_ASYNC    => SyncType::Asynchronous,
+            ::libusb::LIBUSB_ISO_SYNC_TYPE_ADAPTIVE => SyncType::Adaptive,
+            ::libusb::LIBUSB_ISO_SYNC_TYPE_SYNC | _ => SyncType::Synchronous
         }
     }
 
@@ -105,11 +105,11 @@ impl Endpoint {
     ///
     /// The return value of this method is only valid for isochronous endpoints.
     pub fn usage_type(&self) -> UsageType {
-        match (self.attributes & ::ffi::LIBUSB_ISO_USAGE_TYPE_MASK) >> 4 {
-            ::ffi::LIBUSB_ISO_USAGE_TYPE_DATA     => UsageType::Data,
-            ::ffi::LIBUSB_ISO_USAGE_TYPE_FEEDBACK => UsageType::Feedback,
-            ::ffi::LIBUSB_ISO_USAGE_TYPE_IMPLICIT => UsageType::FeedbackData,
-            _                                     => UsageType::Reserved
+        match (self.attributes & ::libusb::LIBUSB_ISO_USAGE_TYPE_MASK) >> 4 {
+            ::libusb::LIBUSB_ISO_USAGE_TYPE_DATA     => UsageType::Data,
+            ::libusb::LIBUSB_ISO_USAGE_TYPE_FEEDBACK => UsageType::Feedback,
+            ::libusb::LIBUSB_ISO_USAGE_TYPE_IMPLICIT => UsageType::FeedbackData,
+            _                                        => UsageType::Reserved
         }
     }
 
@@ -126,7 +126,7 @@ impl Endpoint {
 
 
 #[doc(hidden)]
-pub fn from_libusb(endpoint: &::ffi::libusb_endpoint_descriptor) -> Endpoint {
+pub fn from_libusb(endpoint: &::libusb::libusb_endpoint_descriptor) -> Endpoint {
     Endpoint {
         address:         endpoint.bEndpointAddress,
         attributes:      endpoint.bmAttributes,

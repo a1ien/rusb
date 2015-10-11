@@ -47,7 +47,7 @@ impl Configuration {
 
 
 #[doc(hidden)]
-pub fn from_libusb(configuration: &::ffi::libusb_config_descriptor) -> Configuration {
+pub fn from_libusb(configuration: &::libusb::libusb_config_descriptor) -> Configuration {
     let interfaces = unsafe { slice::from_raw_parts(configuration.interface, configuration.bNumInterfaces as usize) };
 
     Configuration {

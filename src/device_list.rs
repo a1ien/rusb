@@ -7,7 +7,7 @@ use ::device_ref::DeviceRef;
 /// A list of detected USB devices.
 pub struct DeviceList<'a> {
     _context: &'a Context,
-    list: *const *mut ::ffi::libusb_device,
+    list: *const *mut ::libusb::libusb_device,
     len: usize
 }
 
@@ -15,7 +15,7 @@ impl<'a> Drop for DeviceList<'a> {
     /// Frees the device list.
     fn drop(&mut self) {
         unsafe {
-            ::ffi::libusb_free_device_list(self.list, 1);
+            ::libusb::libusb_free_device_list(self.list, 1);
         }
     }
 }
@@ -42,7 +42,7 @@ impl<'a> DeviceList<'a> {
 /// Iterates over detected USB devices.
 pub struct Iter<'a, 'b> {
     _context: &'a Context,
-    devices: &'b [*mut ::ffi::libusb_device],
+    devices: &'b [*mut ::libusb::libusb_device],
     index: usize
 }
 
@@ -69,7 +69,7 @@ impl<'a, 'b> Iterator for Iter<'a, 'b> {
 
 
 #[doc(hidden)]
-pub fn from_libusb<'a>(context: &'a Context, list: *const *mut ::ffi::libusb_device, len: usize,) -> DeviceList<'a> {
+pub fn from_libusb<'a>(context: &'a Context, list: *const *mut ::libusb::libusb_device, len: usize,) -> DeviceList<'a> {
     DeviceList {
         _context: context,
         list: list,

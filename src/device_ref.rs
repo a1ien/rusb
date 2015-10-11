@@ -9,14 +9,14 @@ use ::configuration::Configuration;
 /// A reference to a USB device.
 pub struct DeviceRef<'a> {
     _context: &'a Context,
-    device: *mut ::ffi::libusb_device
+    device: *mut ::libusb::libusb_device
 }
 
 impl<'a> Drop for DeviceRef<'a> {
     /// Releases the device reference.
     fn drop(&mut self) {
         unsafe {
-            ::ffi::libusb_unref_device(self.device);
+            ::libusb::libusb_unref_device(self.device);
         }
     }
 }
@@ -24,22 +24,22 @@ impl<'a> Drop for DeviceRef<'a> {
 impl<'a> DeviceRef<'a> {
     /// Reads information about the device.
     pub fn read_device(&mut self) -> ::Result<Device> {
-        let mut descriptor: ::ffi::libusb_device_descriptor = unsafe { mem::uninitialized() };
+        let mut descriptor: ::libusb::libusb_device_descriptor = unsafe { mem::uninitialized() };
 
         // since libusb 1.0.16, this function always succeeds
-        try_unsafe!(::ffi::libusb_get_device_descriptor(self.device, &mut descriptor));
+        try_unsafe!(::libusb::libusb_get_device_descriptor(self.device, &mut descriptor));
 
         let mut configurations = Vec::<Configuration>::with_capacity(descriptor.bNumConfigurations as usize);
 
         for i in (0..descriptor.bNumConfigurations) {
-            let mut ptr: *const ::ffi::libusb_config_descriptor = unsafe { mem::uninitialized() };
+            let mut ptr: *const ::libusb::libusb_config_descriptor = unsafe { mem::uninitialized() };
 
-            try_unsafe!(::ffi::libusb_get_config_descriptor(self.device, i, &mut ptr));
+            try_unsafe!(::libusb::libusb_get_config_descriptor(self.device, i, &mut ptr));
 
             configurations.push(::configuration::from_libusb(unsafe { mem::transmute(ptr) }));
 
             unsafe {
-                ::ffi::libusb_free_config_descriptor(ptr);
+                ::libusb::libusb_free_config_descriptor(ptr);
             }
         }
 
@@ -47,26 +47,26 @@ impl<'a> DeviceRef<'a> {
             ::device::from_libusb(
                 &descriptor,
                 configurations,
-                unsafe { ::ffi::libusb_get_bus_number(self.device) },
-                unsafe { ::ffi::libusb_get_device_address(self.device) },
-                unsafe { ::ffi::libusb_get_device_speed(self.device) }
+                unsafe { ::libusb::libusb_get_bus_number(self.device) },
+                unsafe { ::libusb::libusb_get_device_address(self.device) },
+                unsafe { ::libusb::libusb_get_device_speed(self.device) }
             )
         )
     }
 
     /// Opens the device.
     pub fn open(&mut self) -> ::Result<DeviceHandle<'a>> {
-        let mut handle: *mut ::ffi::libusb_device_handle = unsafe { mem::uninitialized() };
+        let mut handle: *mut ::libusb::libusb_device_handle = unsafe { mem::uninitialized() };
 
-        try_unsafe!(::ffi::libusb_open(self.device, &mut handle));
+        try_unsafe!(::libusb::libusb_open(self.device, &mut handle));
 
         Ok(::device_handle::from_libusb(self._context, handle))
     }
 }
 
 #[doc(hidden)]
-pub fn from_libusb<'a>(context: &'a Context, device: *mut ::ffi::libusb_device) -> DeviceRef<'a> {
-    unsafe { ::ffi::libusb_ref_device(device) };
+pub fn from_libusb<'a>(context: &'a Context, device: *mut ::libusb::libusb_device) -> DeviceRef<'a> {
+    unsafe { ::libusb::libusb_ref_device(device) };
 
     DeviceRef {
         _context: context,

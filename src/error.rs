@@ -93,20 +93,20 @@ impl StdError for Error {
 #[doc(hidden)]
 pub fn from_libusb(err: c_int) -> Error {
     match err {
-        ::ffi::LIBUSB_SUCCESS             => Error::Success,
-        ::ffi::LIBUSB_ERROR_IO            => Error::Io,
-        ::ffi::LIBUSB_ERROR_INVALID_PARAM => Error::InvalidParam,
-        ::ffi::LIBUSB_ERROR_ACCESS        => Error::Access,
-        ::ffi::LIBUSB_ERROR_NO_DEVICE     => Error::NoDevice,
-        ::ffi::LIBUSB_ERROR_NOT_FOUND     => Error::NotFound,
-        ::ffi::LIBUSB_ERROR_BUSY          => Error::Busy,
-        ::ffi::LIBUSB_ERROR_TIMEOUT       => Error::Timeout,
-        ::ffi::LIBUSB_ERROR_OVERFLOW      => Error::Overflow,
-        ::ffi::LIBUSB_ERROR_PIPE          => Error::Pipe,
-        ::ffi::LIBUSB_ERROR_INTERRUPTED   => Error::Interrupted,
-        ::ffi::LIBUSB_ERROR_NO_MEM        => Error::NoMem,
-        ::ffi::LIBUSB_ERROR_NOT_SUPPORTED => Error::NotSupported,
-        ::ffi::LIBUSB_ERROR_OTHER | _     => Error::Other
+        ::libusb::LIBUSB_SUCCESS             => Error::Success,
+        ::libusb::LIBUSB_ERROR_IO            => Error::Io,
+        ::libusb::LIBUSB_ERROR_INVALID_PARAM => Error::InvalidParam,
+        ::libusb::LIBUSB_ERROR_ACCESS        => Error::Access,
+        ::libusb::LIBUSB_ERROR_NO_DEVICE     => Error::NoDevice,
+        ::libusb::LIBUSB_ERROR_NOT_FOUND     => Error::NotFound,
+        ::libusb::LIBUSB_ERROR_BUSY          => Error::Busy,
+        ::libusb::LIBUSB_ERROR_TIMEOUT       => Error::Timeout,
+        ::libusb::LIBUSB_ERROR_OVERFLOW      => Error::Overflow,
+        ::libusb::LIBUSB_ERROR_PIPE          => Error::Pipe,
+        ::libusb::LIBUSB_ERROR_INTERRUPTED   => Error::Interrupted,
+        ::libusb::LIBUSB_ERROR_NO_MEM        => Error::NoMem,
+        ::libusb::LIBUSB_ERROR_NOT_SUPPORTED => Error::NotSupported,
+        ::libusb::LIBUSB_ERROR_OTHER | _     => Error::Other
     }
 }
 

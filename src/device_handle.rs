@@ -15,14 +15,14 @@ use ::language::Language;
 /// A handle to an open USB device.
 pub struct DeviceHandle<'a> {
     _context: &'a Context,
-    handle: *mut ::ffi::libusb_device_handle
+    handle: *mut ::libusb::libusb_device_handle
 }
 
 impl<'a> Drop for DeviceHandle<'a> {
     /// Closes the device.
     fn drop(&mut self) {
         unsafe {
-            ::ffi::libusb_close(self.handle);
+            ::libusb::libusb_close(self.handle);
         }
     }
 }
@@ -32,25 +32,25 @@ impl<'a> DeviceHandle<'a> {
     pub fn active_configuration(&mut self) -> ::Result<u8> {
         let mut config = unsafe { mem::uninitialized() };
 
-        try_unsafe!(::ffi::libusb_get_configuration(self.handle, &mut config));
+        try_unsafe!(::libusb::libusb_get_configuration(self.handle, &mut config));
         Ok(config as u8)
     }
 
     /// Sets the device's active configuration.
     pub fn set_active_configuration(&mut self, config: u8) -> ::Result<()> {
-        try_unsafe!(::ffi::libusb_set_configuration(self.handle, config as c_int));
+        try_unsafe!(::libusb::libusb_set_configuration(self.handle, config as c_int));
         Ok(())
     }
 
     /// Puts the device in an unconfigured state.
     pub fn unconfigure(&mut self) -> ::Result<()> {
-        try_unsafe!(::ffi::libusb_set_configuration(self.handle, -1));
+        try_unsafe!(::libusb::libusb_set_configuration(self.handle, -1));
         Ok(())
     }
 
     /// Resets the device.
     pub fn reset(&mut self) -> ::Result<()> {
-        try_unsafe!(::ffi::libusb_reset_device(self.handle));
+        try_unsafe!(::libusb::libusb_reset_device(self.handle));
         Ok(())
     }
 
@@ -58,7 +58,7 @@ impl<'a> DeviceHandle<'a> {
     ///
     /// This method is not supported on all platforms.
     pub fn kernel_driver_active(&mut self, iface: u8) -> ::Result<bool> {
-        match unsafe { ::ffi::libusb_kernel_driver_active(self.handle, iface as c_int) } {
+        match unsafe { ::libusb::libusb_kernel_driver_active(self.handle, iface as c_int) } {
             0 => Ok(false),
             1 => Ok(true),
             err => Err(::error::from_libusb(err))
@@ -69,7 +69,7 @@ impl<'a> DeviceHandle<'a> {
     ///
     /// This method is not supported on all platforms.
     pub fn detach_kernel_driver(&mut self, iface: u8) -> ::Result<()> {
-        try_unsafe!(::ffi::libusb_detach_kernel_driver(self.handle, iface as c_int));
+        try_unsafe!(::libusb::libusb_detach_kernel_driver(self.handle, iface as c_int));
         Ok(())
     }
 
@@ -77,7 +77,7 @@ impl<'a> DeviceHandle<'a> {
     ///
     /// This method is not supported on all platforms.
     pub fn attach_kernel_driver(&mut self, iface: u8) -> ::Result<()> {
-        try_unsafe!(::ffi::libusb_attach_kernel_driver(self.handle, iface as c_int));
+        try_unsafe!(::libusb::libusb_attach_kernel_driver(self.handle, iface as c_int));
         Ok(())
     }
 
@@ -85,7 +85,7 @@ impl<'a> DeviceHandle<'a> {
     ///
     /// An interface must be claimed before operating on it.
     pub fn claim_interface<'b>(&'b mut self, iface: u8) -> ::Result<InterfaceHandle<'b>> {
-        try_unsafe!(::ffi::libusb_claim_interface(self.handle, iface as c_int));
+        try_unsafe!(::libusb::libusb_claim_interface(self.handle, iface as c_int));
         Ok(::interface_handle::from_libusb(&self.handle, iface as c_int))
     }
 
@@ -96,7 +96,7 @@ impl<'a> DeviceHandle<'a> {
         let timeout_ms = timeout.num_milliseconds() as c_uint;
 
         let res = unsafe {
-            ::ffi::libusb_control_transfer(self.handle, request_type.to_u8(), request, value, index, buf, len, timeout_ms)
+            ::libusb::libusb_control_transfer(self.handle, request_type.to_u8(), request, value, index, buf, len, timeout_ms)
         };
 
         if res < 0 {
@@ -118,7 +118,7 @@ impl<'a> DeviceHandle<'a> {
             slice::from_raw_parts_mut((&mut buf[..]).as_mut_ptr(), buf.capacity())
         };
 
-        let len = try!(self.control_transfer(request, ::ffi::LIBUSB_REQUEST_GET_DESCRIPTOR, (::ffi::LIBUSB_DT_STRING as u16) << 8, 0, buf_slice, timeout));
+        let len = try!(self.control_transfer(request, ::libusb::LIBUSB_REQUEST_GET_DESCRIPTOR, (::libusb::LIBUSB_DT_STRING as u16) << 8, 0, buf_slice, timeout));
 
         unsafe {
             buf.set_len(len);
@@ -141,7 +141,7 @@ impl<'a> DeviceHandle<'a> {
             slice::from_raw_parts_mut((&mut buf[..]).as_mut_ptr(), buf.capacity())
         };
 
-        let len = try!(self.control_transfer(request, ::ffi::LIBUSB_REQUEST_GET_DESCRIPTOR, (::ffi::LIBUSB_DT_STRING as u16) << 8 | index as u16, language.lang_id(), buf_slice, timeout));
+        let len = try!(self.control_transfer(request, ::libusb::LIBUSB_REQUEST_GET_DESCRIPTOR, (::libusb::LIBUSB_DT_STRING as u16) << 8 | index as u16, language.lang_id(), buf_slice, timeout));
 
         unsafe {
             buf.set_len(len);
@@ -196,7 +196,7 @@ impl<'a> DeviceHandle<'a> {
 }
 
 #[doc(hidden)]
-pub fn from_libusb<'a>(context: &'a Context, handle: *mut ::ffi::libusb_device_handle) -> DeviceHandle<'a> {
+pub fn from_libusb<'a>(context: &'a Context, handle: *mut ::libusb::libusb_device_handle) -> DeviceHandle<'a> {
     DeviceHandle {
         _context: context,
         handle: handle

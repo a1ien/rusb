@@ -62,20 +62,20 @@ impl ControlRequest {
     /// Returns the ControlRequest as a `bmRequestType` field.
     pub fn to_u8(&self) -> u8 {
         let a: u8 = match self.direction {
-            Direction::Out      => ::ffi::LIBUSB_ENDPOINT_OUT,
-            Direction::In       => ::ffi::LIBUSB_ENDPOINT_IN
+            Direction::Out      => ::libusb::LIBUSB_ENDPOINT_OUT,
+            Direction::In       => ::libusb::LIBUSB_ENDPOINT_IN
         };
         let b: u8 = match self.request_type {
-            RequestType::Standard      => ::ffi::LIBUSB_REQUEST_TYPE_STANDARD,
-            RequestType::Class         => ::ffi::LIBUSB_REQUEST_TYPE_CLASS,
-            RequestType::Vendor        => ::ffi::LIBUSB_REQUEST_TYPE_VENDOR,
-            RequestType::Reserved      => ::ffi::LIBUSB_REQUEST_TYPE_RESERVED
+            RequestType::Standard      => ::libusb::LIBUSB_REQUEST_TYPE_STANDARD,
+            RequestType::Class         => ::libusb::LIBUSB_REQUEST_TYPE_CLASS,
+            RequestType::Vendor        => ::libusb::LIBUSB_REQUEST_TYPE_VENDOR,
+            RequestType::Reserved      => ::libusb::LIBUSB_REQUEST_TYPE_RESERVED
         };
         let c: u8 = match self.recipient {
-            Recipient::Device     => ::ffi::LIBUSB_RECIPIENT_DEVICE,
-            Recipient::Interface  => ::ffi::LIBUSB_RECIPIENT_INTERFACE,
-            Recipient::Endpoint   => ::ffi::LIBUSB_RECIPIENT_ENDPOINT,
-            Recipient::Other      => ::ffi::LIBUSB_RECIPIENT_OTHER
+            Recipient::Device     => ::libusb::LIBUSB_RECIPIENT_DEVICE,
+            Recipient::Interface  => ::libusb::LIBUSB_RECIPIENT_INTERFACE,
+            Recipient::Endpoint   => ::libusb::LIBUSB_RECIPIENT_ENDPOINT,
+            Recipient::Other      => ::libusb::LIBUSB_RECIPIENT_OTHER
         };
         a | b | c
     }

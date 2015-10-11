@@ -48,7 +48,7 @@ impl LibraryVersion {
 
 /// Returns a structure with the version of the running libusb library.
 pub fn version() -> LibraryVersion {
-    let v = unsafe { ::ffi::libusb_get_version() };
+    let v = unsafe { ::libusb::libusb_get_version() };
 
     LibraryVersion {
         major: v.major,

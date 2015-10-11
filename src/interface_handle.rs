@@ -5,7 +5,7 @@ use time::Duration;
 
 /// A handle to a claimed USB device interface.
 pub struct InterfaceHandle<'a> {
-    handle: &'a *mut ::ffi::libusb_device_handle,
+    handle: &'a *mut ::libusb::libusb_device_handle,
     iface: c_int
 }
 
@@ -13,7 +13,7 @@ impl<'a> Drop for InterfaceHandle<'a> {
     /// Releases the interface.
     fn drop(&mut self) {
         unsafe {
-            ::ffi::libusb_release_interface(*self.handle, self.iface);
+            ::libusb::libusb_release_interface(*self.handle, self.iface);
         }
     }
 }
@@ -21,7 +21,7 @@ impl<'a> Drop for InterfaceHandle<'a> {
 impl<'a> InterfaceHandle<'a> {
     /// Sets the interfaces active setting.
     pub fn set_alternate_setting(&mut self, setting: u8) -> ::Result<()> {
-        try_unsafe!(::ffi::libusb_set_interface_alt_setting(*self.handle, self.iface, setting as c_int));
+        try_unsafe!(::libusb::libusb_set_interface_alt_setting(*self.handle, self.iface, setting as c_int));
         Ok(())
     }
 
@@ -33,7 +33,7 @@ impl<'a> InterfaceHandle<'a> {
         let len = data.len() as c_int;
         let timeout_ms = timeout.num_milliseconds() as c_uint;
 
-        try_unsafe!(::ffi::libusb_interrupt_transfer(*self.handle, endpoint, buf, len, &mut transferred, timeout_ms));
+        try_unsafe!(::libusb::libusb_interrupt_transfer(*self.handle, endpoint, buf, len, &mut transferred, timeout_ms));
         Ok(transferred as usize)
     }
 
@@ -45,13 +45,13 @@ impl<'a> InterfaceHandle<'a> {
         let len = data.len() as c_int;
         let timeout_ms = timeout.num_milliseconds() as c_uint;
 
-        try_unsafe!(::ffi::libusb_bulk_transfer(*self.handle, endpoint, buf, len, &mut transferred, timeout_ms));
+        try_unsafe!(::libusb::libusb_bulk_transfer(*self.handle, endpoint, buf, len, &mut transferred, timeout_ms));
         Ok(transferred as usize)
     }
 }
 
 #[doc(hidden)]
-pub fn from_libusb<'a>(handle: &'a *mut ::ffi::libusb_device_handle, iface: c_int) -> InterfaceHandle<'a> {
+pub fn from_libusb<'a>(handle: &'a *mut ::libusb::libusb_device_handle, iface: c_int) -> InterfaceHandle<'a> {
     InterfaceHandle {
         handle: handle,
         iface: iface
