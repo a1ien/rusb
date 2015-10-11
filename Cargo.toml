@@ -1,9 +1,9 @@
 [package]
 
 name = "libusb-sys"
-version = "0.1.1"
+version = "0.2.0"
 authors = ["David Cuddeback <david.cuddeback@gmail.com>"]
-description = "Rust bindings for libusb 1.0."
+description = "FFI bindings for libusb."
 license = "MIT"
 homepage = "https://github.com/dcuddeback/libusb-sys"
 repository = "https://github.com/dcuddeback/libusb-sys.git"
