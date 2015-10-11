@@ -247,20 +247,20 @@ extern "C" {
   pub fn libusb_has_capability(capability: u32) -> c_int;
 
   pub fn libusb_init(context: *mut *mut libusb_context) -> c_int;
-  pub fn libusb_exit(context: *mut libusb_context) -> c_void;
-  pub fn libusb_set_debug(context: *mut libusb_context, level: c_int) -> c_void;
+  pub fn libusb_exit(context: *mut libusb_context);
+  pub fn libusb_set_debug(context: *mut libusb_context, level: c_int);
 
   pub fn libusb_get_device_list(context: *mut libusb_context, list: *mut *const *mut libusb_device) -> ssize_t;
-  pub fn libusb_free_device_list(list: *const *mut libusb_device, unref_devices: c_int) -> c_void;
+  pub fn libusb_free_device_list(list: *const *mut libusb_device, unref_devices: c_int);
   pub fn libusb_get_parent(dev: *mut libusb_device) -> *mut libusb_device;
   pub fn libusb_get_device(dev_handle: *mut libusb_device_handle) -> *mut libusb_device;
 
   pub fn libusb_ref_device(dev: *mut libusb_device) -> *mut libusb_device;
-  pub fn libusb_unref_device(dev: *mut libusb_device) -> c_void;
+  pub fn libusb_unref_device(dev: *mut libusb_device);
 
   pub fn libusb_get_device_descriptor(dev: *const libusb_device, desc: *mut libusb_device_descriptor) -> c_int;
   pub fn libusb_get_config_descriptor(dev: *const libusb_device, index: u8, config: *mut *const libusb_config_descriptor) -> c_int;
-  pub fn libusb_free_config_descriptor(config: *const libusb_config_descriptor) -> c_void;
+  pub fn libusb_free_config_descriptor(config: *const libusb_config_descriptor);
 
   pub fn libusb_get_bus_number(dev: *const libusb_device) -> u8;
   pub fn libusb_get_device_address(dev: *const libusb_device) -> u8;
@@ -269,7 +269,7 @@ extern "C" {
   pub fn libusb_get_max_iso_packet_size(dev: *const libusb_device, endpoint: c_uchar) -> c_int;
 
   pub fn libusb_open(dev: *const libusb_device, handle: *mut *mut libusb_device_handle) -> c_int;
-  pub fn libusb_close(dev_handle: *mut libusb_device_handle) -> c_void;
+  pub fn libusb_close(dev_handle: *mut libusb_device_handle);
   pub fn libusb_open_device_with_vid_pid(context: *mut libusb_context, vendor_id: u16, product_id: u16) -> *mut libusb_device_handle;
   pub fn libusb_reset_device(dev_handle: *mut libusb_device_handle) -> c_int;
   pub fn libusb_get_string_descriptor_ascii(dev_handle: *mut libusb_device_handle, desc_index: u8, data: *mut c_uchar, length: c_int) -> c_int;
