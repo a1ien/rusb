@@ -34,7 +34,7 @@ impl Language {
     }
 }
 
-// not exported outside of the crate
+#[doc(hidden)]
 pub fn from_lang_id(raw: u16) -> Language {
     Language { raw: raw }
 }

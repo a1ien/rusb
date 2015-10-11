@@ -26,8 +26,9 @@ pub use ::language::{Language,PrimaryLanguage,SubLanguage};
 #[macro_use]
 mod test_helpers;
 
-mod version;
+#[macro_use]
 mod error;
+mod version;
 
 mod context;
 mod device_list;
