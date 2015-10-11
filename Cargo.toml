@@ -13,7 +13,6 @@ keywords = ["usb", "libusb", "hardware", "bindings"]
 [dependencies]
 libusb-sys = "0.1.1"
 libc = "0.1.5"
-time = "0.1.25"
 
 [dev-dependencies]
 regex = "0.1.26"

@@ -1,10 +1,8 @@
 extern crate libusb;
-extern crate time;
 
 use std::slice;
 use std::str::FromStr;
-
-use time::Duration;
+use std::time::Duration;
 
 #[derive(Debug)]
 struct Endpoint {
@@ -62,7 +60,7 @@ fn open_device(context: &mut libusb::Context, vid: u16, pid: u16) -> Option<(lib
 fn read_device(device: &libusb::Device, handle: &mut libusb::DeviceHandle) -> libusb::Result<()> {
     try!(handle.reset());
 
-    let timeout = Duration::seconds(1);
+    let timeout = Duration::from_secs(1);
     let languages = try!(handle.read_languages(timeout));
 
     println!("Active configuration: {}", try!(handle.active_configuration()));
@@ -128,7 +126,7 @@ fn read_endpoint(handle: &mut libusb::DeviceHandle, endpoint: Endpoint, transfer
             let mut vec = Vec::<u8>::with_capacity(256);
             let mut buf = unsafe { slice::from_raw_parts_mut((&mut vec[..]).as_mut_ptr(), vec.capacity()) };
 
-            let timeout = Duration::milliseconds(1000);
+            let timeout = Duration::from_secs(1);
 
             match transfer_type {
                 libusb::TransferType::Interrupt => {

@@ -2,7 +2,6 @@
 
 extern crate libusb_sys as libusb;
 extern crate libc;
-extern crate time;
 
 pub use ::version::{LibraryVersion,version};
 pub use ::error::{Result,Error};

@@ -1,7 +1,6 @@
 extern crate libusb;
-extern crate time;
 
-use time::Duration;
+use std::time::Duration;
 
 struct UsbDevice<'a> {
     handle: libusb::DeviceHandle<'a>,
@@ -15,7 +14,7 @@ fn main() {
 }
 
 fn list_devices() -> libusb::Result<()> {
-    let timeout = Duration::seconds(1);
+    let timeout = Duration::from_secs(1);
 
     let mut context = try!(libusb::Context::new());
 

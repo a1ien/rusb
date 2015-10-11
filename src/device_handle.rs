@@ -1,8 +1,8 @@
 use std::mem;
 use std::slice;
+use std::time::Duration;
 
 use libc::{c_int,c_uint,c_uchar};
-use time::Duration;
 
 use ::context::Context;
 use ::interface_handle::InterfaceHandle;
@@ -93,7 +93,7 @@ impl<'a> DeviceHandle<'a> {
     pub fn control_transfer(&mut self, request_type: ControlRequest, request: u8, value: u16, index: u16, data: &mut [u8], timeout: Duration) -> ::Result<usize> {
         let buf = data.as_mut_ptr() as *mut c_uchar;
         let len = data.len() as u16;
-        let timeout_ms = timeout.num_milliseconds() as c_uint;
+        let timeout_ms = (timeout.as_secs() * 1000 + timeout.subsec_nanos() as u64 / 1_000_000) as c_uint;
 
         let res = unsafe {
             ::libusb::libusb_control_transfer(self.handle, request_type.to_u8(), request, value, index, buf, len, timeout_ms)

@@ -1,7 +1,7 @@
 use std::mem;
+use std::time::Duration;
 
 use libc::{c_int,c_uint,c_uchar};
-use time::Duration;
 
 /// A handle to a claimed USB device interface.
 pub struct InterfaceHandle<'a> {
@@ -31,7 +31,7 @@ impl<'a> InterfaceHandle<'a> {
 
         let buf = data.as_mut_ptr() as *mut c_uchar;
         let len = data.len() as c_int;
-        let timeout_ms = timeout.num_milliseconds() as c_uint;
+        let timeout_ms = (timeout.as_secs() * 1000 + timeout.subsec_nanos() as u64 / 1_000_000) as c_uint;
 
         try_unsafe!(::libusb::libusb_interrupt_transfer(*self.handle, endpoint, buf, len, &mut transferred, timeout_ms));
         Ok(transferred as usize)
@@ -43,7 +43,7 @@ impl<'a> InterfaceHandle<'a> {
 
         let buf = data.as_mut_ptr() as *mut c_uchar;
         let len = data.len() as c_int;
-        let timeout_ms = timeout.num_milliseconds() as c_uint;
+        let timeout_ms = (timeout.as_secs() * 1000 + timeout.subsec_nanos() as u64 / 1_000_000) as c_uint;
 
         try_unsafe!(::libusb::libusb_bulk_transfer(*self.handle, endpoint, buf, len, &mut transferred, timeout_ms));
         Ok(transferred as usize)
