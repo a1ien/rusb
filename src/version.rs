@@ -1,61 +1,73 @@
+use std::ffi::CStr;
+use std::fmt;
+use std::mem;
 use std::str;
 
-use std::ffi::CStr;
-
-
 /// A structure that describes the version of the underlying `libusb` library.
-#[derive(Debug)]
 pub struct LibraryVersion {
-    major: u16,
-    minor: u16,
-    micro: u16,
-    nano: u16,
-    rc: &'static str,
-    describe: &'static str
+    inner: &'static ::libusb::libusb_version,
 }
 
 impl LibraryVersion {
     /// Library major version.
     pub fn major(&self) -> u16 {
-        self.major
+        self.inner.major
     }
 
     /// Library minor version.
     pub fn minor(&self) -> u16 {
-        self.minor
+        self.inner.minor
     }
 
     /// Library micro version.
     pub fn micro(&self) -> u16 {
-        self.micro
+        self.inner.micro
     }
 
     /// Library nano version.
     pub fn nano(&self) -> u16 {
-        self.nano
+        self.inner.nano
     }
 
     /// Library release candidate suffix string, e.g., `"-rc4"`.
     pub fn rc(&self) -> Option<&'static str> {
-        if self.rc.len() > 0 {
-            Some(self.rc)
+        let cstr = unsafe { CStr::from_ptr(self.inner.rc) };
+
+        match str::from_utf8(cstr.to_bytes()) {
+            Ok(s) => {
+                if s.len() > 0 {
+                    Some(s)
+                }
+                else {
+                    None
+                }
+            },
+            Err(_) => {
+                None
+            }
         }
-        else {
-            None
-        }
+    }
+}
+
+impl fmt::Debug for LibraryVersion {
+    fn fmt(&self, fmt: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+        let mut debug = fmt.debug_struct("LibraryVersion");
+
+        debug.field("major", &self.major());
+        debug.field("minor", &self.minor());
+        debug.field("micro", &self.micro());
+        debug.field("nano", &self.nano());
+        debug.field("rc", &self.rc());
+
+        debug.finish()
     }
 }
 
 /// Returns a structure with the version of the running libusb library.
 pub fn version() -> LibraryVersion {
-    let v = unsafe { ::libusb::libusb_get_version() };
+    let version: &'static ::libusb::libusb_version = unsafe {
+        mem::transmute(::libusb::libusb_get_version())
+    };
 
-    LibraryVersion {
-        major: v.major,
-        minor: v.minor,
-        micro: v.micro,
-        nano: v.nano,
-        rc: str::from_utf8(unsafe { CStr::from_ptr(v.rc) }.to_bytes()).unwrap_or(""),
-        describe: str::from_utf8(unsafe { CStr::from_ptr(v.describe) }.to_bytes()).unwrap_or("")
-    }
+    LibraryVersion { inner: version }
 }
