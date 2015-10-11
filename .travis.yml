@@ -1,3 +1,5 @@
+sudo: false
+
 language: rust
 rust:
   - 1.3.0
@@ -5,13 +7,24 @@ rust:
   - beta
   - nightly
 
+matrix:
+  allow_failures:
+    - rust: nightly
+
+addons:
+  apt:
+    packages:
+      - build-essential
+      - libudev-dev
+
 before_install:
-  - sudo rm /etc/apt/sources.list.d/*.list
-  - sudo apt-get update -q
-  - sudo apt-get install -y build-essential libudev-dev
   - wget https://github.com/libusb/libusb/archive/v1.0.19.tar.gz -O libusb-1.0.19.tar.gz
   - tar -zxvf libusb-1.0.19.tar.gz
-  - cd libusb-1.0.19 && ./autogen.sh && ./configure --prefix=/usr && make && sudo make install
-  - pkg-config --list-all
-  - pkg-config --libs libusb-1.0
-  - pkg-config --modversion libusb-1.0
+  - cd libusb-1.0.19 && ./autogen.sh && ./configure --prefix=$HOME/local && make && make install
+  - PKG_CONFIG_PATH=$HOME/local/lib/pkgconfig pkg-config --list-all
+  - PKG_CONFIG_PATH=$HOME/local/lib/pkgconfig pkg-config --libs libusb-1.0
+  - PKG_CONFIG_PATH=$HOME/local/lib/pkgconfig pkg-config --modversion libusb-1.0
+
+script:
+  - PKG_CONFIG_PATH=$HOME/local/lib/pkgconfig LD_LIBRARY_PATH=$HOME/local/lib:$LD_LIBRARY_PATH cargo build --verbose
+  - PKG_CONFIG_PATH=$HOME/local/lib/pkgconfig LD_LIBRARY_PATH=$HOME/local/lib:$LD_LIBRARY_PATH cargo test --verbose
