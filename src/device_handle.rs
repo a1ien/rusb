@@ -3,10 +3,10 @@ use std::mem;
 use std::slice;
 use std::time::Duration;
 
+use bit_set::BitSet;
 use libc::{c_int,c_uint,c_uchar};
 
 use ::context::Context;
-use ::interface_handle::InterfaceHandle;
 use ::device::Device;
 use ::configuration::Configuration;
 use ::interface::InterfaceSetting;
@@ -17,12 +17,17 @@ use ::language::Language;
 pub struct DeviceHandle<'a> {
     _context: PhantomData<&'a Context>,
     handle: *mut ::libusb::libusb_device_handle,
+    interfaces: BitSet,
 }
 
 impl<'a> Drop for DeviceHandle<'a> {
     /// Closes the device.
     fn drop(&mut self) {
         unsafe {
+            for iface in self.interfaces.iter() {
+                ::libusb::libusb_release_interface(self.handle, iface as c_int);
+            }
+
             ::libusb::libusb_close(self.handle);
         }
     }
@@ -84,10 +89,49 @@ impl<'a> DeviceHandle<'a> {
 
     /// Claims one of the device's interfaces.
     ///
-    /// An interface must be claimed before operating on it.
-    pub fn claim_interface<'b>(&'b mut self, iface: u8) -> ::Result<InterfaceHandle<'b>> {
+    /// An interface must be claimed before operating on it. All claimed interfaces are released
+    /// when the device handle goes out of scope.
+    pub fn claim_interface(&mut self, iface: u8) -> ::Result<()> {
         try_unsafe!(::libusb::libusb_claim_interface(self.handle, iface as c_int));
-        Ok(::interface_handle::from_libusb(&self.handle, iface as c_int))
+        self.interfaces.insert(iface as usize);
+        Ok(())
+    }
+
+    /// Releases a claimed interface.
+    pub fn release_interface(&mut self, iface: u8) -> ::Result<()> {
+        try_unsafe!(::libusb::libusb_release_interface(self.handle, iface as c_int));
+        self.interfaces.remove(&(iface as usize));
+        Ok(())
+    }
+
+    /// Sets an interface's active setting.
+    pub fn set_alternate_setting(&mut self, iface: u8, setting: u8) -> ::Result<()> {
+        try_unsafe!(::libusb::libusb_set_interface_alt_setting(self.handle, iface as c_int, setting as c_int));
+        Ok(())
+    }
+
+    /// Performs an interrupt transfer on one of the device's endpoints.
+    pub fn interrupt_transfer(&mut self, endpoint: u8, data: &mut [u8], timeout: Duration) -> ::Result<usize> {
+        let mut transferred: c_int = unsafe { mem::uninitialized() };
+
+        let buf = data.as_mut_ptr() as *mut c_uchar;
+        let len = data.len() as c_int;
+        let timeout_ms = (timeout.as_secs() * 1000 + timeout.subsec_nanos() as u64 / 1_000_000) as c_uint;
+
+        try_unsafe!(::libusb::libusb_interrupt_transfer(self.handle, endpoint, buf, len, &mut transferred, timeout_ms));
+        Ok(transferred as usize)
+    }
+
+    /// Performs a bulk transfer on one of the device's endpoints.
+    pub fn bulk_transfer(&mut self, endpoint: u8, data: &mut [u8], timeout: Duration) -> ::Result<usize> {
+        let mut transferred: c_int = unsafe { mem::uninitialized() };
+
+        let buf = data.as_mut_ptr() as *mut c_uchar;
+        let len = data.len() as c_int;
+        let timeout_ms = (timeout.as_secs() * 1000 + timeout.subsec_nanos() as u64 / 1_000_000) as c_uint;
+
+        try_unsafe!(::libusb::libusb_bulk_transfer(self.handle, endpoint, buf, len, &mut transferred, timeout_ms));
+        Ok(transferred as usize)
     }
 
     /// Performs a control transfer on the device.
@@ -201,5 +245,6 @@ pub fn from_libusb<'a>(context: PhantomData<&'a Context>, handle: *mut ::libusb:
     DeviceHandle {
         _context: context,
         handle: handle,
+        interfaces: BitSet::with_capacity(u8::max_value() as usize + 1),
     }
 }

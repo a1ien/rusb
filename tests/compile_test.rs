@@ -142,8 +142,3 @@ fn it_should_not_compile_device_handle_that_outlives_context() {
 fn it_should_compile_device_handle_that_outlives_device_ref() {
   assert_compile_success!("device_handle_outlives_device_ref.rs");
 }
-
-#[test]
-fn it_should_not_compile_interface_handle_that_outlives_device_handle() {
-  assert_compile_fail!("interface_handle_outlives_device_handle.rs", ERR_LIFETIME, 9);
-}

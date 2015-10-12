@@ -122,7 +122,7 @@ fn read_endpoint(handle: &mut libusb::DeviceHandle, endpoint: Endpoint, transfer
     println!(" - kernel driver? {}", has_kernel_driver);
 
     match configure_endpoint(handle, &endpoint) {
-        Ok(mut iface) => {
+        Ok(_) => {
             let mut vec = Vec::<u8>::with_capacity(256);
             let mut buf = unsafe { slice::from_raw_parts_mut((&mut vec[..]).as_mut_ptr(), vec.capacity()) };
 
@@ -130,7 +130,7 @@ fn read_endpoint(handle: &mut libusb::DeviceHandle, endpoint: Endpoint, transfer
 
             match transfer_type {
                 libusb::TransferType::Interrupt => {
-                    match iface.interrupt_transfer(endpoint.address, buf, timeout) {
+                    match handle.interrupt_transfer(endpoint.address, buf, timeout) {
                         Ok(len) => {
                             unsafe { vec.set_len(len) };
                             println!(" - read: {:?}", vec);
@@ -139,7 +139,7 @@ fn read_endpoint(handle: &mut libusb::DeviceHandle, endpoint: Endpoint, transfer
                     }
                 },
                 libusb::TransferType::Bulk => {
-                    match iface.bulk_transfer(endpoint.address, buf, timeout) {
+                    match handle.bulk_transfer(endpoint.address, buf, timeout) {
                         Ok(len) => {
                             unsafe { vec.set_len(len) };
                             println!(" - read: {:?}", vec);
@@ -158,12 +158,9 @@ fn read_endpoint(handle: &mut libusb::DeviceHandle, endpoint: Endpoint, transfer
     }
 }
 
-fn configure_endpoint<'a>(handle: &'a mut libusb::DeviceHandle, endpoint: &Endpoint) -> libusb::Result<libusb::InterfaceHandle<'a>> {
+fn configure_endpoint<'a>(handle: &'a mut libusb::DeviceHandle, endpoint: &Endpoint) -> libusb::Result<()> {
     try!(handle.set_active_configuration(endpoint.config));
-
-    let mut iface = try!(handle.claim_interface(endpoint.iface));
-
-    try!(iface.set_alternate_setting(endpoint.setting));
-
-    Ok(iface)
+    try!(handle.claim_interface(endpoint.iface));
+    try!(handle.set_alternate_setting(endpoint.iface, endpoint.setting));
+    Ok(())
 }
