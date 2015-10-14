@@ -17,7 +17,7 @@ pub use ::device::{Device,Speed};
 pub use ::configuration::{Configuration};
 pub use ::interface::{Interface,InterfaceSetting};
 pub use ::endpoint::{Endpoint,TransferType,SyncType,UsageType};
-pub use ::request::{Direction,RequestType,Recipient,ControlRequest};
+pub use ::request::{Direction,RequestType,Recipient,request_type};
 pub use ::language::{Language,PrimaryLanguage,SubLanguage};
 
 

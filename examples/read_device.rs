@@ -130,7 +130,7 @@ fn read_endpoint(handle: &mut libusb::DeviceHandle, endpoint: Endpoint, transfer
 
             match transfer_type {
                 libusb::TransferType::Interrupt => {
-                    match handle.interrupt_transfer(endpoint.address, buf, timeout) {
+                    match handle.read_interrupt(endpoint.address, buf, timeout) {
                         Ok(len) => {
                             unsafe { vec.set_len(len) };
                             println!(" - read: {:?}", vec);
@@ -139,7 +139,7 @@ fn read_endpoint(handle: &mut libusb::DeviceHandle, endpoint: Endpoint, transfer
                     }
                 },
                 libusb::TransferType::Bulk => {
-                    match handle.bulk_transfer(endpoint.address, buf, timeout) {
+                    match handle.read_bulk(endpoint.address, buf, timeout) {
                         Ok(len) => {
                             unsafe { vec.set_len(len) };
                             println!(" - read: {:?}", vec);
