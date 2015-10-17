@@ -7,10 +7,10 @@ use bit_set::BitSet;
 use libc::{c_int,c_uint,c_uchar};
 
 use ::context::Context;
-use ::device::Device;
-use ::configuration::Configuration;
-use ::interface::InterfaceSetting;
-use ::request::{Direction,RequestType,Recipient,request_type};
+use ::device_descriptor::DeviceDescriptor;
+use ::config_descriptor::ConfigDescriptor;
+use ::interface_descriptor::InterfaceDescriptor;
+use ::fields::{Direction,RequestType,Recipient,request_type};
 use ::language::Language;
 
 /// A handle to an open USB device.
@@ -448,7 +448,7 @@ impl<'a> DeviceHandle<'a> {
     }
 
     /// Reads the device's manufacturer string descriptor.
-    pub fn read_manufacturer_string(&mut self, language: Language, device: &Device, timeout: Duration) -> ::Result<String> {
+    pub fn read_manufacturer_string(&mut self, language: Language, device: &DeviceDescriptor, timeout: Duration) -> ::Result<String> {
         match device.manufacturer_string_index() {
             None => Err(::Error::InvalidParam),
             Some(n) => self.read_string_descriptor(language, n, timeout)
@@ -456,7 +456,7 @@ impl<'a> DeviceHandle<'a> {
     }
 
     /// Reads the device's product string descriptor.
-    pub fn read_product_string(&mut self, language: Language, device: &Device, timeout: Duration) -> ::Result<String> {
+    pub fn read_product_string(&mut self, language: Language, device: &DeviceDescriptor, timeout: Duration) -> ::Result<String> {
         match device.product_string_index() {
             None => Err(::Error::InvalidParam),
             Some(n) => self.read_string_descriptor(language, n, timeout)
@@ -464,7 +464,7 @@ impl<'a> DeviceHandle<'a> {
     }
 
     /// Reads the device's serial number string descriptor.
-    pub fn read_serial_number_string(&mut self, language: Language, device: &Device, timeout: Duration) -> ::Result<String> {
+    pub fn read_serial_number_string(&mut self, language: Language, device: &DeviceDescriptor, timeout: Duration) -> ::Result<String> {
         match device.serial_number_string_index() {
             None => Err(::Error::InvalidParam),
             Some(n) => self.read_string_descriptor(language, n, timeout)
@@ -472,7 +472,7 @@ impl<'a> DeviceHandle<'a> {
     }
 
     /// Reads the string descriptor for a configuration's description.
-    pub fn read_configuration_string(&mut self, language: Language, configuration: &Configuration, timeout: Duration) -> ::Result<String> {
+    pub fn read_configuration_string(&mut self, language: Language, configuration: &ConfigDescriptor, timeout: Duration) -> ::Result<String> {
         match configuration.description_string_index() {
             None => Err(::Error::InvalidParam),
             Some(n) => self.read_string_descriptor(language, n, timeout)
@@ -480,7 +480,7 @@ impl<'a> DeviceHandle<'a> {
     }
 
     /// Reads the string descriptor for a interface's description.
-    pub fn read_interface_string(&mut self, language: Language, interface: &InterfaceSetting, timeout: Duration) -> ::Result<String> {
+    pub fn read_interface_string(&mut self, language: Language, interface: &InterfaceDescriptor, timeout: Duration) -> ::Result<String> {
         match interface.description_string_index() {
             None => Err(::Error::InvalidParam),
             Some(n) => self.read_string_descriptor(language, n, timeout)

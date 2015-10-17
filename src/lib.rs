@@ -9,15 +9,14 @@ pub use ::error::{Result,Error};
 
 pub use ::context::{Context,LogLevel};
 pub use ::device_list::{DeviceList};
-pub use ::device_ref::{DeviceRef};
+pub use ::device::{Device};
 pub use ::device_handle::DeviceHandle;
 
-pub use ::fields::{Version};
-pub use ::device::{Device,Speed};
-pub use ::configuration::{Configuration};
-pub use ::interface::{Interface,InterfaceSetting};
-pub use ::endpoint::{Endpoint,TransferType,SyncType,UsageType};
-pub use ::request::{Direction,RequestType,Recipient,request_type};
+pub use ::fields::{Speed,TransferType,SyncType,UsageType,Direction,RequestType,Recipient,Version,request_type};
+pub use ::device_descriptor::{DeviceDescriptor};
+pub use ::config_descriptor::{ConfigDescriptor,Interfaces};
+pub use ::interface_descriptor::{Interface,InterfaceDescriptors,InterfaceDescriptor,EndpointDescriptors};
+pub use ::endpoint_descriptor::{EndpointDescriptor};
 pub use ::language::{Language,PrimaryLanguage,SubLanguage};
 
 
@@ -31,13 +30,12 @@ mod version;
 
 mod context;
 mod device_list;
-mod device_ref;
+mod device;
 mod device_handle;
 
 mod fields;
-mod device;
-mod configuration;
-mod interface;
-mod endpoint;
-mod request;
+mod device_descriptor;
+mod config_descriptor;
+mod interface_descriptor;
+mod endpoint_descriptor;
 mod language;

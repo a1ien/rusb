@@ -104,7 +104,7 @@ macro_rules! config_descriptor {
                 extra:               $crate::test_helpers::ptr::null(),
                 extra_length:        0
             } => $($key: $value),*
-            )
+        )
     };
     ($($interface:expr),+) => {
         {
@@ -147,6 +147,6 @@ macro_rules! device_descriptor {
                 iSerialNumber:      0,
                 bNumConfigurations: 1
             } => $($key: $value),*
-            )
+        )
     }
 }

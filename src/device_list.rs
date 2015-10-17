@@ -2,7 +2,7 @@ use std::marker::PhantomData;
 use std::slice;
 
 use ::context::Context;
-use ::device_ref::DeviceRef;
+use ::device::Device;
 
 
 /// A list of detected USB devices.
@@ -29,7 +29,7 @@ impl<'a> DeviceList<'a> {
 
     /// Returns an iterator over the devices in the list.
     ///
-    /// The iterator yields a sequence of `DeviceRef` objects.
+    /// The iterator yields a sequence of `Device` objects.
     pub fn iter<'b>(&'b self) -> Iter<'a, 'b> {
         Iter {
             context: self.context,
@@ -48,14 +48,14 @@ pub struct Iter<'a, 'b> {
 }
 
 impl<'a, 'b> Iterator for Iter<'a, 'b> {
-    type Item = DeviceRef<'a>;
+    type Item = Device<'a>;
 
-    fn next(&mut self) -> Option<DeviceRef<'a>> {
+    fn next(&mut self) -> Option<Device<'a>> {
         if self.index < self.devices.len() {
             let device = self.devices[self.index];
 
             self.index += 1;
-            Some(::device_ref::from_libusb(self.context, device))
+            Some(::device::from_libusb(self.context, device))
         }
         else {
             None
