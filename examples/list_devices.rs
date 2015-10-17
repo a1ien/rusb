@@ -19,7 +19,7 @@ fn list_devices() -> libusb::Result<()> {
     let mut context = try!(libusb::Context::new());
 
     for mut device in try!(context.devices()).iter() {
-        let device_desc = match device.read_device_descriptor() {
+        let device_desc = match device.device_descriptor() {
             Ok(d) => d,
             Err(_) => continue
         };
@@ -51,7 +51,7 @@ fn list_devices() -> libusb::Result<()> {
         print_device(&device_desc, &mut usb_device);
 
         for n in (0..device_desc.num_configurations()) {
-            let config_desc = match device.read_config_descriptor(n) {
+            let config_desc = match device.config_descriptor(n) {
                 Ok(c) => c,
                 Err(_) => continue
             };

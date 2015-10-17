@@ -25,7 +25,7 @@ impl<'a> Drop for Device<'a> {
 
 impl<'a> Device<'a> {
     /// Reads the device descriptor.
-    pub fn read_device_descriptor(&mut self) -> ::Result<DeviceDescriptor> {
+    pub fn device_descriptor(&mut self) -> ::Result<DeviceDescriptor> {
         let mut descriptor: ::libusb::libusb_device_descriptor = unsafe { mem::uninitialized() };
 
         // since libusb 1.0.16, this function always succeeds
@@ -35,7 +35,7 @@ impl<'a> Device<'a> {
     }
 
     /// Reads a configuration descriptor.
-    pub fn read_config_descriptor(&mut self, config_index: u8) -> ::Result<ConfigDescriptor> {
+    pub fn config_descriptor(&mut self, config_index: u8) -> ::Result<ConfigDescriptor> {
         let mut config: *const ::libusb::libusb_config_descriptor = unsafe { mem::uninitialized() };
 
         try_unsafe!(::libusb::libusb_get_config_descriptor(self.device, config_index, &mut config));
