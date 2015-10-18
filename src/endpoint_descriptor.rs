@@ -1,3 +1,5 @@
+use std::fmt;
+
 use ::fields::{Direction,TransferType,SyncType,UsageType};
 
 /// Describes an endpoint.
@@ -69,6 +71,20 @@ impl<'a> EndpointDescriptor<'a> {
     }
 }
 
+impl<'a> fmt::Debug for EndpointDescriptor<'a> {
+    fn fmt(&self, fmt: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+        let mut debug = fmt.debug_struct("EndpointDescriptor");
+
+        debug.field("bLength", &self.descriptor.bLength);
+        debug.field("bDescriptorType", &self.descriptor.bDescriptorType);
+        debug.field("bEndpointAddress", &self.descriptor.bEndpointAddress);
+        debug.field("bmAttributes", &self.descriptor.bmAttributes);
+        debug.field("wMaxPacketSize", &self.descriptor.wMaxPacketSize);
+        debug.field("bInterval", &self.descriptor.bInterval);
+
+        debug.finish()
+    }
+}
 
 #[doc(hidden)]
 pub fn from_libusb(endpoint: &::libusb::libusb_endpoint_descriptor) -> EndpointDescriptor {

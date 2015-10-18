@@ -1,3 +1,5 @@
+use std::fmt;
+use std::mem;
 use std::slice;
 
 use ::interface_descriptor::Interface;
@@ -72,6 +74,27 @@ impl ConfigDescriptor {
         };
 
         Interfaces { iter: interfaces.iter() }
+    }
+}
+
+impl fmt::Debug for ConfigDescriptor {
+    fn fmt(&self, fmt: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+        let mut debug = fmt.debug_struct("ConfigDescriptor");
+
+        let descriptor: &::libusb::libusb_config_descriptor = unsafe {
+            mem::transmute(self.descriptor)
+        };
+
+        debug.field("bLength", &descriptor.bLength);
+        debug.field("bDescriptorType", &descriptor.bDescriptorType);
+        debug.field("wTotalLength", &descriptor.wTotalLength);
+        debug.field("bNumInterfaces", &descriptor.bNumInterfaces);
+        debug.field("bConfigurationValue", &descriptor.bConfigurationValue);
+        debug.field("iConfiguration", &descriptor.iConfiguration);
+        debug.field("bmAttributes", &descriptor.bmAttributes);
+        debug.field("bMaxPower	", &descriptor.bMaxPower);
+
+        debug.finish()
     }
 }
 

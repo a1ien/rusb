@@ -1,3 +1,4 @@
+use std::fmt;
 use std::slice;
 
 use ::endpoint_descriptor::EndpointDescriptor;
@@ -99,6 +100,24 @@ impl<'a> InterfaceDescriptor<'a> {
         };
 
         EndpointDescriptors { iter: endpoints.iter() }
+    }
+}
+
+impl<'a> fmt::Debug for InterfaceDescriptor<'a> {
+    fn fmt(&self, fmt: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+        let mut debug = fmt.debug_struct("InterfaceDescriptor");
+
+        debug.field("bLength", &self.descriptor.bLength);
+        debug.field("bDescriptorType", &self.descriptor.bDescriptorType);
+        debug.field("bInterfaceNumber", &self.descriptor.bInterfaceNumber);
+        debug.field("bAlternateSetting", &self.descriptor.bAlternateSetting);
+        debug.field("bNumEndpoints", &self.descriptor.bNumEndpoints);
+        debug.field("bInterfaceClass", &self.descriptor.bInterfaceClass);
+        debug.field("bInterfaceSubClass", &self.descriptor.bInterfaceSubClass);
+        debug.field("bInterfaceProtocol", &self.descriptor.bInterfaceProtocol);
+        debug.field("iInterface", &self.descriptor.iInterface);
+
+        debug.finish()
     }
 }
 

@@ -1,3 +1,5 @@
+use std::fmt;
+
 use ::fields::Version;
 
 /// Describes a device.
@@ -76,6 +78,28 @@ impl DeviceDescriptor {
     }
 }
 
+impl fmt::Debug for DeviceDescriptor {
+    fn fmt(&self, fmt: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+        let mut debug = fmt.debug_struct("DeviceDescriptor");
+
+        debug.field("bLength", &self.descriptor.bLength);
+        debug.field("bDescriptorType", &self.descriptor.bDescriptorType);
+        debug.field("bcdUSB", &self.descriptor.bcdUSB);
+        debug.field("bDeviceClass", &self.descriptor.bDeviceClass);
+        debug.field("bDeviceSubClass", &self.descriptor.bDeviceSubClass);
+        debug.field("bDeviceProtocol", &self.descriptor.bDeviceProtocol);
+        debug.field("bMaxPacketSize", &self.descriptor.bMaxPacketSize0);
+        debug.field("idVendor", &self.descriptor.idVendor);
+        debug.field("idProduct", &self.descriptor.idProduct);
+        debug.field("bcdDevice", &self.descriptor.bcdDevice);
+        debug.field("iManufacturer", &self.descriptor.iManufacturer);
+        debug.field("iProduct", &self.descriptor.iProduct);
+        debug.field("iSerialNumber", &self.descriptor.iSerialNumber);
+        debug.field("bNumConfigurations", &self.descriptor.bNumConfigurations);
+
+        debug.finish()
+    }
+}
 
 #[doc(hidden)]
 pub fn from_libusb(device: ::libusb::libusb_device_descriptor) -> DeviceDescriptor {
