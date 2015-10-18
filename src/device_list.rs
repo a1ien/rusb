@@ -30,8 +30,8 @@ impl<'a> DeviceList<'a> {
     /// Returns an iterator over the devices in the list.
     ///
     /// The iterator yields a sequence of `Device` objects.
-    pub fn iter<'b>(&'b self) -> Iter<'a, 'b> {
-        Iter {
+    pub fn iter<'b>(&'b self) -> Devices<'a, 'b> {
+        Devices {
             context: self.context,
             devices: unsafe { slice::from_raw_parts(self.list, self.len) },
             index: 0,
@@ -39,15 +39,14 @@ impl<'a> DeviceList<'a> {
     }
 }
 
-
-/// Iterates over detected USB devices.
-pub struct Iter<'a, 'b> {
+/// Iterator over detected USB devices.
+pub struct Devices<'a, 'b> {
     context: PhantomData<&'a Context>,
     devices: &'b [*mut ::libusb::libusb_device],
     index: usize,
 }
 
-impl<'a, 'b> Iterator for Iter<'a, 'b> {
+impl<'a, 'b> Iterator for Devices<'a, 'b> {
     type Item = Device<'a>;
 
     fn next(&mut self) -> Option<Device<'a>> {
