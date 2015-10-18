@@ -32,15 +32,17 @@ communicate with their endpoints:
 extern crate libusb;
 
 fn main() {
-  let mut context = libusb::Context::new().unwrap();
+    let mut context = libusb::Context::new().unwrap();
 
-  for mut device_ref in context.devices().unwrap().iter() {
-    let device = device_ref.read_device().unwrap();
+    for mut device in context.devices().unwrap().iter() {
+        let device_desc = device.device_descriptor().unwrap();
 
-    println!("Bus {:03} Device {:03} ID {:04x}:{:04x}",
-        device.bus_number(), device.address(),
-        device.vendor_id(), device.product_id());
-  }
+        println!("Bus {:03} Device {:03} ID {:04x}:{:04x}",
+            device.bus_number(),
+            device.address(),
+            device_desc.vendor_id(),
+            device_desc.product_id());
+    }
 }
 ```
 
