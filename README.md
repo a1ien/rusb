@@ -4,6 +4,8 @@ and Rust lifetimes to ensure safe usage of all `libusb` functionality. The RAII 
 all acquired resources are released when they're no longer needed, and Rust lifetimes ensure that
 resources are released in a proper order.
 
+* [Documentation](http://dcuddeback.github.io/libusb-rs/libusb/)
+
 ## Dependencies
 In order to use the `libusb` crate, you must have the native `libusb` library installed where it can
 be found by `pkg-config`.

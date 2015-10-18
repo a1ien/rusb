@@ -1,5 +1,4 @@
 [package]
-
 name = "libusb"
 version = "0.2.0"
 authors = ["David Cuddeback <david.cuddeback@gmail.com>"]
@@ -7,6 +6,7 @@ description = "Rust library for accessing USB devices."
 license = "MIT"
 homepage = "https://github.com/dcuddeback/libusb-rs"
 repository = "https://github.com/dcuddeback/libusb-rs.git"
+documentation = "http://dcuddeback.github.io/libusb-rs/libusb/"
 readme = "README.md"
 keywords = ["usb", "libusb", "hardware", "bindings"]
 
