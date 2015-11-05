@@ -14,7 +14,7 @@ build = "build.rs"
 links = "usb-1.0"
 
 [dependencies]
-libc = "0.1.5"
+libc = "0.2"
 
 [build-dependencies]
 pkg-config = "0.3.2"
