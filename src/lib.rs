@@ -2,7 +2,7 @@
 
 extern crate libc;
 
-use libc::{c_void,c_int,c_uint,c_char,c_uchar,ssize_t};
+use libc::{c_void,c_int,c_uint,c_char,c_uchar,ssize_t,timeval};
 
 
 #[repr(C)]
@@ -103,6 +103,31 @@ pub struct libusb_endpoint_descriptor {
   pub extra_length: c_int
 }
 
+#[repr(C)]
+pub struct libusb_iso_packet_descriptor {
+  length: c_uint,
+  actual_length: c_uint,
+  status: c_int,
+}
+
+pub type libusb_transfer_cb_fn = extern "C" fn(*mut libusb_transfer);
+
+#[repr(C)]
+pub struct libusb_transfer {
+  pub dev_handle: *mut libusb_device_handle,
+  pub flags: u8,
+  pub endpoint: c_uchar,
+  pub transfer_type: c_uchar,
+  pub timeout: c_uint,
+  pub status: c_int,
+  pub length: c_int,
+  pub actual_length: c_int,
+  pub callback: libusb_transfer_cb_fn,
+  pub user_data: *mut c_void,
+  pub buffer: *mut c_uchar,
+  pub num_iso_packets: c_int,
+  pub iso_packet_desc: [libusb_iso_packet_descriptor; 0],
+}
 
 // libusb_error
 pub const LIBUSB_SUCCESS:             c_int = 0;
@@ -120,6 +145,19 @@ pub const LIBUSB_ERROR_NO_MEM:        c_int = -11;
 pub const LIBUSB_ERROR_NOT_SUPPORTED: c_int = -12;
 pub const LIBUSB_ERROR_OTHER:         c_int = -99;
 
+// libusb_transfer_status
+pub const LIBUSB_TRANSFER_COMPLETED:  c_int = 0;
+pub const LIBUSB_TRANSFER_ERROR:      c_int = 1;
+pub const LIBUSB_TRANSFER_TIMED_OUT:  c_int = 2;
+pub const LIBUSB_TRANSFER_CANCELLED:  c_int = 3;
+pub const LIBUSB_TRANSFER_STALL:      c_int = 4;
+pub const LIBUSB_TRANSFER_NO_DEVICE:  c_int = 5;
+pub const LIBUSB_TRANSFER_OVERFLOW:   c_int = 6;
+
+pub const LIBUSB_TRANSFER_SHORT_NOT_OK:    u8 = 1<<0;
+pub const LIBUSB_TRANSFER_FREE_BUFFER :    u8 = 1<<1;
+pub const LIBUSB_TRANSFER_FREE_TRANSFER :  u8 = 1<<2;
+pub const LIBUSB_TRANSFER_ADD_ZERO_PACKET: u8 = 1<<3;
 
 // libusb_capability
 pub const LIBUSB_CAP_HAS_CAPABILITY:                u32 = 0x0000;
@@ -289,6 +327,15 @@ extern "C" {
   pub fn libusb_interrupt_transfer(dev_handle: *mut libusb_device_handle, endpoint: c_uchar, data: *mut c_uchar, length: c_int, transferred: *mut c_int, timeout: c_uint) -> c_int;
   pub fn libusb_bulk_transfer(dev_handle: *mut libusb_device_handle, endpoint: c_uchar, data: *mut c_uchar, length: c_int, transferred: *mut c_int, timeout: c_uint) -> c_int;
   pub fn libusb_control_transfer(dev_handle: *mut libusb_device_handle, request_type: u8, request: u8, value: u16, index: u16, data: *mut c_uchar, length: u16, timeout: c_uint) -> c_int;
+
+  pub fn libusb_alloc_transfer(iso_packets: c_int) -> *mut libusb_transfer;
+  pub fn libusb_submit_transfer(transfer: *mut libusb_transfer) -> c_int;
+  pub fn libusb_cancel_transfer(transfer: *mut libusb_transfer) -> c_int;
+  pub fn libusb_free_transfer(transfer: *mut libusb_transfer);
+
+  pub fn libusb_handle_events(ctx: *mut libusb_context) -> c_int;
+  pub fn libusb_handle_events_completed(ctx: *mut libusb_context, completed: *mut c_int) -> c_int;
+  pub fn libusb_handle_events_timeout_completed(ctx: *mut libusb_context, tv: *const timeval, completed: *mut c_int) -> c_int;
 }
 
 
