@@ -45,7 +45,7 @@ Add `libusb-sys` as a dependency in `Cargo.toml`:
 
 ```toml
 [dependencies]
-libusb-sys = "0.2.0"
+libusb-sys = "0.2"
 ```
 
 Import the `libusb_sys` crate and use the functions as they're defined in the native `libusb`
