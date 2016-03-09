@@ -55,6 +55,11 @@ impl Context {
         Ok(Context { context: context })
     }
 
+    /// Get the raw libusb_context pointer, for advanced use in unsafe code.
+    pub fn as_raw(&self) -> *mut ::libusb::libusb_context {
+        self.context
+    }
+
     /// Sets the log level of a `libusb` context.
     pub fn set_log_level(&mut self, level: LogLevel) {
         unsafe {

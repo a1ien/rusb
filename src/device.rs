@@ -28,6 +28,11 @@ unsafe impl<'a> Send for Device<'a> {}
 unsafe impl<'a> Sync for Device<'a> {}
 
 impl<'a> Device<'a> {
+    /// Get the raw libusb_device pointer, for advanced use in unsafe code
+    pub fn as_raw(&self) -> *mut ::libusb::libusb_device {
+        self.device
+    }
+
     /// Reads the device descriptor.
     pub fn device_descriptor(&self) -> crate::Result<DeviceDescriptor> {
         let mut descriptor: libusb_device_descriptor = unsafe { mem::uninitialized() };
