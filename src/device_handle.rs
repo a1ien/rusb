@@ -492,7 +492,7 @@ impl<'a> DeviceHandle<'a> {
 }
 
 #[doc(hidden)]
-pub fn from_libusb<'a>(context: PhantomData<&'a Context>, handle: *mut ::libusb::libusb_device_handle) -> DeviceHandle<'a> {
+pub unsafe fn from_libusb<'a>(context: PhantomData<&'a Context>, handle: *mut ::libusb::libusb_device_handle) -> DeviceHandle<'a> {
     DeviceHandle {
         _context: context,
         handle: handle,

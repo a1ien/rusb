@@ -76,7 +76,7 @@ impl Context {
             Err(::error::from_libusb(n as c_int))
         }
         else {
-            Ok(::device_list::from_libusb(self, list, n as usize))
+            Ok(unsafe { ::device_list::from_libusb(self, list, n as usize) })
         }
     }
 }

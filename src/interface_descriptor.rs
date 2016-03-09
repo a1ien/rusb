@@ -142,8 +142,8 @@ impl<'a> Iterator for EndpointDescriptors<'a> {
 
 
 #[doc(hidden)]
-pub fn from_libusb(interface: &::libusb::libusb_interface) -> Interface {
-    let descriptors = unsafe { slice::from_raw_parts(interface.altsetting, interface.num_altsetting as usize) };
+pub unsafe fn from_libusb(interface: &::libusb::libusb_interface) -> Interface {
+    let descriptors = slice::from_raw_parts(interface.altsetting, interface.num_altsetting as usize);
     debug_assert!(descriptors.len() > 0);
 
     Interface { descriptors: descriptors }
@@ -154,42 +154,42 @@ pub fn from_libusb(interface: &::libusb::libusb_interface) -> Interface {
 mod test {
     #[test]
     fn it_has_interface_number() {
-        assert_eq!(42, super::from_libusb(&interface!(interface_descriptor!(bInterfaceNumber: 42))).number());
+        assert_eq!(42, unsafe { super::from_libusb(&interface!(interface_descriptor!(bInterfaceNumber: 42))) }.number());
     }
 
     #[test]
     fn it_has_interface_number_in_descriptor() {
-        assert_eq!(vec!(42), super::from_libusb(&interface!(interface_descriptor!(bInterfaceNumber: 42))).descriptors().map(|setting| setting.interface_number()).collect::<Vec<_>>());
+        assert_eq!(vec!(42), unsafe { super::from_libusb(&interface!(interface_descriptor!(bInterfaceNumber: 42))) }.descriptors().map(|setting| setting.interface_number()).collect::<Vec<_>>());
     }
 
     #[test]
     fn it_has_alternate_setting_number() {
-        assert_eq!(vec!(42), super::from_libusb(&interface!(interface_descriptor!(bAlternateSetting: 42))).descriptors().map(|setting| setting.setting_number()).collect::<Vec<_>>());
+        assert_eq!(vec!(42), unsafe { super::from_libusb(&interface!(interface_descriptor!(bAlternateSetting: 42))) }.descriptors().map(|setting| setting.setting_number()).collect::<Vec<_>>());
     }
 
     #[test]
     fn it_has_class_code() {
-        assert_eq!(vec!(42), super::from_libusb(&interface!(interface_descriptor!(bInterfaceClass: 42))).descriptors().map(|setting| setting.class_code()).collect::<Vec<_>>());
+        assert_eq!(vec!(42), unsafe { super::from_libusb(&interface!(interface_descriptor!(bInterfaceClass: 42))) }.descriptors().map(|setting| setting.class_code()).collect::<Vec<_>>());
     }
 
     #[test]
     fn it_has_sub_class_code() {
-        assert_eq!(vec!(42), super::from_libusb(&interface!(interface_descriptor!(bInterfaceSubClass: 42))).descriptors().map(|setting| setting.sub_class_code()).collect::<Vec<_>>());
+        assert_eq!(vec!(42), unsafe { super::from_libusb(&interface!(interface_descriptor!(bInterfaceSubClass: 42))) }.descriptors().map(|setting| setting.sub_class_code()).collect::<Vec<_>>());
     }
 
     #[test]
     fn it_has_protocol_code() {
-        assert_eq!(vec!(42), super::from_libusb(&interface!(interface_descriptor!(bInterfaceProtocol: 42))).descriptors().map(|setting| setting.protocol_code()).collect::<Vec<_>>());
+        assert_eq!(vec!(42), unsafe { super::from_libusb(&interface!(interface_descriptor!(bInterfaceProtocol: 42))) }.descriptors().map(|setting| setting.protocol_code()).collect::<Vec<_>>());
     }
 
     #[test]
     fn it_has_description_string_index() {
-        assert_eq!(vec!(Some(42)), super::from_libusb(&interface!(interface_descriptor!(iInterface: 42))).descriptors().map(|setting| setting.description_string_index()).collect::<Vec<_>>());
+        assert_eq!(vec!(Some(42)), unsafe { super::from_libusb(&interface!(interface_descriptor!(iInterface: 42))) }.descriptors().map(|setting| setting.description_string_index()).collect::<Vec<_>>());
     }
 
     #[test]
     fn it_handles_missing_description_string_index() {
-        assert_eq!(vec!(None), super::from_libusb(&interface!(interface_descriptor!(iInterface: 0))).descriptors().map(|setting| setting.description_string_index()).collect::<Vec<_>>());
+        assert_eq!(vec!(None), unsafe { super::from_libusb(&interface!(interface_descriptor!(iInterface: 0))) }.descriptors().map(|setting| setting.description_string_index()).collect::<Vec<_>>());
     }
 
     #[test]
@@ -197,13 +197,13 @@ mod test {
         let endpoint1 = endpoint_descriptor!(bEndpointAddress: 0x81);
         let endpoint2 = endpoint_descriptor!(bEndpointAddress: 0x01);
 
-        assert_eq!(vec!(2), super::from_libusb(&interface!(interface_descriptor!(endpoint1, endpoint2))).descriptors().map(|setting| setting.num_endpoints()).collect::<Vec<_>>());
+        assert_eq!(vec!(2), unsafe { super::from_libusb(&interface!(interface_descriptor!(endpoint1, endpoint2))) }.descriptors().map(|setting| setting.num_endpoints()).collect::<Vec<_>>());
     }
 
     #[test]
     fn it_has_endpoints() {
         let libusb_interface = interface!(interface_descriptor!(endpoint_descriptor!(bEndpointAddress: 0x87)));
-        let interface = super::from_libusb(&libusb_interface);
+        let interface = unsafe { super::from_libusb(&libusb_interface) };
 
         let endpoint_addresses = interface.descriptors().next().unwrap().endpoint_descriptors().map(|endpoint| {
             endpoint.address()
