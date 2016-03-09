@@ -19,6 +19,9 @@ impl Drop for Context {
     }
 }
 
+unsafe impl Sync for Context {}
+unsafe impl Send for Context {}
+
 impl Context {
     /// Opens a new `libusb` context.
     pub fn new() -> ::Result<Self> {
@@ -64,7 +67,7 @@ impl Context {
     }
 
     /// Returns a list of the current USB devices. The context must outlive the device list.
-    pub fn devices<'a>(&'a mut self) -> ::Result<DeviceList<'a>> {
+    pub fn devices<'a>(&'a self) -> ::Result<DeviceList<'a>> {
         let mut list: *const *mut ::libusb::libusb_device = unsafe { mem::uninitialized() };
 
         let n = unsafe { ::libusb::libusb_get_device_list(self.context, &mut list) };

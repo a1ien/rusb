@@ -18,6 +18,9 @@ impl Drop for ConfigDescriptor {
     }
 }
 
+unsafe impl Sync for ConfigDescriptor {}
+unsafe impl Send for ConfigDescriptor {}
+
 impl ConfigDescriptor {
     /// Returns the configuration number.
     pub fn number(&self) -> u8 {
