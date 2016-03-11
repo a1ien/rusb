@@ -56,7 +56,7 @@ impl Context {
     }
 
     /// Get the raw libusb_context pointer, for advanced use in unsafe code.
-    pub fn as_raw(&self) -> *mut ::libusb::libusb_context {
+    pub fn as_raw(&self) -> *mut libusb_context {
         self.context
     }
 

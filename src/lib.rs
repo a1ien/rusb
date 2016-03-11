@@ -2,6 +2,7 @@
 
 pub use libusb_sys::constants;
 
+pub use crate::async_io::{AsyncGroup, Transfer, TransferStatus};
 pub use crate::error::{Error, Result};
 pub use crate::version::{version, LibraryVersion};
 
@@ -30,6 +31,7 @@ mod test_helpers;
 mod error;
 mod version;
 
+mod async_io;
 mod context;
 mod device;
 mod device_handle;

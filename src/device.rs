@@ -29,7 +29,7 @@ unsafe impl<'a> Sync for Device<'a> {}
 
 impl<'a> Device<'a> {
     /// Get the raw libusb_device pointer, for advanced use in unsafe code
-    pub fn as_raw(&self) -> *mut ::libusb::libusb_device {
+    pub fn as_raw(&self) -> *mut libusb_device {
         self.device
     }
 

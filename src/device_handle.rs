@@ -4,8 +4,8 @@ use std::slice;
 use std::time::Duration;
 
 use bit_set::BitSet;
-use libusb_sys::{constants::*, *};
 use libc::{c_int, c_uchar, c_uint};
+use libusb_sys::{constants::*, *};
 
 use crate::config_descriptor::ConfigDescriptor;
 use crate::context::Context;
@@ -43,7 +43,7 @@ impl<'a> DeviceHandle<'a> {
     ///
     /// This structure tracks claimed interfaces, and will get out if sync if interfaces are
     /// manipulated externally. Use only libusb endpoint IO functions.
-    pub fn as_raw(&self) -> *mut ::libusb::libusb_device_handle {
+    pub fn as_raw(&self) -> *mut libusb_device_handle {
         self.handle
     }
 
