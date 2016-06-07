@@ -279,6 +279,18 @@ pub const LIBUSB_REQUEST_SYNCH_FRAME:       u8 = 0x0C;
 pub const LIBUSB_REQUEST_SET_SEL:           u8 = 0x30;
 pub const LIBUSB_SET_ISOCH_DELAY:           u8 = 0x31;
 
+pub type libusb_hotplug_callback_handle = c_int;
+pub type libusb_hotplug_callback_fn = extern "C" fn(ctx: *mut libusb_context, device: *mut libusb_device, event: libusb_hotplug_event, user_data: *mut c_void) -> c_int;
+
+pub type libusb_hotplug_flag = c_int;
+pub const LIBUSB_HOTPLUG_NO_FLAGS: libusb_hotplug_flag = 0;
+pub const LIBUSB_HOTPLUG_ENUMERATE: libusb_hotplug_flag = 1<<0;
+
+pub type libusb_hotplug_event = c_int;
+pub const LIBUSB_HOTPLUG_EVENT_DEVICE_ARRIVED: libusb_hotplug_event = 0x01;
+pub const LIBUSB_HOTPLUG_EVENT_DEVICE_LEFT: libusb_hotplug_event    = 0x02;
+
+pub const LIBUSB_HOTPLUG_MATCH_ANY: c_int = -1;
 
 extern "C" {
   pub fn libusb_get_version() -> *const libusb_version;
@@ -336,6 +348,9 @@ extern "C" {
   pub fn libusb_handle_events(ctx: *mut libusb_context) -> c_int;
   pub fn libusb_handle_events_completed(ctx: *mut libusb_context, completed: *mut c_int) -> c_int;
   pub fn libusb_handle_events_timeout_completed(ctx: *mut libusb_context, tv: *const timeval, completed: *mut c_int) -> c_int;
+
+  pub fn libusb_hotplug_register_callback(ctx: *mut libusb_context, events: libusb_hotplug_event, flags: libusb_hotplug_flag, vendor_id: c_int, product_id: c_int, dev_class: c_int, cb_fn: libusb_hotplug_callback_fn, user_data: *mut c_void, callback_handle: *mut libusb_hotplug_callback_handle) -> c_int;
+  pub fn libusb_hotplug_deregister_callback(ctx: *mut libusb_context, callback_handle: libusb_hotplug_callback_handle);
 }
 
 
