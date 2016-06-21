@@ -298,6 +298,8 @@ extern "C" {
 
   pub fn libusb_get_device_descriptor(dev: *const libusb_device, desc: *mut libusb_device_descriptor) -> c_int;
   pub fn libusb_get_config_descriptor(dev: *const libusb_device, index: u8, config: *mut *const libusb_config_descriptor) -> c_int;
+  pub fn libusb_get_active_config_descriptor(dev: *const libusb_device, config: *mut *const libusb_config_descriptor) -> c_int;
+  pub fn libusb_get_config_descriptor_by_value(dev: *const libusb_device, bConfigurationValue: u8, config: *mut *const libusb_config_descriptor) -> c_int;
   pub fn libusb_free_config_descriptor(config: *const libusb_config_descriptor);
 
   pub fn libusb_get_bus_number(dev: *const libusb_device) -> u8;
