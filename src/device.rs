@@ -43,6 +43,15 @@ impl<'a> Device<'a> {
         Ok(::config_descriptor::from_libusb(config))
     }
 
+    /// Reads the configuration descriptor for the current configuration
+    pub fn active_config_descriptor(&self) -> ::Result<ConfigDescriptor> {
+        let mut config: *const ::libusb::libusb_config_descriptor = unsafe { mem::uninitialized() };
+
+        try_unsafe!(::libusb::libusb_get_active_config_descriptor(self.device, &mut config));
+
+        Ok(::config_descriptor::from_libusb(config))
+    }
+
     /// Returns the number of the bus that the device is connected to.
     pub fn bus_number(&mut self) -> u8 {
         unsafe {
