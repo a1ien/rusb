@@ -55,7 +55,7 @@ macro_rules! interface_descriptor {
         {
             let endpoints = vec![$($endpoint),+];
 
-            ::libusb::libusb_interface_descriptor {
+            let r = ::libusb::libusb_interface_descriptor {
                 bLength:            9,
                 bDescriptorType:    0x04,
                 bInterfaceNumber:   0,
@@ -68,7 +68,11 @@ macro_rules! interface_descriptor {
                 endpoint:           (&endpoints[..]).as_ptr(),
                 extra:              $crate::test_helpers::ptr::null(),
                 extra_length:       0
-            }
+            };
+            
+            // leak the Vec so the returned pointer remains valid
+            ::std::mem::forget(endpoints);
+            r
         }
     }
 }
@@ -79,10 +83,14 @@ macro_rules! interface {
         {
             let descriptors = vec![$($descriptor),*];
 
-            ::libusb::libusb_interface {
+            let r = ::libusb::libusb_interface {
                 altsetting:     descriptors.as_ptr(),
                 num_altsetting: descriptors.len() as ::libc::c_int
-            }
+            };
+            
+            // leak the Vec so the returned pointer remains valid
+            ::std::mem::forget(descriptors);
+            r
         }
     }
 }
@@ -110,7 +118,7 @@ macro_rules! config_descriptor {
         {
             let interfaces = vec![$($interface),+];
 
-            ::libusb::libusb_config_descriptor {
+            let r = ::libusb::libusb_config_descriptor {
                 bLength:             9,
                 bDescriptorType:     0x02,
                 wTotalLength:        9,
@@ -122,7 +130,11 @@ macro_rules! config_descriptor {
                 interface:           (&interfaces[..]).as_ptr(),
                 extra:               $crate::test_helpers::ptr::null(),
                 extra_length:        0
-            }
+            };
+            
+            // leak the Vec so the returned pointer remains valid
+            ::std::mem::forget(interfaces);
+            r
         }
     }
 }
