@@ -93,7 +93,7 @@ fn print_device_tree(device: *mut ::ffi::libusb_device) -> usize {
   let parent = unsafe { ::ffi::libusb_get_parent(device) };
   let depth = print_device_tree(parent);
 
-  for _ in (0..depth) {
+  for _ in 0..depth {
     print!("  ");
   }
 
@@ -121,7 +121,7 @@ fn get_language_ids(handle: *mut ::ffi::libusb_device_handle) -> Vec<u16> {
       let mut cursor = Cursor::new(buf);
       cursor.set_position(2);
 
-      for _ in (0..num_languages) {
+      for _ in 0..num_languages {
         let mut bytes = Vec::<u8>::with_capacity(2);
 
         match cursor.read(unsafe { slice::from_raw_parts_mut((&mut bytes[..]).as_mut_ptr(), bytes.capacity()) }) {
@@ -153,7 +153,7 @@ fn find_readable_endpoint(device: *mut ::ffi::libusb_device, transfer_type: u8) 
 
   match unsafe { ::ffi::libusb_get_device_descriptor(device, &mut device_descriptor) } {
     0 => {
-      for i in (0..device_descriptor.bNumConfigurations) {
+      for i in 0..device_descriptor.bNumConfigurations {
         let mut config_ptr: *const ::ffi::libusb_config_descriptor = unsafe { mem::uninitialized() };
 
         match unsafe { ::ffi::libusb_get_config_descriptor(device, i, &mut config_ptr) } {

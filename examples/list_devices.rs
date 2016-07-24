@@ -93,7 +93,7 @@ fn display_device(dev: &*mut ::ffi::libusb_device) {
   if has_descriptor {
     print_device_descriptor(handle, &descriptor);
 
-    for i in (0..descriptor.bNumConfigurations) {
+    for i in 0..descriptor.bNumConfigurations {
       let mut descriptor: *const ::ffi::libusb_config_descriptor = unsafe { mem::uninitialized() };
 
       match unsafe { ::ffi::libusb_get_config_descriptor(*dev, i, &mut descriptor) } {
