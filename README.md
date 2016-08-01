@@ -51,6 +51,7 @@ fn main() {
 ## Contributors
 * [dcuddeback](https://github.com/dcuddeback)
 * [nibua-r](https://github.com/nibua-r)
+* [kevinmehall](https://github.com/kevinmehall)
 
 ## License
 Copyright © 2015 David Cuddeback
