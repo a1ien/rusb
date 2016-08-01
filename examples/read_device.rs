@@ -88,7 +88,7 @@ fn read_device(device: &mut libusb::Device, device_desc: &libusb::DeviceDescript
 }
 
 fn find_readable_endpoint(device: &mut libusb::Device, device_desc: &libusb::DeviceDescriptor, transfer_type: libusb::TransferType) -> Option<Endpoint> {
-    for n in (0..device_desc.num_configurations()) {
+    for n in 0..device_desc.num_configurations() {
         let config_desc = match device.config_descriptor(n) {
             Ok(c) => c,
             Err(_) => continue

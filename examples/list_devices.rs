@@ -50,7 +50,7 @@ fn list_devices() -> libusb::Result<()> {
         println!("Bus {:03} Device {:03} ID {:04x}:{:04x} {}", device.bus_number(), device.address(), device_desc.vendor_id(), device_desc.product_id(), get_speed(device.speed()));
         print_device(&device_desc, &mut usb_device);
 
-        for n in (0..device_desc.num_configurations()) {
+        for n in 0..device_desc.num_configurations() {
             let config_desc = match device.config_descriptor(n) {
                 Ok(c) => c,
                 Err(_) => continue
