@@ -40,7 +40,7 @@ fn open_device(context: &mut libusb::Context, vid: u16, pid: u16) -> Option<(lib
         Err(_) => return None
     };
 
-    for mut device in devices.iter() {
+    for device in devices.iter() {
         let device_desc = match device.device_descriptor() {
             Ok(d) => d,
             Err(_) => continue

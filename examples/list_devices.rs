@@ -16,9 +16,9 @@ fn main() {
 fn list_devices() -> libusb::Result<()> {
     let timeout = Duration::from_secs(1);
 
-    let mut context = try!(libusb::Context::new());
+    let context = try!(libusb::Context::new());
 
-    for mut device in try!(context.devices()).iter() {
+    for device in try!(context.devices()).iter() {
         let device_desc = match device.device_descriptor() {
             Ok(d) => d,
             Err(_) => continue
@@ -26,7 +26,7 @@ fn list_devices() -> libusb::Result<()> {
 
         let mut usb_device = {
             match device.open() {
-                Ok(mut h) => {
+                Ok(h) => {
                     match h.read_languages(timeout) {
                         Ok(l) => {
                             if l.len() > 0 {
