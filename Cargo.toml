@@ -12,7 +12,7 @@ keywords = ["usb", "libusb", "hardware", "bindings"]
 
 [dependencies]
 bit-set = "0.2.0"
-libusb-sys = "0.2.1"
+libusb-sys = "0.2.3"
 libc = "0.2"
 
 [dev-dependencies]
