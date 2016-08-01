@@ -33,9 +33,12 @@ impl<'a> Drop for DeviceHandle<'a> {
     }
 }
 
+unsafe impl<'a> Send for DeviceHandle<'a> {}
+unsafe impl<'a> Sync for DeviceHandle<'a> {}
+
 impl<'a> DeviceHandle<'a> {
     /// Returns the active configuration number.
-    pub fn active_configuration(&mut self) -> ::Result<u8> {
+    pub fn active_configuration(&self) -> ::Result<u8> {
         let mut config = unsafe { mem::uninitialized() };
 
         try_unsafe!(::libusb::libusb_get_configuration(self.handle, &mut config));
@@ -63,7 +66,7 @@ impl<'a> DeviceHandle<'a> {
     /// Indicates whether the device has an attached kernel driver.
     ///
     /// This method is not supported on all platforms.
-    pub fn kernel_driver_active(&mut self, iface: u8) -> ::Result<bool> {
+    pub fn kernel_driver_active(&self, iface: u8) -> ::Result<bool> {
         match unsafe { ::libusb::libusb_kernel_driver_active(self.handle, iface as c_int) } {
             0 => Ok(false),
             1 => Ok(true),
@@ -132,7 +135,7 @@ impl<'a> DeviceHandle<'a> {
     /// * `Overflow` if the device offered more data.
     /// * `NoDevice` if the device has been disconnected.
     /// * `Io` if the transfer encountered an I/O error.
-    pub fn read_interrupt(&mut self, endpoint: u8, buf: &mut [u8], timeout: Duration) -> ::Result<usize> {
+    pub fn read_interrupt(&self, endpoint: u8, buf: &mut [u8], timeout: Duration) -> ::Result<usize> {
         if endpoint & ::libusb::LIBUSB_ENDPOINT_DIR_MASK != ::libusb::LIBUSB_ENDPOINT_IN {
             return Err(::Error::InvalidParam);
         }
@@ -178,7 +181,7 @@ impl<'a> DeviceHandle<'a> {
     /// * `Pipe` if the endpoint halted.
     /// * `NoDevice` if the device has been disconnected.
     /// * `Io` if the transfer encountered an I/O error.
-    pub fn write_interrupt(&mut self, endpoint: u8, buf: &[u8], timeout: Duration) -> ::Result<usize> {
+    pub fn write_interrupt(&self, endpoint: u8, buf: &[u8], timeout: Duration) -> ::Result<usize> {
         if endpoint & ::libusb::LIBUSB_ENDPOINT_DIR_MASK != ::libusb::LIBUSB_ENDPOINT_OUT {
             return Err(::Error::InvalidParam);
         }
@@ -226,7 +229,7 @@ impl<'a> DeviceHandle<'a> {
     /// * `Overflow` if the device offered more data.
     /// * `NoDevice` if the device has been disconnected.
     /// * `Io` if the transfer encountered an I/O error.
-    pub fn read_bulk(&mut self, endpoint: u8, buf: &mut [u8], timeout: Duration) -> ::Result<usize> {
+    pub fn read_bulk(&self, endpoint: u8, buf: &mut [u8], timeout: Duration) -> ::Result<usize> {
         if endpoint & ::libusb::LIBUSB_ENDPOINT_DIR_MASK != ::libusb::LIBUSB_ENDPOINT_IN {
             return Err(::Error::InvalidParam);
         }
@@ -272,7 +275,7 @@ impl<'a> DeviceHandle<'a> {
     /// * `Pipe` if the endpoint halted.
     /// * `NoDevice` if the device has been disconnected.
     /// * `Io` if the transfer encountered an I/O error.
-    pub fn write_bulk(&mut self, endpoint: u8, buf: &[u8], timeout: Duration) -> ::Result<usize> {
+    pub fn write_bulk(&self, endpoint: u8, buf: &[u8], timeout: Duration) -> ::Result<usize> {
         if endpoint & ::libusb::LIBUSB_ENDPOINT_DIR_MASK != ::libusb::LIBUSB_ENDPOINT_OUT {
             return Err(::Error::InvalidParam);
         }
@@ -325,7 +328,7 @@ impl<'a> DeviceHandle<'a> {
     /// * `Pipe` if the control request was not supported by the device.
     /// * `NoDevice` if the device has been disconnected.
     /// * `Io` if the transfer encountered an I/O error.
-    pub fn read_control(&mut self, request_type: u8, request: u8, value: u16, index: u16, buf: &mut [u8], timeout: Duration) -> ::Result<usize> {
+    pub fn read_control(&self, request_type: u8, request: u8, value: u16, index: u16, buf: &mut [u8], timeout: Duration) -> ::Result<usize> {
         if request_type & ::libusb::LIBUSB_ENDPOINT_DIR_MASK != ::libusb::LIBUSB_ENDPOINT_IN {
             return Err(::Error::InvalidParam);
         }
@@ -371,7 +374,7 @@ impl<'a> DeviceHandle<'a> {
     /// * `Pipe` if the control request was not supported by the device.
     /// * `NoDevice` if the device has been disconnected.
     /// * `Io` if the transfer encountered an I/O error.
-    pub fn write_control(&mut self, request_type: u8, request: u8, value: u16, index: u16, buf: &[u8], timeout: Duration) -> ::Result<usize> {
+    pub fn write_control(&self, request_type: u8, request: u8, value: u16, index: u16, buf: &[u8], timeout: Duration) -> ::Result<usize> {
         if request_type & ::libusb::LIBUSB_ENDPOINT_DIR_MASK != ::libusb::LIBUSB_ENDPOINT_OUT {
             return Err(::Error::InvalidParam);
         }
@@ -395,7 +398,7 @@ impl<'a> DeviceHandle<'a> {
     ///
     /// This function returns a list of languages that can be used to read the device's string
     /// descriptors.
-    pub fn read_languages(&mut self, timeout: Duration) -> ::Result<Vec<Language>> {
+    pub fn read_languages(&self, timeout: Duration) -> ::Result<Vec<Language>> {
         let mut buf = Vec::<u8>::with_capacity(256);
 
         let mut buf_slice = unsafe {
@@ -422,7 +425,7 @@ impl<'a> DeviceHandle<'a> {
     /// Reads a string descriptor from the device.
     ///
     /// `language` should be one of the languages returned from [`read_languages`](#method.read_languages).
-    pub fn read_string_descriptor(&mut self, language: Language, index: u8, timeout: Duration) -> ::Result<String> {
+    pub fn read_string_descriptor(&self, language: Language, index: u8, timeout: Duration) -> ::Result<String> {
         let mut buf = Vec::<u8>::with_capacity(256);
 
         let mut buf_slice = unsafe {
@@ -448,7 +451,7 @@ impl<'a> DeviceHandle<'a> {
     }
 
     /// Reads the device's manufacturer string descriptor.
-    pub fn read_manufacturer_string(&mut self, language: Language, device: &DeviceDescriptor, timeout: Duration) -> ::Result<String> {
+    pub fn read_manufacturer_string(&self, language: Language, device: &DeviceDescriptor, timeout: Duration) -> ::Result<String> {
         match device.manufacturer_string_index() {
             None => Err(::Error::InvalidParam),
             Some(n) => self.read_string_descriptor(language, n, timeout)
@@ -456,7 +459,7 @@ impl<'a> DeviceHandle<'a> {
     }
 
     /// Reads the device's product string descriptor.
-    pub fn read_product_string(&mut self, language: Language, device: &DeviceDescriptor, timeout: Duration) -> ::Result<String> {
+    pub fn read_product_string(&self, language: Language, device: &DeviceDescriptor, timeout: Duration) -> ::Result<String> {
         match device.product_string_index() {
             None => Err(::Error::InvalidParam),
             Some(n) => self.read_string_descriptor(language, n, timeout)
@@ -464,7 +467,7 @@ impl<'a> DeviceHandle<'a> {
     }
 
     /// Reads the device's serial number string descriptor.
-    pub fn read_serial_number_string(&mut self, language: Language, device: &DeviceDescriptor, timeout: Duration) -> ::Result<String> {
+    pub fn read_serial_number_string(&self, language: Language, device: &DeviceDescriptor, timeout: Duration) -> ::Result<String> {
         match device.serial_number_string_index() {
             None => Err(::Error::InvalidParam),
             Some(n) => self.read_string_descriptor(language, n, timeout)
@@ -472,7 +475,7 @@ impl<'a> DeviceHandle<'a> {
     }
 
     /// Reads the string descriptor for a configuration's description.
-    pub fn read_configuration_string(&mut self, language: Language, configuration: &ConfigDescriptor, timeout: Duration) -> ::Result<String> {
+    pub fn read_configuration_string(&self, language: Language, configuration: &ConfigDescriptor, timeout: Duration) -> ::Result<String> {
         match configuration.description_string_index() {
             None => Err(::Error::InvalidParam),
             Some(n) => self.read_string_descriptor(language, n, timeout)
@@ -480,7 +483,7 @@ impl<'a> DeviceHandle<'a> {
     }
 
     /// Reads the string descriptor for a interface's description.
-    pub fn read_interface_string(&mut self, language: Language, interface: &InterfaceDescriptor, timeout: Duration) -> ::Result<String> {
+    pub fn read_interface_string(&self, language: Language, interface: &InterfaceDescriptor, timeout: Duration) -> ::Result<String> {
         match interface.description_string_index() {
             None => Err(::Error::InvalidParam),
             Some(n) => self.read_string_descriptor(language, n, timeout)
