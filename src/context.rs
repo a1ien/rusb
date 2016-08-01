@@ -8,7 +8,7 @@ use error;
 
 /// A `libusb` context.
 pub struct Context {
-    context: *mut libusb_context
+    context: *mut libusb_context,
 }
 
 impl Drop for Context {

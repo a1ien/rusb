@@ -46,7 +46,7 @@ impl LibraryVersion {
             },
             Err(_) => {
                 None
-            }
+            },
         }
     }
 }

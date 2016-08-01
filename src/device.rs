@@ -13,7 +13,7 @@ use fields::{self, Speed};
 /// A reference to a USB device.
 pub struct Device<'a> {
     context: PhantomData<&'a Context>,
-    device: *mut libusb_device
+    device: *mut libusb_device,
 }
 
 impl<'a> Drop for Device<'a> {
@@ -48,7 +48,7 @@ impl<'a> Device<'a> {
         Ok(unsafe { config_descriptor::from_libusb(config) })
     }
 
-    /// Reads the configuration descriptor for the current configuration
+    /// Reads the configuration descriptor for the current configuration.
     pub fn active_config_descriptor(&self) -> ::Result<ConfigDescriptor> {
         let mut config: *const libusb_config_descriptor = unsafe { mem::uninitialized() };
 

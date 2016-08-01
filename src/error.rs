@@ -72,7 +72,7 @@ impl Error {
             Error::Interrupted  => "System call interrupted (perhaps due to signal)",
             Error::NoMem        => "Insufficient memory",
             Error::NotSupported => "Operation not supported or unimplemented on this platform",
-            Error::Other        => "Other error"
+            Error::Other        => "Other error",
         }
     }
 }
@@ -106,7 +106,7 @@ pub fn from_libusb(err: c_int) -> Error {
         LIBUSB_ERROR_INTERRUPTED   => Error::Interrupted,
         LIBUSB_ERROR_NO_MEM        => Error::NoMem,
         LIBUSB_ERROR_NOT_SUPPORTED => Error::NotSupported,
-        LIBUSB_ERROR_OTHER | _     => Error::Other
+        LIBUSB_ERROR_OTHER | _     => Error::Other,
     }
 }
 

@@ -72,7 +72,7 @@ impl<'a> DeviceHandle<'a> {
         match unsafe { libusb_kernel_driver_active(self.handle, iface as c_int) } {
             0 => Ok(false),
             1 => Ok(true),
-            err => Err(error::from_libusb(err))
+            err => Err(error::from_libusb(err)),
         }
     }
 

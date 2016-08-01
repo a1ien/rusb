@@ -11,7 +11,7 @@ const SUB_LANGUAGE_MASK:     u16 = 0xFC00;
 /// Traditional). Each primary language has its own set of sub languages.
 #[derive(Debug,Copy,Clone,PartialEq,Eq)]
 pub struct Language {
-    raw: u16
+    raw: u16,
 }
 
 impl Language {
@@ -30,7 +30,7 @@ impl Language {
 
     /// Returns the sub language.
     pub fn sub_language(&self) -> SubLanguage {
-        SubLanguage::from_raw(PrimaryLanguage::from_raw(self.raw), self.raw)
+        SubLanguage::from_raw(self.primary_language(), self.raw)
     }
 }
 
@@ -117,7 +117,7 @@ pub enum PrimaryLanguage {
     Vietnamese,
 
     HID,
-    Other(u16)
+    Other(u16),
 }
 
 impl PrimaryLanguage {
@@ -200,7 +200,7 @@ impl PrimaryLanguage {
             0x0043 => PrimaryLanguage::Uzbek,
             0x002A => PrimaryLanguage::Vietnamese,
             0x00FF => PrimaryLanguage::HID,
-            n      => PrimaryLanguage::Other(n)
+            n      => PrimaryLanguage::Other(n),
         }
     }
 }
@@ -291,7 +291,7 @@ pub enum SubLanguage {
     VendorDefined3, // HID
     VendorDefined4, // HID
 
-    Other(u16)
+    Other(u16),
 }
 
 impl SubLanguage {
@@ -314,12 +314,12 @@ impl SubLanguage {
                 0x3800 => SubLanguage::UnitedArabEmirates,
                 0x3C00 => SubLanguage::Bahrain,
                 0x4000 => SubLanguage::Qatar,
-                n      => SubLanguage::Other(n)
+                n      => SubLanguage::Other(n),
             },
             PrimaryLanguage::Azeri => match raw & SUB_LANGUAGE_MASK {
                 0x0400 => SubLanguage::Latin,
                 0x0800 => SubLanguage::Cyrillic,
-                n      => SubLanguage::Other(n)
+                n      => SubLanguage::Other(n),
             },
             PrimaryLanguage::Chinese => match raw & SUB_LANGUAGE_MASK {
                 0x0400 => SubLanguage::Taiwan,
@@ -327,12 +327,12 @@ impl SubLanguage {
                 0x0C00 => SubLanguage::HongKong,
                 0x1000 => SubLanguage::Singapore,
                 0x1400 => SubLanguage::Macau,
-                n      => SubLanguage::Other(n)
+                n      => SubLanguage::Other(n),
             },
             PrimaryLanguage::Dutch => match raw & SUB_LANGUAGE_MASK {
                 0x0400 => SubLanguage::Netherlands,
                 0x0800 => SubLanguage::Belgium,
-                n      => SubLanguage::Other(n)
+                n      => SubLanguage::Other(n),
             },
             PrimaryLanguage::English => match raw & SUB_LANGUAGE_MASK {
                 0x0400 => SubLanguage::UnitedStates,
@@ -348,7 +348,7 @@ impl SubLanguage {
                 0x2C00 => SubLanguage::Trinidad,
                 0x3000 => SubLanguage::Zimbabwe,
                 0x3400 => SubLanguage::Philippines,
-                n      => SubLanguage::Other(n)
+                n      => SubLanguage::Other(n),
             },
             PrimaryLanguage::French => match raw & SUB_LANGUAGE_MASK {
                 0x0400 => SubLanguage::Standard,
@@ -357,7 +357,7 @@ impl SubLanguage {
                 0x1000 => SubLanguage::Switzerland,
                 0x1400 => SubLanguage::Luxembourg,
                 0x1800 => SubLanguage::Monaco,
-                n      => SubLanguage::Other(n)
+                n      => SubLanguage::Other(n),
             },
             PrimaryLanguage::German => match raw & SUB_LANGUAGE_MASK {
                 0x0400 => SubLanguage::Standard,
@@ -365,42 +365,42 @@ impl SubLanguage {
                 0x0C00 => SubLanguage::Austria,
                 0x1000 => SubLanguage::Luxembourg,
                 0x1400 => SubLanguage::Liechtenstein,
-                n      => SubLanguage::Other(n)
+                n      => SubLanguage::Other(n),
             },
             PrimaryLanguage::Italian => match raw & SUB_LANGUAGE_MASK {
                 0x0400 => SubLanguage::Standard,
                 0x0800 => SubLanguage::Switzerland,
-                n      => SubLanguage::Other(n)
+                n      => SubLanguage::Other(n),
             },
             PrimaryLanguage::Korean => match raw & SUB_LANGUAGE_MASK {
                 0x0400 => SubLanguage::Standard,
                 0x0800 => SubLanguage::Johab,
-                n      => SubLanguage::Other(n)
+                n      => SubLanguage::Other(n),
             },
             PrimaryLanguage::Lithuanian => match raw & SUB_LANGUAGE_MASK {
                 0x0400 => SubLanguage::Standard,
                 0x0800 => SubLanguage::Classic,
-                n      => SubLanguage::Other(n)
+                n      => SubLanguage::Other(n),
             },
             PrimaryLanguage::Malay => match raw & SUB_LANGUAGE_MASK {
                 0x0400 => SubLanguage::Malaysia,
                 0x0800 => SubLanguage::BruneiDarussalam,
-                n      => SubLanguage::Other(n)
+                n      => SubLanguage::Other(n),
             },
             PrimaryLanguage::Norwegian => match raw & SUB_LANGUAGE_MASK {
                 0x0400 => SubLanguage::Bokmal,
                 0x0800 => SubLanguage::Nynorsk,
-                n      => SubLanguage::Other(n)
+                n      => SubLanguage::Other(n),
             },
             PrimaryLanguage::Portuguese => match raw & SUB_LANGUAGE_MASK {
                 0x0400 => SubLanguage::Brazil,
                 0x0800 => SubLanguage::Standard,
-                n      => SubLanguage::Other(n)
+                n      => SubLanguage::Other(n),
             },
             PrimaryLanguage::Serbian => match raw & SUB_LANGUAGE_MASK {
                 0x0C00 => SubLanguage::Cyrillic,
                 0x0800 => SubLanguage::Latin,
-                n      => SubLanguage::Other(n)
+                n      => SubLanguage::Other(n),
             },
             PrimaryLanguage::Spanish => match raw & SUB_LANGUAGE_MASK {
                 0x0400 => SubLanguage::Traditional,
@@ -423,22 +423,22 @@ impl SubLanguage {
                 0x4800 => SubLanguage::Honduras,
                 0x4C00 => SubLanguage::Nicaragua,
                 0x5000 => SubLanguage::PuertoRico,
-                n      => SubLanguage::Other(n)
+                n      => SubLanguage::Other(n),
             },
             PrimaryLanguage::Swedish => match raw & SUB_LANGUAGE_MASK {
                 0x0400 => SubLanguage::Standard,
                 0x0800 => SubLanguage::Finland,
-                n      => SubLanguage::Other(n)
+                n      => SubLanguage::Other(n),
             },
             PrimaryLanguage::Urdu => match raw & SUB_LANGUAGE_MASK {
                 0x0400 => SubLanguage::Pakistan,
                 0x0800 => SubLanguage::India,
-                n      => SubLanguage::Other(n)
+                n      => SubLanguage::Other(n),
             },
             PrimaryLanguage::Uzbek => match raw & SUB_LANGUAGE_MASK {
                 0x0400 => SubLanguage::Latin,
                 0x0800 => SubLanguage::Cyrillic,
-                n      => SubLanguage::Other(n)
+                n      => SubLanguage::Other(n),
             },
             PrimaryLanguage::HID => match raw & SUB_LANGUAGE_MASK {
                 0x0400 => SubLanguage::UsageDataDescriptor,
@@ -446,10 +446,10 @@ impl SubLanguage {
                 0xF400 => SubLanguage::VendorDefined2,
                 0xF800 => SubLanguage::VendorDefined3,
                 0xFC00 => SubLanguage::VendorDefined4,
-                n      => SubLanguage::Other(n)
+                n      => SubLanguage::Other(n),
             },
             PrimaryLanguage::Other(_) => SubLanguage::Other(raw & SUB_LANGUAGE_MASK),
-            _ => SubLanguage::Standard
+            _ => SubLanguage::Standard,
         }
     }
 }

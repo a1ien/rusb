@@ -17,7 +17,7 @@ pub enum Speed {
     High,
 
     /// The device is operating at super speed (5000Mbps).
-    Super
+    Super,
 }
 
 #[doc(hidden)]
@@ -28,7 +28,7 @@ pub fn speed_from_libusb(n: c_int) -> Speed {
         LIBUSB_SPEED_FULL  => Speed::Full,
         LIBUSB_SPEED_LOW   => Speed::Low,
 
-        LIBUSB_SPEED_UNKNOWN | _ => Speed::Unknown
+        LIBUSB_SPEED_UNKNOWN | _ => Speed::Unknown,
     }
 }
 
@@ -39,7 +39,7 @@ pub enum Direction {
     In,
 
     /// Direction for write (host to device) transfers.
-    Out
+    Out,
 }
 
 /// An endpoint's transfer type.
@@ -55,7 +55,7 @@ pub enum TransferType {
     Bulk,
 
     /// Interrupt endpoint.
-    Interrupt
+    Interrupt,
 }
 
 
@@ -72,7 +72,7 @@ pub enum SyncType {
     Adaptive,
 
     /// Synchronous.
-    Synchronous
+    Synchronous,
 }
 
 
@@ -89,7 +89,7 @@ pub enum UsageType {
     FeedbackData,
 
     /// Reserved.
-    Reserved
+    Reserved,
 }
 
 
