@@ -1,4 +1,5 @@
-use ::libc::{c_int};
+use libc::c_int;
+use libusb::*;
 
 /// Device speeds. Indicates the speed at which a device is operating.
 #[derive(Debug,PartialEq,Eq,Clone,Copy,Hash)]
@@ -22,12 +23,12 @@ pub enum Speed {
 #[doc(hidden)]
 pub fn speed_from_libusb(n: c_int) -> Speed {
     match n {
-        ::libusb::LIBUSB_SPEED_SUPER => Speed::Super,
-        ::libusb::LIBUSB_SPEED_HIGH  => Speed::High,
-        ::libusb::LIBUSB_SPEED_FULL  => Speed::Full,
-        ::libusb::LIBUSB_SPEED_LOW   => Speed::Low,
+        LIBUSB_SPEED_SUPER => Speed::Super,
+        LIBUSB_SPEED_HIGH  => Speed::High,
+        LIBUSB_SPEED_FULL  => Speed::Full,
+        LIBUSB_SPEED_LOW   => Speed::Low,
 
-        ::libusb::LIBUSB_SPEED_UNKNOWN | _ => Speed::Unknown
+        LIBUSB_SPEED_UNKNOWN | _ => Speed::Unknown
     }
 }
 
@@ -197,22 +198,22 @@ impl Version {
 /// ```
 pub fn request_type(direction: Direction, request_type: RequestType, recipient: Recipient) -> u8 {
     let mut value: u8 = match direction {
-        Direction::Out => ::libusb::LIBUSB_ENDPOINT_OUT,
-        Direction::In  => ::libusb::LIBUSB_ENDPOINT_IN,
+        Direction::Out => LIBUSB_ENDPOINT_OUT,
+        Direction::In  => LIBUSB_ENDPOINT_IN,
     };
 
     value |= match request_type {
-        RequestType::Standard => ::libusb::LIBUSB_REQUEST_TYPE_STANDARD,
-        RequestType::Class    => ::libusb::LIBUSB_REQUEST_TYPE_CLASS,
-        RequestType::Vendor   => ::libusb::LIBUSB_REQUEST_TYPE_VENDOR,
-        RequestType::Reserved => ::libusb::LIBUSB_REQUEST_TYPE_RESERVED,
+        RequestType::Standard => LIBUSB_REQUEST_TYPE_STANDARD,
+        RequestType::Class    => LIBUSB_REQUEST_TYPE_CLASS,
+        RequestType::Vendor   => LIBUSB_REQUEST_TYPE_VENDOR,
+        RequestType::Reserved => LIBUSB_REQUEST_TYPE_RESERVED,
     };
 
     value |= match recipient {
-        Recipient::Device    => ::libusb::LIBUSB_RECIPIENT_DEVICE,
-        Recipient::Interface => ::libusb::LIBUSB_RECIPIENT_INTERFACE,
-        Recipient::Endpoint  => ::libusb::LIBUSB_RECIPIENT_ENDPOINT,
-        Recipient::Other     => ::libusb::LIBUSB_RECIPIENT_OTHER,
+        Recipient::Device    => LIBUSB_RECIPIENT_DEVICE,
+        Recipient::Interface => LIBUSB_RECIPIENT_INTERFACE,
+        Recipient::Endpoint  => LIBUSB_RECIPIENT_ENDPOINT,
+        Recipient::Other     => LIBUSB_RECIPIENT_OTHER,
     };
 
     value

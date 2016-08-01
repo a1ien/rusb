@@ -1,10 +1,12 @@
 use std::fmt;
 
-use ::fields::{Direction,TransferType,SyncType,UsageType};
+use libusb::*;
+
+use fields::{Direction, TransferType, SyncType, UsageType};
 
 /// Describes an endpoint.
 pub struct EndpointDescriptor<'a> {
-    descriptor: &'a ::libusb::libusb_endpoint_descriptor,
+    descriptor: &'a libusb_endpoint_descriptor,
 }
 
 impl<'a> EndpointDescriptor<'a> {
@@ -20,19 +22,19 @@ impl<'a> EndpointDescriptor<'a> {
 
     /// Returns the endpoint's direction.
     pub fn direction(&self) -> Direction {
-        match self.descriptor.bEndpointAddress & ::libusb::LIBUSB_ENDPOINT_DIR_MASK {
-            ::libusb::LIBUSB_ENDPOINT_OUT    => Direction::Out,
-            ::libusb::LIBUSB_ENDPOINT_IN | _ => Direction::In
+        match self.descriptor.bEndpointAddress & LIBUSB_ENDPOINT_DIR_MASK {
+            LIBUSB_ENDPOINT_OUT    => Direction::Out,
+            LIBUSB_ENDPOINT_IN | _ => Direction::In
         }
     }
 
     /// Returns the endpoint's transfer type.
     pub fn transfer_type(&self) -> TransferType {
-        match self.descriptor.bmAttributes & ::libusb::LIBUSB_TRANSFER_TYPE_MASK {
-            ::libusb::LIBUSB_TRANSFER_TYPE_CONTROL       => TransferType::Control,
-            ::libusb::LIBUSB_TRANSFER_TYPE_ISOCHRONOUS   => TransferType::Isochronous,
-            ::libusb::LIBUSB_TRANSFER_TYPE_BULK          => TransferType::Bulk,
-            ::libusb::LIBUSB_TRANSFER_TYPE_INTERRUPT | _ => TransferType::Interrupt
+        match self.descriptor.bmAttributes & LIBUSB_TRANSFER_TYPE_MASK {
+            LIBUSB_TRANSFER_TYPE_CONTROL       => TransferType::Control,
+            LIBUSB_TRANSFER_TYPE_ISOCHRONOUS   => TransferType::Isochronous,
+            LIBUSB_TRANSFER_TYPE_BULK          => TransferType::Bulk,
+            LIBUSB_TRANSFER_TYPE_INTERRUPT | _ => TransferType::Interrupt
         }
     }
 
@@ -40,11 +42,11 @@ impl<'a> EndpointDescriptor<'a> {
     ///
     /// The return value of this method is only valid for isochronous endpoints.
     pub fn sync_type(&self) -> SyncType {
-        match (self.descriptor.bmAttributes & ::libusb::LIBUSB_ISO_SYNC_TYPE_MASK) >> 2 {
-            ::libusb::LIBUSB_ISO_SYNC_TYPE_NONE     => SyncType::NoSync,
-            ::libusb::LIBUSB_ISO_SYNC_TYPE_ASYNC    => SyncType::Asynchronous,
-            ::libusb::LIBUSB_ISO_SYNC_TYPE_ADAPTIVE => SyncType::Adaptive,
-            ::libusb::LIBUSB_ISO_SYNC_TYPE_SYNC | _ => SyncType::Synchronous
+        match (self.descriptor.bmAttributes & LIBUSB_ISO_SYNC_TYPE_MASK) >> 2 {
+            LIBUSB_ISO_SYNC_TYPE_NONE     => SyncType::NoSync,
+            LIBUSB_ISO_SYNC_TYPE_ASYNC    => SyncType::Asynchronous,
+            LIBUSB_ISO_SYNC_TYPE_ADAPTIVE => SyncType::Adaptive,
+            LIBUSB_ISO_SYNC_TYPE_SYNC | _ => SyncType::Synchronous
         }
     }
 
@@ -52,11 +54,11 @@ impl<'a> EndpointDescriptor<'a> {
     ///
     /// The return value of this method is only valid for isochronous endpoints.
     pub fn usage_type(&self) -> UsageType {
-        match (self.descriptor.bmAttributes & ::libusb::LIBUSB_ISO_USAGE_TYPE_MASK) >> 4 {
-            ::libusb::LIBUSB_ISO_USAGE_TYPE_DATA     => UsageType::Data,
-            ::libusb::LIBUSB_ISO_USAGE_TYPE_FEEDBACK => UsageType::Feedback,
-            ::libusb::LIBUSB_ISO_USAGE_TYPE_IMPLICIT => UsageType::FeedbackData,
-            _                                        => UsageType::Reserved
+        match (self.descriptor.bmAttributes & LIBUSB_ISO_USAGE_TYPE_MASK) >> 4 {
+            LIBUSB_ISO_USAGE_TYPE_DATA     => UsageType::Data,
+            LIBUSB_ISO_USAGE_TYPE_FEEDBACK => UsageType::Feedback,
+            LIBUSB_ISO_USAGE_TYPE_IMPLICIT => UsageType::FeedbackData,
+            _                              => UsageType::Reserved
         }
     }
 
@@ -87,7 +89,7 @@ impl<'a> fmt::Debug for EndpointDescriptor<'a> {
 }
 
 #[doc(hidden)]
-pub fn from_libusb(endpoint: &::libusb::libusb_endpoint_descriptor) -> EndpointDescriptor {
+pub fn from_libusb(endpoint: &libusb_endpoint_descriptor) -> EndpointDescriptor {
     EndpointDescriptor { descriptor: endpoint }
 }
 

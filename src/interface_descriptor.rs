@@ -1,15 +1,16 @@
 use std::fmt;
 use std::slice;
 
-use ::endpoint_descriptor::EndpointDescriptor;
+use libusb::*;
 
+use endpoint_descriptor::{self, EndpointDescriptor};
 
 /// A device interface.
 ///
 /// An interface can have several descriptors, each describing an alternate setting of the
 /// interface.
 pub struct Interface<'a> {
-    descriptors: &'a [::libusb::libusb_interface_descriptor],
+    descriptors: &'a [libusb_interface_descriptor],
 }
 
 impl<'a> Interface<'a> {
@@ -28,7 +29,7 @@ impl<'a> Interface<'a> {
 
 /// Iterator over an interface's descriptors.
 pub struct InterfaceDescriptors<'a> {
-    iter: slice::Iter<'a, ::libusb::libusb_interface_descriptor>,
+    iter: slice::Iter<'a, libusb_interface_descriptor>,
 }
 
 impl<'a> Iterator for InterfaceDescriptors<'a> {
@@ -48,7 +49,7 @@ impl<'a> Iterator for InterfaceDescriptors<'a> {
 
 /// Describes an alternate setting for an interface.
 pub struct InterfaceDescriptor<'a> {
-    descriptor: &'a ::libusb::libusb_interface_descriptor,
+    descriptor: &'a libusb_interface_descriptor,
 }
 
 impl<'a> InterfaceDescriptor<'a> {
@@ -123,7 +124,7 @@ impl<'a> fmt::Debug for InterfaceDescriptor<'a> {
 
 /// Iterator over an interface's endpoint descriptors.
 pub struct EndpointDescriptors<'a> {
-    iter: slice::Iter<'a, ::libusb::libusb_endpoint_descriptor>,
+    iter: slice::Iter<'a, libusb_endpoint_descriptor>,
 }
 
 impl<'a> Iterator for EndpointDescriptors<'a> {
@@ -131,7 +132,7 @@ impl<'a> Iterator for EndpointDescriptors<'a> {
 
     fn next(&mut self) -> Option<EndpointDescriptor<'a>> {
         self.iter.next().map(|endpoint| {
-            ::endpoint_descriptor::from_libusb(endpoint)
+            endpoint_descriptor::from_libusb(endpoint)
         })
     }
 
@@ -142,7 +143,7 @@ impl<'a> Iterator for EndpointDescriptors<'a> {
 
 
 #[doc(hidden)]
-pub unsafe fn from_libusb(interface: &::libusb::libusb_interface) -> Interface {
+pub unsafe fn from_libusb(interface: &libusb_interface) -> Interface {
     let descriptors = slice::from_raw_parts(interface.altsetting, interface.num_altsetting as usize);
     debug_assert!(descriptors.len() > 0);
 

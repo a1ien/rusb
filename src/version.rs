@@ -3,9 +3,11 @@ use std::fmt;
 use std::mem;
 use std::str;
 
+use libusb::*;
+
 /// A structure that describes the version of the underlying `libusb` library.
 pub struct LibraryVersion {
-    inner: &'static ::libusb::libusb_version,
+    inner: &'static libusb_version,
 }
 
 impl LibraryVersion {
@@ -65,8 +67,8 @@ impl fmt::Debug for LibraryVersion {
 
 /// Returns a structure with the version of the running libusb library.
 pub fn version() -> LibraryVersion {
-    let version: &'static ::libusb::libusb_version = unsafe {
-        mem::transmute(::libusb::libusb_get_version())
+    let version: &'static libusb_version = unsafe {
+        mem::transmute(libusb_get_version())
     };
 
     LibraryVersion { inner: version }

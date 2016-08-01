@@ -69,7 +69,7 @@ macro_rules! interface_descriptor {
                 extra:              $crate::test_helpers::ptr::null(),
                 extra_length:       0
             };
-            
+
             // leak the Vec so the returned pointer remains valid
             ::std::mem::forget(endpoints);
             r
@@ -87,7 +87,7 @@ macro_rules! interface {
                 altsetting:     descriptors.as_ptr(),
                 num_altsetting: descriptors.len() as ::libc::c_int
             };
-            
+
             // leak the Vec so the returned pointer remains valid
             ::std::mem::forget(descriptors);
             r
@@ -131,7 +131,7 @@ macro_rules! config_descriptor {
                 extra:               $crate::test_helpers::ptr::null(),
                 extra_length:        0
             };
-            
+
             // leak the Vec so the returned pointer remains valid
             ::std::mem::forget(interfaces);
             r

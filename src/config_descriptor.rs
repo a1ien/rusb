@@ -2,18 +2,19 @@ use std::fmt;
 use std::mem;
 use std::slice;
 
-use ::interface_descriptor::Interface;
+use libusb::*;
 
+use interface_descriptor::{self, Interface};
 
 /// Describes a configuration.
 pub struct ConfigDescriptor {
-    descriptor: *const ::libusb::libusb_config_descriptor,
+    descriptor: *const libusb_config_descriptor,
 }
 
 impl Drop for ConfigDescriptor {
     fn drop(&mut self) {
         unsafe {
-            ::libusb::libusb_free_config_descriptor(self.descriptor);
+            libusb_free_config_descriptor(self.descriptor);
         }
     }
 }
@@ -84,7 +85,7 @@ impl fmt::Debug for ConfigDescriptor {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> Result<(), fmt::Error> {
         let mut debug = fmt.debug_struct("ConfigDescriptor");
 
-        let descriptor: &::libusb::libusb_config_descriptor = unsafe {
+        let descriptor: &libusb_config_descriptor = unsafe {
             mem::transmute(self.descriptor)
         };
 
@@ -103,7 +104,7 @@ impl fmt::Debug for ConfigDescriptor {
 
 /// Iterator over a configuration's interfaces.
 pub struct Interfaces<'a> {
-    iter: slice::Iter<'a, ::libusb::libusb_interface>,
+    iter: slice::Iter<'a, libusb_interface>,
 }
 
 impl<'a> Iterator for Interfaces<'a> {
@@ -111,7 +112,7 @@ impl<'a> Iterator for Interfaces<'a> {
 
     fn next(&mut self) -> Option<Interface<'a>> {
         self.iter.next().map(|interface| {
-            unsafe { ::interface_descriptor::from_libusb(interface) }
+            unsafe { interface_descriptor::from_libusb(interface) }
         })
     }
 
@@ -122,7 +123,7 @@ impl<'a> Iterator for Interfaces<'a> {
 
 
 #[doc(hidden)]
-pub unsafe fn from_libusb(config: *const ::libusb::libusb_config_descriptor) -> ConfigDescriptor {
+pub unsafe fn from_libusb(config: *const libusb_config_descriptor) -> ConfigDescriptor {
     ConfigDescriptor { descriptor: config }
 }
 

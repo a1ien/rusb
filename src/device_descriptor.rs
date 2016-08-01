@@ -1,10 +1,12 @@
 use std::fmt;
 
-use ::fields::Version;
+use libusb::*;
+
+use fields::Version;
 
 /// Describes a device.
 pub struct DeviceDescriptor {
-    descriptor: ::libusb::libusb_device_descriptor,
+    descriptor: libusb_device_descriptor,
 }
 
 impl DeviceDescriptor {
@@ -102,21 +104,23 @@ impl fmt::Debug for DeviceDescriptor {
 }
 
 #[doc(hidden)]
-pub fn from_libusb(device: ::libusb::libusb_device_descriptor) -> DeviceDescriptor {
+pub fn from_libusb(device: libusb_device_descriptor) -> DeviceDescriptor {
     DeviceDescriptor { descriptor: device }
 }
 
 
 #[cfg(test)]
 mod test {
+    use fields::Version;
+
     #[test]
     fn it_has_usb_version() {
-        assert_eq!(::Version::from_bcd(0x1234), super::from_libusb(device_descriptor!(bcdUSB: 0x1234)).usb_version());
+        assert_eq!(Version::from_bcd(0x1234), super::from_libusb(device_descriptor!(bcdUSB: 0x1234)).usb_version());
     }
 
     #[test]
     fn it_has_device_version() {
-        assert_eq!(::Version::from_bcd(0x1234), super::from_libusb(device_descriptor!(bcdDevice: 0x1234)).device_version());
+        assert_eq!(Version::from_bcd(0x1234), super::from_libusb(device_descriptor!(bcdDevice: 0x1234)).device_version());
     }
 
     #[test]

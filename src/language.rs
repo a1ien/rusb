@@ -457,8 +457,8 @@ impl SubLanguage {
 
 #[cfg(test)]
 mod test {
-    use super::{PrimaryLanguage,SubLanguage};
-    use super::{PRIMARY_LANGUAGE_MASK,SUB_LANGUAGE_MASK};
+    use super::{PrimaryLanguage, SubLanguage};
+    use super::{PRIMARY_LANGUAGE_MASK, SUB_LANGUAGE_MASK};
 
     // language ids defined in http://www.usb.org/developers/docs/USB_LANGIDs.pdf
     const AFRIKAANS:                  u16 = 0x0436;
@@ -613,1221 +613,1221 @@ mod test {
 
     #[test]
     fn it_recognizes_afrikaans_as_afrikaans_language() {
-        assert_eq!(::language::from_lang_id(AFRIKAANS).primary_language(), PrimaryLanguage::Afrikaans);
+        assert_eq!(super::from_lang_id(AFRIKAANS).primary_language(), PrimaryLanguage::Afrikaans);
     }
 
     #[test]
     fn it_recognizes_albanian_as_albanian_language() {
-        assert_eq!(::language::from_lang_id(ALBANIAN).primary_language(), PrimaryLanguage::Albanian);
+        assert_eq!(super::from_lang_id(ALBANIAN).primary_language(), PrimaryLanguage::Albanian);
     }
 
     #[test]
     fn it_recognizes_arabic_from_saudi_arabia_as_arabic_language() {
-        assert_eq!(::language::from_lang_id(ARABIC_SAUDI_ARABIA).primary_language(), PrimaryLanguage::Arabic);
+        assert_eq!(super::from_lang_id(ARABIC_SAUDI_ARABIA).primary_language(), PrimaryLanguage::Arabic);
     }
 
     #[test]
     fn it_recognizes_arabic_from_saudi_arabia_as_saudi_arabia_sub_language() {
-        assert_eq!(::language::from_lang_id(ARABIC_SAUDI_ARABIA).sub_language(), SubLanguage::SaudiArabia);
+        assert_eq!(super::from_lang_id(ARABIC_SAUDI_ARABIA).sub_language(), SubLanguage::SaudiArabia);
     }
 
     #[test]
     fn it_recognizes_arabic_from_iraq_as_arabic_language() {
-        assert_eq!(::language::from_lang_id(ARABIC_IRAQ).primary_language(), PrimaryLanguage::Arabic);
+        assert_eq!(super::from_lang_id(ARABIC_IRAQ).primary_language(), PrimaryLanguage::Arabic);
     }
 
     #[test]
     fn it_recognizes_arabic_from_iraq_as_iraq_sub_language() {
-        assert_eq!(::language::from_lang_id(ARABIC_IRAQ).sub_language(), SubLanguage::Iraq);
+        assert_eq!(super::from_lang_id(ARABIC_IRAQ).sub_language(), SubLanguage::Iraq);
     }
 
     #[test]
     fn it_recognizes_arabic_from_egypt_as_arabic_language() {
-        assert_eq!(::language::from_lang_id(ARABIC_EGYPT).primary_language(), PrimaryLanguage::Arabic);
+        assert_eq!(super::from_lang_id(ARABIC_EGYPT).primary_language(), PrimaryLanguage::Arabic);
     }
 
     #[test]
     fn it_recognizes_arabic_from_egypt_as_egypt_sub_language() {
-        assert_eq!(::language::from_lang_id(ARABIC_EGYPT).sub_language(), SubLanguage::Egypt);
+        assert_eq!(super::from_lang_id(ARABIC_EGYPT).sub_language(), SubLanguage::Egypt);
     }
 
     #[test]
     fn it_recognizes_arabic_from_libya_as_arabic_language() {
-        assert_eq!(::language::from_lang_id(ARABIC_LIBYA).primary_language(), PrimaryLanguage::Arabic);
+        assert_eq!(super::from_lang_id(ARABIC_LIBYA).primary_language(), PrimaryLanguage::Arabic);
     }
 
     #[test]
     fn it_recognizes_arabic_from_libya_as_libya_sub_language() {
-        assert_eq!(::language::from_lang_id(ARABIC_LIBYA).sub_language(), SubLanguage::Libya);
+        assert_eq!(super::from_lang_id(ARABIC_LIBYA).sub_language(), SubLanguage::Libya);
     }
 
     #[test]
     fn it_recognizes_arabic_from_algeria_as_arabic_language() {
-        assert_eq!(::language::from_lang_id(ARABIC_ALGERIA).primary_language(), PrimaryLanguage::Arabic);
+        assert_eq!(super::from_lang_id(ARABIC_ALGERIA).primary_language(), PrimaryLanguage::Arabic);
     }
 
     #[test]
     fn it_recognizes_arabic_from_algeria_as_algeria_sub_language() {
-        assert_eq!(::language::from_lang_id(ARABIC_ALGERIA).sub_language(), SubLanguage::Algeria);
+        assert_eq!(super::from_lang_id(ARABIC_ALGERIA).sub_language(), SubLanguage::Algeria);
     }
 
     #[test]
     fn it_recognizes_arabic_from_morocco_as_arabic_language() {
-        assert_eq!(::language::from_lang_id(ARABIC_MOROCCO).primary_language(), PrimaryLanguage::Arabic);
+        assert_eq!(super::from_lang_id(ARABIC_MOROCCO).primary_language(), PrimaryLanguage::Arabic);
     }
 
     #[test]
     fn it_recognizes_arabic_from_morocco_as_morocco_sub_language() {
-        assert_eq!(::language::from_lang_id(ARABIC_MOROCCO).sub_language(), SubLanguage::Morocco);
+        assert_eq!(super::from_lang_id(ARABIC_MOROCCO).sub_language(), SubLanguage::Morocco);
     }
 
     #[test]
     fn it_recognizes_arabic_from_tunisia_as_arabic_language() {
-        assert_eq!(::language::from_lang_id(ARABIC_TUNISIA).primary_language(), PrimaryLanguage::Arabic);
+        assert_eq!(super::from_lang_id(ARABIC_TUNISIA).primary_language(), PrimaryLanguage::Arabic);
     }
 
     #[test]
     fn it_recognizes_arabic_from_tunisia_as_tunisia_sub_language() {
-        assert_eq!(::language::from_lang_id(ARABIC_TUNISIA).sub_language(), SubLanguage::Tunisia);
+        assert_eq!(super::from_lang_id(ARABIC_TUNISIA).sub_language(), SubLanguage::Tunisia);
     }
 
     #[test]
     fn it_recognizes_arabic_from_oman_as_arabic_language() {
-        assert_eq!(::language::from_lang_id(ARABIC_OMAN).primary_language(), PrimaryLanguage::Arabic);
+        assert_eq!(super::from_lang_id(ARABIC_OMAN).primary_language(), PrimaryLanguage::Arabic);
     }
 
     #[test]
     fn it_recognizes_arabic_from_oman_as_oman_sub_language() {
-        assert_eq!(::language::from_lang_id(ARABIC_OMAN).sub_language(), SubLanguage::Oman);
+        assert_eq!(super::from_lang_id(ARABIC_OMAN).sub_language(), SubLanguage::Oman);
     }
 
     #[test]
     fn it_recognizes_arabic_from_yemen_as_arabic_language() {
-        assert_eq!(::language::from_lang_id(ARABIC_YEMEN).primary_language(), PrimaryLanguage::Arabic);
+        assert_eq!(super::from_lang_id(ARABIC_YEMEN).primary_language(), PrimaryLanguage::Arabic);
     }
 
     #[test]
     fn it_recognizes_arabic_from_yemen_as_yemen_sub_language() {
-        assert_eq!(::language::from_lang_id(ARABIC_YEMEN).sub_language(), SubLanguage::Yemen);
+        assert_eq!(super::from_lang_id(ARABIC_YEMEN).sub_language(), SubLanguage::Yemen);
     }
 
     #[test]
     fn it_recognizes_arabic_from_syria_as_arabic_language() {
-        assert_eq!(::language::from_lang_id(ARABIC_SYRIA).primary_language(), PrimaryLanguage::Arabic);
+        assert_eq!(super::from_lang_id(ARABIC_SYRIA).primary_language(), PrimaryLanguage::Arabic);
     }
 
     #[test]
     fn it_recognizes_arabic_from_syria_as_syria_sub_language() {
-        assert_eq!(::language::from_lang_id(ARABIC_SYRIA).sub_language(), SubLanguage::Syria);
+        assert_eq!(super::from_lang_id(ARABIC_SYRIA).sub_language(), SubLanguage::Syria);
     }
 
     #[test]
     fn it_recognizes_arabic_from_jordan_as_arabic_language() {
-        assert_eq!(::language::from_lang_id(ARABIC_JORDAN).primary_language(), PrimaryLanguage::Arabic);
+        assert_eq!(super::from_lang_id(ARABIC_JORDAN).primary_language(), PrimaryLanguage::Arabic);
     }
 
     #[test]
     fn it_recognizes_arabic_from_jordan_as_jordan_sub_language() {
-        assert_eq!(::language::from_lang_id(ARABIC_JORDAN).sub_language(), SubLanguage::Jordan);
+        assert_eq!(super::from_lang_id(ARABIC_JORDAN).sub_language(), SubLanguage::Jordan);
     }
 
     #[test]
     fn it_recognizes_arabic_from_lebanon_as_arabic_language() {
-        assert_eq!(::language::from_lang_id(ARABIC_LEBANON).primary_language(), PrimaryLanguage::Arabic);
+        assert_eq!(super::from_lang_id(ARABIC_LEBANON).primary_language(), PrimaryLanguage::Arabic);
     }
 
     #[test]
     fn it_recognizes_arabic_from_lebanon_as_lebanon_sub_language() {
-        assert_eq!(::language::from_lang_id(ARABIC_LEBANON).sub_language(), SubLanguage::Lebanon);
+        assert_eq!(super::from_lang_id(ARABIC_LEBANON).sub_language(), SubLanguage::Lebanon);
     }
 
     #[test]
     fn it_recognizes_arabic_from_kuwait_as_arabic_language() {
-        assert_eq!(::language::from_lang_id(ARABIC_KUWAIT).primary_language(), PrimaryLanguage::Arabic);
+        assert_eq!(super::from_lang_id(ARABIC_KUWAIT).primary_language(), PrimaryLanguage::Arabic);
     }
 
     #[test]
     fn it_recognizes_arabic_from_kuwait_as_kuwait_sub_language() {
-        assert_eq!(::language::from_lang_id(ARABIC_KUWAIT).sub_language(), SubLanguage::Kuwait);
+        assert_eq!(super::from_lang_id(ARABIC_KUWAIT).sub_language(), SubLanguage::Kuwait);
     }
 
     #[test]
     fn it_recognizes_arabic_from_uae_as_arabic_language() {
-        assert_eq!(::language::from_lang_id(ARABIC_UAE).primary_language(), PrimaryLanguage::Arabic);
+        assert_eq!(super::from_lang_id(ARABIC_UAE).primary_language(), PrimaryLanguage::Arabic);
     }
 
     #[test]
     fn it_recognizes_arabic_from_uae_as_uae_sub_language() {
-        assert_eq!(::language::from_lang_id(ARABIC_UAE).sub_language(), SubLanguage::UnitedArabEmirates);
+        assert_eq!(super::from_lang_id(ARABIC_UAE).sub_language(), SubLanguage::UnitedArabEmirates);
     }
 
     #[test]
     fn it_recognizes_arabic_from_bahrain_as_arabic_language() {
-        assert_eq!(::language::from_lang_id(ARABIC_BAHRAIN).primary_language(), PrimaryLanguage::Arabic);
+        assert_eq!(super::from_lang_id(ARABIC_BAHRAIN).primary_language(), PrimaryLanguage::Arabic);
     }
 
     #[test]
     fn it_recognizes_arabic_from_bahrain_as_bahrain_sub_language() {
-        assert_eq!(::language::from_lang_id(ARABIC_BAHRAIN).sub_language(), SubLanguage::Bahrain);
+        assert_eq!(super::from_lang_id(ARABIC_BAHRAIN).sub_language(), SubLanguage::Bahrain);
     }
 
     #[test]
     fn it_recognizes_arabic_from_qatar_as_arabic_language() {
-        assert_eq!(::language::from_lang_id(ARABIC_QATAR).primary_language(), PrimaryLanguage::Arabic);
+        assert_eq!(super::from_lang_id(ARABIC_QATAR).primary_language(), PrimaryLanguage::Arabic);
     }
 
     #[test]
     fn it_recognizes_arabic_from_qatar_as_qatar_sub_language() {
-        assert_eq!(::language::from_lang_id(ARABIC_QATAR).sub_language(), SubLanguage::Qatar);
+        assert_eq!(super::from_lang_id(ARABIC_QATAR).sub_language(), SubLanguage::Qatar);
     }
 
     #[test]
     fn it_recognizes_armenian_as_armenian_language() {
-        assert_eq!(::language::from_lang_id(ARMENIAN).primary_language(), PrimaryLanguage::Armenian);
+        assert_eq!(super::from_lang_id(ARMENIAN).primary_language(), PrimaryLanguage::Armenian);
     }
 
     #[test]
     fn it_recognizes_assamese_as_assamese_language() {
-        assert_eq!(::language::from_lang_id(ASSAMESE).primary_language(), PrimaryLanguage::Assamese);
+        assert_eq!(super::from_lang_id(ASSAMESE).primary_language(), PrimaryLanguage::Assamese);
     }
 
     #[test]
     fn it_recognizes_azeri_latin_as_azeri_language() {
-        assert_eq!(::language::from_lang_id(AZERI_LATIN).primary_language(), PrimaryLanguage::Azeri);
+        assert_eq!(super::from_lang_id(AZERI_LATIN).primary_language(), PrimaryLanguage::Azeri);
     }
 
     #[test]
     fn it_recognizes_azeri_latin_as_latin_sub_language() {
-        assert_eq!(::language::from_lang_id(AZERI_LATIN).sub_language(), SubLanguage::Latin);
+        assert_eq!(super::from_lang_id(AZERI_LATIN).sub_language(), SubLanguage::Latin);
     }
 
     #[test]
     fn it_recognizes_azeri_cyrillic_as_azeri_language() {
-        assert_eq!(::language::from_lang_id(AZERI_CYRILLIC).primary_language(), PrimaryLanguage::Azeri);
+        assert_eq!(super::from_lang_id(AZERI_CYRILLIC).primary_language(), PrimaryLanguage::Azeri);
     }
 
     #[test]
     fn it_recognizes_azeri_cyrillic_as_cyrillic_sub_language() {
-        assert_eq!(::language::from_lang_id(AZERI_CYRILLIC).sub_language(), SubLanguage::Cyrillic);
+        assert_eq!(super::from_lang_id(AZERI_CYRILLIC).sub_language(), SubLanguage::Cyrillic);
     }
 
     #[test]
     fn it_recognizes_basque_as_basque_language() {
-        assert_eq!(::language::from_lang_id(BASQUE).primary_language(), PrimaryLanguage::Basque);
+        assert_eq!(super::from_lang_id(BASQUE).primary_language(), PrimaryLanguage::Basque);
     }
 
     #[test]
     fn it_recognizes_belarussian_as_belarussian_language() {
-        assert_eq!(::language::from_lang_id(BELARUSSIAN).primary_language(), PrimaryLanguage::Belarussian);
+        assert_eq!(super::from_lang_id(BELARUSSIAN).primary_language(), PrimaryLanguage::Belarussian);
     }
 
     #[test]
     fn it_recognizes_bengali_as_bengali_language() {
-        assert_eq!(::language::from_lang_id(BENGALI).primary_language(), PrimaryLanguage::Bengali);
+        assert_eq!(super::from_lang_id(BENGALI).primary_language(), PrimaryLanguage::Bengali);
     }
 
     #[test]
     fn it_recognizes_bulgarian_as_bulgarian_language() {
-        assert_eq!(::language::from_lang_id(BULGARIAN).primary_language(), PrimaryLanguage::Bulgarian);
+        assert_eq!(super::from_lang_id(BULGARIAN).primary_language(), PrimaryLanguage::Bulgarian);
     }
 
     #[test]
     fn it_recognizes_burmese_as_burmese_language() {
-        assert_eq!(::language::from_lang_id(BURMESE).primary_language(), PrimaryLanguage::Burmese);
+        assert_eq!(super::from_lang_id(BURMESE).primary_language(), PrimaryLanguage::Burmese);
     }
 
     #[test]
     fn it_recognizes_catalan_as_catalan_language() {
-        assert_eq!(::language::from_lang_id(CATALAN).primary_language(), PrimaryLanguage::Catalan);
+        assert_eq!(super::from_lang_id(CATALAN).primary_language(), PrimaryLanguage::Catalan);
     }
 
     #[test]
     fn it_recognizes_chinese_from_taiwan_as_chinese_language() {
-        assert_eq!(::language::from_lang_id(CHINESE_TAIWAN).primary_language(), PrimaryLanguage::Chinese);
+        assert_eq!(super::from_lang_id(CHINESE_TAIWAN).primary_language(), PrimaryLanguage::Chinese);
     }
 
     #[test]
     fn it_recognizes_chinese_from_taiwan_as_taiwan_sub_language() {
-        assert_eq!(::language::from_lang_id(CHINESE_TAIWAN).sub_language(), SubLanguage::Taiwan);
+        assert_eq!(super::from_lang_id(CHINESE_TAIWAN).sub_language(), SubLanguage::Taiwan);
     }
 
     #[test]
     fn it_recognizes_chinese_from_china_as_chinese_language() {
-        assert_eq!(::language::from_lang_id(CHINESE_CHINA).primary_language(), PrimaryLanguage::Chinese);
+        assert_eq!(super::from_lang_id(CHINESE_CHINA).primary_language(), PrimaryLanguage::Chinese);
     }
 
     #[test]
     fn it_recognizes_chinese_from_china_as_china_sub_language() {
-        assert_eq!(::language::from_lang_id(CHINESE_CHINA).sub_language(), SubLanguage::China);
+        assert_eq!(super::from_lang_id(CHINESE_CHINA).sub_language(), SubLanguage::China);
     }
 
     #[test]
     fn it_recognizes_chinese_from_hong_kong_as_chinese_language() {
-        assert_eq!(::language::from_lang_id(CHINESE_HONG_KONG).primary_language(), PrimaryLanguage::Chinese);
+        assert_eq!(super::from_lang_id(CHINESE_HONG_KONG).primary_language(), PrimaryLanguage::Chinese);
     }
 
     #[test]
     fn it_recognizes_chinese_from_hong_kong_as_hong_kong_sub_language() {
-        assert_eq!(::language::from_lang_id(CHINESE_HONG_KONG).sub_language(), SubLanguage::HongKong);
+        assert_eq!(super::from_lang_id(CHINESE_HONG_KONG).sub_language(), SubLanguage::HongKong);
     }
 
     #[test]
     fn it_recognizes_chinese_from_singapore_as_chinese_language() {
-        assert_eq!(::language::from_lang_id(CHINESE_SINGAPORE).primary_language(), PrimaryLanguage::Chinese);
+        assert_eq!(super::from_lang_id(CHINESE_SINGAPORE).primary_language(), PrimaryLanguage::Chinese);
     }
 
     #[test]
     fn it_recognizes_chinese_from_singapore_as_singapore_sub_language() {
-        assert_eq!(::language::from_lang_id(CHINESE_SINGAPORE).sub_language(), SubLanguage::Singapore);
+        assert_eq!(super::from_lang_id(CHINESE_SINGAPORE).sub_language(), SubLanguage::Singapore);
     }
 
     #[test]
     fn it_recognizes_chinese_from_macau_as_chinese_language() {
-        assert_eq!(::language::from_lang_id(CHINESE_MACAU).primary_language(), PrimaryLanguage::Chinese);
+        assert_eq!(super::from_lang_id(CHINESE_MACAU).primary_language(), PrimaryLanguage::Chinese);
     }
 
     #[test]
     fn it_recognizes_chinese_from_macau_as_macau_sub_language() {
-        assert_eq!(::language::from_lang_id(CHINESE_MACAU).sub_language(), SubLanguage::Macau);
+        assert_eq!(super::from_lang_id(CHINESE_MACAU).sub_language(), SubLanguage::Macau);
     }
 
     #[test]
     fn it_recognizes_croatian_as_croatian_language() {
-        assert_eq!(::language::from_lang_id(CROATIAN).primary_language(), PrimaryLanguage::Croatian);
+        assert_eq!(super::from_lang_id(CROATIAN).primary_language(), PrimaryLanguage::Croatian);
     }
 
     #[test]
     fn it_recognizes_czech_as_czech_language() {
-        assert_eq!(::language::from_lang_id(CZECH).primary_language(), PrimaryLanguage::Czech);
+        assert_eq!(super::from_lang_id(CZECH).primary_language(), PrimaryLanguage::Czech);
     }
 
     #[test]
     fn it_recognizes_danish_as_danish_language() {
-        assert_eq!(::language::from_lang_id(DANISH).primary_language(), PrimaryLanguage::Danish);
+        assert_eq!(super::from_lang_id(DANISH).primary_language(), PrimaryLanguage::Danish);
     }
 
     #[test]
     fn it_recognizes_dutch_from_netherlands_as_dutch_language() {
-        assert_eq!(::language::from_lang_id(DUTCH_NETHERLANDS).primary_language(), PrimaryLanguage::Dutch);
+        assert_eq!(super::from_lang_id(DUTCH_NETHERLANDS).primary_language(), PrimaryLanguage::Dutch);
     }
 
     #[test]
     fn it_recognizes_dutch_from_netherlands_as_netherlands_sub_language() {
-        assert_eq!(::language::from_lang_id(DUTCH_NETHERLANDS).sub_language(), SubLanguage::Netherlands);
+        assert_eq!(super::from_lang_id(DUTCH_NETHERLANDS).sub_language(), SubLanguage::Netherlands);
     }
 
     #[test]
     fn it_recognizes_dutch_from_belgium_as_dutch_language() {
-        assert_eq!(::language::from_lang_id(DUTCH_BELGIUM).primary_language(), PrimaryLanguage::Dutch);
+        assert_eq!(super::from_lang_id(DUTCH_BELGIUM).primary_language(), PrimaryLanguage::Dutch);
     }
 
     #[test]
     fn it_recognizes_dutch_from_belgium_as_belgium_sub_language() {
-        assert_eq!(::language::from_lang_id(DUTCH_BELGIUM).sub_language(), SubLanguage::Belgium);
+        assert_eq!(super::from_lang_id(DUTCH_BELGIUM).sub_language(), SubLanguage::Belgium);
     }
 
     #[test]
     fn it_recognizes_english_from_united_states_as_english_language() {
-        assert_eq!(::language::from_lang_id(ENGLISH_UNITED_STATES).primary_language(), PrimaryLanguage::English);
+        assert_eq!(super::from_lang_id(ENGLISH_UNITED_STATES).primary_language(), PrimaryLanguage::English);
     }
 
     #[test]
     fn it_recognizes_english_from_united_states_as_united_states_sub_language() {
-        assert_eq!(::language::from_lang_id(ENGLISH_UNITED_STATES).sub_language(), SubLanguage::UnitedStates);
+        assert_eq!(super::from_lang_id(ENGLISH_UNITED_STATES).sub_language(), SubLanguage::UnitedStates);
     }
 
     #[test]
     fn it_recognizes_english_from_united_kingdom_as_english_language() {
-        assert_eq!(::language::from_lang_id(ENGLISH_UNITED_KINGDOM).primary_language(), PrimaryLanguage::English);
+        assert_eq!(super::from_lang_id(ENGLISH_UNITED_KINGDOM).primary_language(), PrimaryLanguage::English);
     }
 
     #[test]
     fn it_recognizes_english_from_united_kingdom_as_united_kingdom_sub_language() {
-        assert_eq!(::language::from_lang_id(ENGLISH_UNITED_KINGDOM).sub_language(), SubLanguage::UnitedKingdom);
+        assert_eq!(super::from_lang_id(ENGLISH_UNITED_KINGDOM).sub_language(), SubLanguage::UnitedKingdom);
     }
 
     #[test]
     fn it_recognizes_english_from_australia_as_english_language() {
-        assert_eq!(::language::from_lang_id(ENGLISH_AUSTRALIAN).primary_language(), PrimaryLanguage::English);
+        assert_eq!(super::from_lang_id(ENGLISH_AUSTRALIAN).primary_language(), PrimaryLanguage::English);
     }
 
     #[test]
     fn it_recognizes_english_from_australia_as_australia_sub_language() {
-        assert_eq!(::language::from_lang_id(ENGLISH_AUSTRALIAN).sub_language(), SubLanguage::Australia);
+        assert_eq!(super::from_lang_id(ENGLISH_AUSTRALIAN).sub_language(), SubLanguage::Australia);
     }
 
     #[test]
     fn it_recognizes_english_from_canada_as_english_language() {
-        assert_eq!(::language::from_lang_id(ENGLISH_CANADIAN).primary_language(), PrimaryLanguage::English);
+        assert_eq!(super::from_lang_id(ENGLISH_CANADIAN).primary_language(), PrimaryLanguage::English);
     }
 
     #[test]
     fn it_recognizes_english_from_canada_as_canada_sub_language() {
-        assert_eq!(::language::from_lang_id(ENGLISH_CANADIAN).sub_language(), SubLanguage::Canada);
+        assert_eq!(super::from_lang_id(ENGLISH_CANADIAN).sub_language(), SubLanguage::Canada);
     }
 
     #[test]
     fn it_recognizes_english_from_new_zealand_as_english_language() {
-        assert_eq!(::language::from_lang_id(ENGLISH_NEW_ZEALAND).primary_language(), PrimaryLanguage::English);
+        assert_eq!(super::from_lang_id(ENGLISH_NEW_ZEALAND).primary_language(), PrimaryLanguage::English);
     }
 
     #[test]
     fn it_recognizes_english_from_new_zealand_as_new_zealand_language() {
-        assert_eq!(::language::from_lang_id(ENGLISH_NEW_ZEALAND).sub_language(), SubLanguage::NewZealand);
+        assert_eq!(super::from_lang_id(ENGLISH_NEW_ZEALAND).sub_language(), SubLanguage::NewZealand);
     }
 
     #[test]
     fn it_recognizes_english_from_ireland_as_english_language() {
-        assert_eq!(::language::from_lang_id(ENGLISH_IRELAND).primary_language(), PrimaryLanguage::English);
+        assert_eq!(super::from_lang_id(ENGLISH_IRELAND).primary_language(), PrimaryLanguage::English);
     }
 
     #[test]
     fn it_recognizes_english_from_ireland_as_ireland_sub_language() {
-        assert_eq!(::language::from_lang_id(ENGLISH_IRELAND).sub_language(), SubLanguage::Ireland);
+        assert_eq!(super::from_lang_id(ENGLISH_IRELAND).sub_language(), SubLanguage::Ireland);
     }
 
     #[test]
     fn it_recognizes_english_from_south_africa_as_english_language() {
-        assert_eq!(::language::from_lang_id(ENGLISH_SOUTH_AFRICA).primary_language(), PrimaryLanguage::English);
+        assert_eq!(super::from_lang_id(ENGLISH_SOUTH_AFRICA).primary_language(), PrimaryLanguage::English);
     }
 
     #[test]
     fn it_recognizes_english_from_south_africa_as_south_africa_sub_language() {
-        assert_eq!(::language::from_lang_id(ENGLISH_SOUTH_AFRICA).sub_language(), SubLanguage::SouthAfrica);
+        assert_eq!(super::from_lang_id(ENGLISH_SOUTH_AFRICA).sub_language(), SubLanguage::SouthAfrica);
     }
 
     #[test]
     fn it_recognizes_english_from_jamaica_as_english_language() {
-        assert_eq!(::language::from_lang_id(ENGLISH_JAMAICA).primary_language(), PrimaryLanguage::English);
+        assert_eq!(super::from_lang_id(ENGLISH_JAMAICA).primary_language(), PrimaryLanguage::English);
     }
 
     #[test]
     fn it_recognizes_english_from_jamaica_as_jamaica_sub_language() {
-        assert_eq!(::language::from_lang_id(ENGLISH_JAMAICA).sub_language(), SubLanguage::Jamaica);
+        assert_eq!(super::from_lang_id(ENGLISH_JAMAICA).sub_language(), SubLanguage::Jamaica);
     }
 
     #[test]
     fn it_recognizes_english_from_caribbean_as_english_language() {
-        assert_eq!(::language::from_lang_id(ENGLISH_CARIBBEAN).primary_language(), PrimaryLanguage::English);
+        assert_eq!(super::from_lang_id(ENGLISH_CARIBBEAN).primary_language(), PrimaryLanguage::English);
     }
 
     #[test]
     fn it_recognizes_english_from_caribbean_as_caribbean_sub_language() {
-        assert_eq!(::language::from_lang_id(ENGLISH_CARIBBEAN).sub_language(), SubLanguage::Caribbean);
+        assert_eq!(super::from_lang_id(ENGLISH_CARIBBEAN).sub_language(), SubLanguage::Caribbean);
     }
 
     #[test]
     fn it_recognizes_english_from_belize_as_english_language() {
-        assert_eq!(::language::from_lang_id(ENGLISH_BELIZE).primary_language(), PrimaryLanguage::English);
+        assert_eq!(super::from_lang_id(ENGLISH_BELIZE).primary_language(), PrimaryLanguage::English);
     }
 
     #[test]
     fn it_recognizes_english_from_belize_as_belize_sub_language() {
-        assert_eq!(::language::from_lang_id(ENGLISH_BELIZE).sub_language(), SubLanguage::Belize);
+        assert_eq!(super::from_lang_id(ENGLISH_BELIZE).sub_language(), SubLanguage::Belize);
     }
 
     #[test]
     fn it_recognizes_english_from_trinidad_as_english_language() {
-        assert_eq!(::language::from_lang_id(ENGLISH_TRINIDAD).primary_language(), PrimaryLanguage::English);
+        assert_eq!(super::from_lang_id(ENGLISH_TRINIDAD).primary_language(), PrimaryLanguage::English);
     }
 
     #[test]
     fn it_recognizes_english_from_trinidad_as_trinidad_sub_language() {
-        assert_eq!(::language::from_lang_id(ENGLISH_TRINIDAD).sub_language(), SubLanguage::Trinidad);
+        assert_eq!(super::from_lang_id(ENGLISH_TRINIDAD).sub_language(), SubLanguage::Trinidad);
     }
 
     #[test]
     fn it_recognizes_english_from_zimbabwe_as_english_language() {
-        assert_eq!(::language::from_lang_id(ENGLISH_ZIMBABWE).primary_language(), PrimaryLanguage::English);
+        assert_eq!(super::from_lang_id(ENGLISH_ZIMBABWE).primary_language(), PrimaryLanguage::English);
     }
 
     #[test]
     fn it_recognizes_english_from_zimbabwe_as_zimbabwe_sub_language() {
-        assert_eq!(::language::from_lang_id(ENGLISH_ZIMBABWE).sub_language(), SubLanguage::Zimbabwe);
+        assert_eq!(super::from_lang_id(ENGLISH_ZIMBABWE).sub_language(), SubLanguage::Zimbabwe);
     }
 
     #[test]
     fn it_recognizes_english_from_philippines_as_english_language() {
-        assert_eq!(::language::from_lang_id(ENGLISH_PHILIPPINES).primary_language(), PrimaryLanguage::English);
+        assert_eq!(super::from_lang_id(ENGLISH_PHILIPPINES).primary_language(), PrimaryLanguage::English);
     }
 
     #[test]
     fn it_recognizes_english_from_philippines_as_philippines_sub_language() {
-        assert_eq!(::language::from_lang_id(ENGLISH_PHILIPPINES).sub_language(), SubLanguage::Philippines);
+        assert_eq!(super::from_lang_id(ENGLISH_PHILIPPINES).sub_language(), SubLanguage::Philippines);
     }
 
     #[test]
     fn it_recognizes_estonian_as_estonian_language() {
-        assert_eq!(::language::from_lang_id(ESTONIAN).primary_language(), PrimaryLanguage::Estonian);
+        assert_eq!(super::from_lang_id(ESTONIAN).primary_language(), PrimaryLanguage::Estonian);
     }
 
     #[test]
     fn it_recognizes_faeroese_as_faeroese_language() {
-        assert_eq!(::language::from_lang_id(FAEROESE).primary_language(), PrimaryLanguage::Faeroese);
+        assert_eq!(super::from_lang_id(FAEROESE).primary_language(), PrimaryLanguage::Faeroese);
     }
 
     #[test]
     fn it_recognizes_farsi_as_farsi_language() {
-        assert_eq!(::language::from_lang_id(FARSI).primary_language(), PrimaryLanguage::Farsi);
+        assert_eq!(super::from_lang_id(FARSI).primary_language(), PrimaryLanguage::Farsi);
     }
 
     #[test]
     fn it_recognizes_finnish_as_finnish_language() {
-        assert_eq!(::language::from_lang_id(FINNISH).primary_language(), PrimaryLanguage::Finnish);
+        assert_eq!(super::from_lang_id(FINNISH).primary_language(), PrimaryLanguage::Finnish);
     }
 
     #[test]
     fn it_recognizes_french_standard_as_french_language() {
-        assert_eq!(::language::from_lang_id(FRENCH_STANDARD).primary_language(), PrimaryLanguage::French);
+        assert_eq!(super::from_lang_id(FRENCH_STANDARD).primary_language(), PrimaryLanguage::French);
     }
 
     #[test]
     fn it_recognizes_french_standard_as_standard_sub_language() {
-        assert_eq!(::language::from_lang_id(FRENCH_STANDARD).sub_language(), SubLanguage::Standard);
+        assert_eq!(super::from_lang_id(FRENCH_STANDARD).sub_language(), SubLanguage::Standard);
     }
 
     #[test]
     fn it_recognizes_french_from_belgium_as_french_language() {
-        assert_eq!(::language::from_lang_id(FRENCH_BELGIAN).primary_language(), PrimaryLanguage::French);
+        assert_eq!(super::from_lang_id(FRENCH_BELGIAN).primary_language(), PrimaryLanguage::French);
     }
 
     #[test]
     fn it_recognizes_french_from_belgium_as_belgium_sub_language() {
-        assert_eq!(::language::from_lang_id(FRENCH_BELGIAN).sub_language(), SubLanguage::Belgium);
+        assert_eq!(super::from_lang_id(FRENCH_BELGIAN).sub_language(), SubLanguage::Belgium);
     }
 
     #[test]
     fn it_recognizes_french_from_canada_as_french_language() {
-        assert_eq!(::language::from_lang_id(FRENCH_CANADIAN).primary_language(), PrimaryLanguage::French);
+        assert_eq!(super::from_lang_id(FRENCH_CANADIAN).primary_language(), PrimaryLanguage::French);
     }
 
     #[test]
     fn it_recognizes_french_from_canada_as_canada_sub_language() {
-        assert_eq!(::language::from_lang_id(FRENCH_CANADIAN).sub_language(), SubLanguage::Canada);
+        assert_eq!(super::from_lang_id(FRENCH_CANADIAN).sub_language(), SubLanguage::Canada);
     }
 
     #[test]
     fn it_recognizes_french_from_switzerland_as_french_language() {
-        assert_eq!(::language::from_lang_id(FRENCH_SWITZERLAND).primary_language(), PrimaryLanguage::French);
+        assert_eq!(super::from_lang_id(FRENCH_SWITZERLAND).primary_language(), PrimaryLanguage::French);
     }
 
     #[test]
     fn it_recognizes_french_from_switzerland_as_switzerland_sub_language() {
-        assert_eq!(::language::from_lang_id(FRENCH_SWITZERLAND).sub_language(), SubLanguage::Switzerland);
+        assert_eq!(super::from_lang_id(FRENCH_SWITZERLAND).sub_language(), SubLanguage::Switzerland);
     }
 
     #[test]
     fn it_recognizes_french_from_luxembourg_as_french_language() {
-        assert_eq!(::language::from_lang_id(FRENCH_LUXEMBOURG).primary_language(), PrimaryLanguage::French);
+        assert_eq!(super::from_lang_id(FRENCH_LUXEMBOURG).primary_language(), PrimaryLanguage::French);
     }
 
     #[test]
     fn it_recognizes_french_from_luxembourg_as_luxembourg_sub_language() {
-        assert_eq!(::language::from_lang_id(FRENCH_LUXEMBOURG).sub_language(), SubLanguage::Luxembourg);
+        assert_eq!(super::from_lang_id(FRENCH_LUXEMBOURG).sub_language(), SubLanguage::Luxembourg);
     }
 
     #[test]
     fn it_recognizes_french_from_monaco_as_french_language() {
-        assert_eq!(::language::from_lang_id(FRENCH_MONACO).primary_language(), PrimaryLanguage::French);
+        assert_eq!(super::from_lang_id(FRENCH_MONACO).primary_language(), PrimaryLanguage::French);
     }
 
     #[test]
     fn it_recognizes_french_from_monaco_as_monaco_sub_language() {
-        assert_eq!(::language::from_lang_id(FRENCH_MONACO).sub_language(), SubLanguage::Monaco);
+        assert_eq!(super::from_lang_id(FRENCH_MONACO).sub_language(), SubLanguage::Monaco);
     }
 
     #[test]
     fn it_recognizes_georgian_as_georgian_language() {
-        assert_eq!(::language::from_lang_id(GEORGIAN).primary_language(), PrimaryLanguage::Georgian);
+        assert_eq!(super::from_lang_id(GEORGIAN).primary_language(), PrimaryLanguage::Georgian);
     }
 
     #[test]
     fn it_recognizes_german_standard_as_german_language() {
-        assert_eq!(::language::from_lang_id(GERMAN_STANDARD).primary_language(), PrimaryLanguage::German);
+        assert_eq!(super::from_lang_id(GERMAN_STANDARD).primary_language(), PrimaryLanguage::German);
     }
 
     #[test]
     fn it_recognizes_german_standard_as_standard_sub_language() {
-        assert_eq!(::language::from_lang_id(GERMAN_STANDARD).sub_language(), SubLanguage::Standard);
+        assert_eq!(super::from_lang_id(GERMAN_STANDARD).sub_language(), SubLanguage::Standard);
     }
 
     #[test]
     fn it_recognizes_german_from_switzerland_as_german_language() {
-        assert_eq!(::language::from_lang_id(GERMAN_SWITZERLAND).primary_language(), PrimaryLanguage::German);
+        assert_eq!(super::from_lang_id(GERMAN_SWITZERLAND).primary_language(), PrimaryLanguage::German);
     }
 
     #[test]
     fn it_recognizes_german_from_switzerland_as_switzerland_sub_language() {
-        assert_eq!(::language::from_lang_id(GERMAN_SWITZERLAND).sub_language(), SubLanguage::Switzerland);
+        assert_eq!(super::from_lang_id(GERMAN_SWITZERLAND).sub_language(), SubLanguage::Switzerland);
     }
 
     #[test]
     fn it_recognizes_german_from_austria_as_german_language() {
-        assert_eq!(::language::from_lang_id(GERMAN_AUSTRIA).primary_language(), PrimaryLanguage::German);
+        assert_eq!(super::from_lang_id(GERMAN_AUSTRIA).primary_language(), PrimaryLanguage::German);
     }
 
     #[test]
     fn it_recognizes_german_from_austria_as_austria_sub_language() {
-        assert_eq!(::language::from_lang_id(GERMAN_AUSTRIA).sub_language(), SubLanguage::Austria);
+        assert_eq!(super::from_lang_id(GERMAN_AUSTRIA).sub_language(), SubLanguage::Austria);
     }
 
     #[test]
     fn it_recognizes_german_from_luxembourg_as_german_language() {
-        assert_eq!(::language::from_lang_id(GERMAN_LUXEMBOURG).primary_language(), PrimaryLanguage::German);
+        assert_eq!(super::from_lang_id(GERMAN_LUXEMBOURG).primary_language(), PrimaryLanguage::German);
     }
 
     #[test]
     fn it_recognizes_german_from_luxembourg_as_luxembourg_sub_language() {
-        assert_eq!(::language::from_lang_id(GERMAN_LUXEMBOURG).sub_language(), SubLanguage::Luxembourg);
+        assert_eq!(super::from_lang_id(GERMAN_LUXEMBOURG).sub_language(), SubLanguage::Luxembourg);
     }
 
     #[test]
     fn it_recognizes_german_from_liechtenstein_as_german_language() {
-        assert_eq!(::language::from_lang_id(GERMAN_LIECHTENSTEIN).primary_language(), PrimaryLanguage::German);
+        assert_eq!(super::from_lang_id(GERMAN_LIECHTENSTEIN).primary_language(), PrimaryLanguage::German);
     }
 
     #[test]
     fn it_recognizes_german_from_liechtenstein_as_liechtenstein_sub_language() {
-        assert_eq!(::language::from_lang_id(GERMAN_LIECHTENSTEIN).sub_language(), SubLanguage::Liechtenstein);
+        assert_eq!(super::from_lang_id(GERMAN_LIECHTENSTEIN).sub_language(), SubLanguage::Liechtenstein);
     }
 
     #[test]
     fn it_recognizes_greek_as_greek_language() {
-        assert_eq!(::language::from_lang_id(GREEK).primary_language(), PrimaryLanguage::Greek);
+        assert_eq!(super::from_lang_id(GREEK).primary_language(), PrimaryLanguage::Greek);
     }
 
     #[test]
     fn it_recognizes_gujarati_as_gujarati_language() {
-        assert_eq!(::language::from_lang_id(GUJARATI).primary_language(), PrimaryLanguage::Gujarati);
+        assert_eq!(super::from_lang_id(GUJARATI).primary_language(), PrimaryLanguage::Gujarati);
     }
 
     #[test]
     fn it_recognizes_hebrew_as_hebrew_language() {
-        assert_eq!(::language::from_lang_id(HEBREW).primary_language(), PrimaryLanguage::Hebrew);
+        assert_eq!(super::from_lang_id(HEBREW).primary_language(), PrimaryLanguage::Hebrew);
     }
 
     #[test]
     fn it_recognizes_hindi_as_hindi_language() {
-        assert_eq!(::language::from_lang_id(HINDI).primary_language(), PrimaryLanguage::Hindi);
+        assert_eq!(super::from_lang_id(HINDI).primary_language(), PrimaryLanguage::Hindi);
     }
 
     #[test]
     fn it_recognizes_hungarian_as_hungarian_language() {
-        assert_eq!(::language::from_lang_id(HUNGARIAN).primary_language(), PrimaryLanguage::Hungarian);
+        assert_eq!(super::from_lang_id(HUNGARIAN).primary_language(), PrimaryLanguage::Hungarian);
     }
 
     #[test]
     fn it_recognizes_icelandic_as_icelandic_language() {
-        assert_eq!(::language::from_lang_id(ICELANDIC).primary_language(), PrimaryLanguage::Icelandic);
+        assert_eq!(super::from_lang_id(ICELANDIC).primary_language(), PrimaryLanguage::Icelandic);
     }
 
     #[test]
     fn it_recognizes_indonesian_as_indonesian_language() {
-        assert_eq!(::language::from_lang_id(INDONESIAN).primary_language(), PrimaryLanguage::Indonesian);
+        assert_eq!(super::from_lang_id(INDONESIAN).primary_language(), PrimaryLanguage::Indonesian);
     }
 
     #[test]
     fn it_recognizes_italian_standard_as_italian_language() {
-        assert_eq!(::language::from_lang_id(ITALIAN_STANDARD).primary_language(), PrimaryLanguage::Italian);
+        assert_eq!(super::from_lang_id(ITALIAN_STANDARD).primary_language(), PrimaryLanguage::Italian);
     }
 
     #[test]
     fn it_recognizes_italian_standard_as_standard_sub_language() {
-        assert_eq!(::language::from_lang_id(ITALIAN_STANDARD).sub_language(), SubLanguage::Standard);
+        assert_eq!(super::from_lang_id(ITALIAN_STANDARD).sub_language(), SubLanguage::Standard);
     }
 
     #[test]
     fn it_recognizes_italian_from_switzerland_as_italian_language() {
-        assert_eq!(::language::from_lang_id(ITALIAN_SWITZERLAND).primary_language(), PrimaryLanguage::Italian);
+        assert_eq!(super::from_lang_id(ITALIAN_SWITZERLAND).primary_language(), PrimaryLanguage::Italian);
     }
 
     #[test]
     fn it_recognizes_italian_from_switzerland_as_switzerland_sub_language() {
-        assert_eq!(::language::from_lang_id(ITALIAN_SWITZERLAND).sub_language(), SubLanguage::Switzerland);
+        assert_eq!(super::from_lang_id(ITALIAN_SWITZERLAND).sub_language(), SubLanguage::Switzerland);
     }
 
     #[test]
     fn it_recognizes_japanese_as_japanese_language() {
-        assert_eq!(::language::from_lang_id(JAPANESE).primary_language(), PrimaryLanguage::Japanese);
+        assert_eq!(super::from_lang_id(JAPANESE).primary_language(), PrimaryLanguage::Japanese);
     }
 
     #[test]
     fn it_recognizes_kannada_as_kannada_language() {
-        assert_eq!(::language::from_lang_id(KANNADA).primary_language(), PrimaryLanguage::Kannada);
+        assert_eq!(super::from_lang_id(KANNADA).primary_language(), PrimaryLanguage::Kannada);
     }
 
     #[test]
     fn it_recognizes_kashmiri_as_kashmiri_language() {
-        assert_eq!(::language::from_lang_id(KASHMIRI_INDIA).primary_language(), PrimaryLanguage::Kashmiri);
+        assert_eq!(super::from_lang_id(KASHMIRI_INDIA).primary_language(), PrimaryLanguage::Kashmiri);
     }
 
     #[test]
     fn it_recognizes_kazakh_as_kazakh_language() {
-        assert_eq!(::language::from_lang_id(KAZAKH).primary_language(), PrimaryLanguage::Kazakh);
+        assert_eq!(super::from_lang_id(KAZAKH).primary_language(), PrimaryLanguage::Kazakh);
     }
 
     #[test]
     fn it_recognizes_konkani_as_konkani_language() {
-        assert_eq!(::language::from_lang_id(KONKANI).primary_language(), PrimaryLanguage::Konkani);
+        assert_eq!(super::from_lang_id(KONKANI).primary_language(), PrimaryLanguage::Konkani);
     }
 
     #[test]
     fn it_recognizes_korean_as_korean_language() {
-        assert_eq!(::language::from_lang_id(KOREAN).primary_language(), PrimaryLanguage::Korean);
+        assert_eq!(super::from_lang_id(KOREAN).primary_language(), PrimaryLanguage::Korean);
     }
 
     #[test]
     fn it_recognizes_korean_as_standard_sub_language() {
-        assert_eq!(::language::from_lang_id(KOREAN).sub_language(), SubLanguage::Standard);
+        assert_eq!(super::from_lang_id(KOREAN).sub_language(), SubLanguage::Standard);
     }
 
     #[test]
     fn it_recognizes_korean_johab_as_korean_language() {
-        assert_eq!(::language::from_lang_id(KOREAN_JOHAB).primary_language(), PrimaryLanguage::Korean);
+        assert_eq!(super::from_lang_id(KOREAN_JOHAB).primary_language(), PrimaryLanguage::Korean);
     }
 
     #[test]
     fn it_recognizes_korean_johab_as_johab_sub_language() {
-        assert_eq!(::language::from_lang_id(KOREAN_JOHAB).sub_language(), SubLanguage::Johab);
+        assert_eq!(super::from_lang_id(KOREAN_JOHAB).sub_language(), SubLanguage::Johab);
     }
 
     #[test]
     fn it_recognizes_latvian_as_latvian_language() {
-        assert_eq!(::language::from_lang_id(LATVIAN).primary_language(), PrimaryLanguage::Latvian);
+        assert_eq!(super::from_lang_id(LATVIAN).primary_language(), PrimaryLanguage::Latvian);
     }
 
     #[test]
     fn it_recognizes_lithuanian_as_lithuanian_language() {
-        assert_eq!(::language::from_lang_id(LITHUANIAN).primary_language(), PrimaryLanguage::Lithuanian);
+        assert_eq!(super::from_lang_id(LITHUANIAN).primary_language(), PrimaryLanguage::Lithuanian);
     }
 
     #[test]
     fn it_recognizes_lithuanian_as_standard_sub_language() {
-        assert_eq!(::language::from_lang_id(LITHUANIAN).sub_language(), SubLanguage::Standard);
+        assert_eq!(super::from_lang_id(LITHUANIAN).sub_language(), SubLanguage::Standard);
     }
 
     #[test]
     fn it_recognizes_lithuanian_classic_as_lithuanian_language() {
-        assert_eq!(::language::from_lang_id(LITHUANIAN_CLASSIC).primary_language(), PrimaryLanguage::Lithuanian);
+        assert_eq!(super::from_lang_id(LITHUANIAN_CLASSIC).primary_language(), PrimaryLanguage::Lithuanian);
     }
 
     #[test]
     fn it_recognizes_lithuanian_classic_as_classic_sub_language() {
-        assert_eq!(::language::from_lang_id(LITHUANIAN_CLASSIC).sub_language(), SubLanguage::Classic);
+        assert_eq!(super::from_lang_id(LITHUANIAN_CLASSIC).sub_language(), SubLanguage::Classic);
     }
 
     #[test]
     fn it_recognizes_macedonian_as_macedonian_language() {
-        assert_eq!(::language::from_lang_id(MACEDONIAN).primary_language(), PrimaryLanguage::Macedonian);
+        assert_eq!(super::from_lang_id(MACEDONIAN).primary_language(), PrimaryLanguage::Macedonian);
     }
 
     #[test]
     fn it_recognizes_malay_from_malaysia_as_malay_language() {
-        assert_eq!(::language::from_lang_id(MALAY_MALAYSIAN).primary_language(), PrimaryLanguage::Malay);
+        assert_eq!(super::from_lang_id(MALAY_MALAYSIAN).primary_language(), PrimaryLanguage::Malay);
     }
 
     #[test]
     fn it_recognizes_malay_from_malaysia_as_malaysia_sub_language() {
-        assert_eq!(::language::from_lang_id(MALAY_MALAYSIAN).sub_language(), SubLanguage::Malaysia);
+        assert_eq!(super::from_lang_id(MALAY_MALAYSIAN).sub_language(), SubLanguage::Malaysia);
     }
 
     #[test]
     fn it_recognizes_malay_from_brunei_darussalam_as_malay_language() {
-        assert_eq!(::language::from_lang_id(MALAY_BRUNEI_DARUSSALAM).primary_language(), PrimaryLanguage::Malay);
+        assert_eq!(super::from_lang_id(MALAY_BRUNEI_DARUSSALAM).primary_language(), PrimaryLanguage::Malay);
     }
 
     #[test]
     fn it_recognizes_malay_from_brunei_darussalam_as_brunei_darussalam_sub_language() {
-        assert_eq!(::language::from_lang_id(MALAY_BRUNEI_DARUSSALAM).sub_language(), SubLanguage::BruneiDarussalam);
+        assert_eq!(super::from_lang_id(MALAY_BRUNEI_DARUSSALAM).sub_language(), SubLanguage::BruneiDarussalam);
     }
 
     #[test]
     fn it_recognizes_malayalam_as_malayalam_language() {
-        assert_eq!(::language::from_lang_id(MALAYALAM).primary_language(), PrimaryLanguage::Malayalam);
+        assert_eq!(super::from_lang_id(MALAYALAM).primary_language(), PrimaryLanguage::Malayalam);
     }
 
     #[test]
     fn it_recognizes_manipuri_as_manipuri_language() {
-        assert_eq!(::language::from_lang_id(MANIPURI).primary_language(), PrimaryLanguage::Manipuri);
+        assert_eq!(super::from_lang_id(MANIPURI).primary_language(), PrimaryLanguage::Manipuri);
     }
 
     #[test]
     fn it_recognizes_marathi_as_marathi_language() {
-        assert_eq!(::language::from_lang_id(MARATHI).primary_language(), PrimaryLanguage::Marathi);
+        assert_eq!(super::from_lang_id(MARATHI).primary_language(), PrimaryLanguage::Marathi);
     }
 
     #[test]
     fn it_recognizes_nepali_as_nepali_language() {
-        assert_eq!(::language::from_lang_id(NEPALI_INDIA).primary_language(), PrimaryLanguage::Nepali);
+        assert_eq!(super::from_lang_id(NEPALI_INDIA).primary_language(), PrimaryLanguage::Nepali);
     }
 
     #[test]
     fn it_recognizes_norwegian_bokmal_as_norwegian_language() {
-        assert_eq!(::language::from_lang_id(NORWEGIAN_BOKMAL).primary_language(), PrimaryLanguage::Norwegian);
+        assert_eq!(super::from_lang_id(NORWEGIAN_BOKMAL).primary_language(), PrimaryLanguage::Norwegian);
     }
 
     #[test]
     fn it_recognizes_norwegian_bokmal_as_bokmal_sub_language() {
-        assert_eq!(::language::from_lang_id(NORWEGIAN_BOKMAL).sub_language(), SubLanguage::Bokmal);
+        assert_eq!(super::from_lang_id(NORWEGIAN_BOKMAL).sub_language(), SubLanguage::Bokmal);
     }
 
     #[test]
     fn it_recognizes_norwegian_nynorsk_as_norwegian_language() {
-        assert_eq!(::language::from_lang_id(NORWEGIAN_NYNORSK).primary_language(), PrimaryLanguage::Norwegian);
+        assert_eq!(super::from_lang_id(NORWEGIAN_NYNORSK).primary_language(), PrimaryLanguage::Norwegian);
     }
 
     #[test]
     fn it_recognizes_norwegian_nynorsk_as_nynorsk_sub_language() {
-        assert_eq!(::language::from_lang_id(NORWEGIAN_NYNORSK).sub_language(), SubLanguage::Nynorsk);
+        assert_eq!(super::from_lang_id(NORWEGIAN_NYNORSK).sub_language(), SubLanguage::Nynorsk);
     }
 
     #[test]
     fn it_recognizes_oriya_as_oriya_language() {
-        assert_eq!(::language::from_lang_id(ORIYA).primary_language(), PrimaryLanguage::Oriya);
+        assert_eq!(super::from_lang_id(ORIYA).primary_language(), PrimaryLanguage::Oriya);
     }
 
     #[test]
     fn it_recognizes_polish_as_polish_language() {
-        assert_eq!(::language::from_lang_id(POLISH).primary_language(), PrimaryLanguage::Polish);
+        assert_eq!(super::from_lang_id(POLISH).primary_language(), PrimaryLanguage::Polish);
     }
 
     #[test]
     fn it_recognizes_portuguese_from_brazil_as_portuguese_language() {
-        assert_eq!(::language::from_lang_id(PORTUGUESE_BRAZIL).primary_language(), PrimaryLanguage::Portuguese);
+        assert_eq!(super::from_lang_id(PORTUGUESE_BRAZIL).primary_language(), PrimaryLanguage::Portuguese);
     }
 
     #[test]
     fn it_recognizes_portuguese_from_brazil_as_brazil_sub_language() {
-        assert_eq!(::language::from_lang_id(PORTUGUESE_BRAZIL).sub_language(), SubLanguage::Brazil);
+        assert_eq!(super::from_lang_id(PORTUGUESE_BRAZIL).sub_language(), SubLanguage::Brazil);
     }
 
     #[test]
     fn it_recognizes_portuguese_standard_as_portuguese_language() {
-        assert_eq!(::language::from_lang_id(PORTUGUESE_STANDARD).primary_language(), PrimaryLanguage::Portuguese);
+        assert_eq!(super::from_lang_id(PORTUGUESE_STANDARD).primary_language(), PrimaryLanguage::Portuguese);
     }
 
     #[test]
     fn it_recognizes_portuguese_standard_as_standard_sub_language() {
-        assert_eq!(::language::from_lang_id(PORTUGUESE_STANDARD).sub_language(), SubLanguage::Standard);
+        assert_eq!(super::from_lang_id(PORTUGUESE_STANDARD).sub_language(), SubLanguage::Standard);
     }
 
     #[test]
     fn it_recognizes_punjabi_as_punjabi_language() {
-        assert_eq!(::language::from_lang_id(PUNJABI).primary_language(), PrimaryLanguage::Punjabi);
+        assert_eq!(super::from_lang_id(PUNJABI).primary_language(), PrimaryLanguage::Punjabi);
     }
 
     #[test]
     fn it_recognizes_romanian_as_romanian_language() {
-        assert_eq!(::language::from_lang_id(ROMANIAN).primary_language(), PrimaryLanguage::Romanian);
+        assert_eq!(super::from_lang_id(ROMANIAN).primary_language(), PrimaryLanguage::Romanian);
     }
 
     #[test]
     fn it_recognizes_russian_as_russian_language() {
-        assert_eq!(::language::from_lang_id(RUSSIAN).primary_language(), PrimaryLanguage::Russian);
+        assert_eq!(super::from_lang_id(RUSSIAN).primary_language(), PrimaryLanguage::Russian);
     }
 
     #[test]
     fn it_recognizes_sanskrit_as_sanskrit_language() {
-        assert_eq!(::language::from_lang_id(SANSKRIT).primary_language(), PrimaryLanguage::Sanskrit);
+        assert_eq!(super::from_lang_id(SANSKRIT).primary_language(), PrimaryLanguage::Sanskrit);
     }
 
     #[test]
     fn it_recognizes_serbian_cyrillic_as_serbian_language() {
-        assert_eq!(::language::from_lang_id(SERBIAN_CYRILLIC).primary_language(), PrimaryLanguage::Serbian);
+        assert_eq!(super::from_lang_id(SERBIAN_CYRILLIC).primary_language(), PrimaryLanguage::Serbian);
     }
 
     #[test]
     fn it_recognizes_serbian_cyrillic_as_cyrillic_sub_language() {
-        assert_eq!(::language::from_lang_id(SERBIAN_CYRILLIC).sub_language(), SubLanguage::Cyrillic);
+        assert_eq!(super::from_lang_id(SERBIAN_CYRILLIC).sub_language(), SubLanguage::Cyrillic);
     }
 
     #[test]
     fn it_recognizes_serbian_latin_as_serbian_language() {
-        assert_eq!(::language::from_lang_id(SERBIAN_LATIN).primary_language(), PrimaryLanguage::Serbian);
+        assert_eq!(super::from_lang_id(SERBIAN_LATIN).primary_language(), PrimaryLanguage::Serbian);
     }
 
     #[test]
     fn it_recognizes_serbian_latin_as_latin_sub_language() {
-        assert_eq!(::language::from_lang_id(SERBIAN_LATIN).sub_language(), SubLanguage::Latin);
+        assert_eq!(super::from_lang_id(SERBIAN_LATIN).sub_language(), SubLanguage::Latin);
     }
 
     #[test]
     fn it_recognizes_sindhi_as_sindhi_language() {
-        assert_eq!(::language::from_lang_id(SINDHI).primary_language(), PrimaryLanguage::Sindhi);
+        assert_eq!(super::from_lang_id(SINDHI).primary_language(), PrimaryLanguage::Sindhi);
     }
 
     #[test]
     fn it_recognizes_slovak_as_slovak_language() {
-        assert_eq!(::language::from_lang_id(SLOVAK).primary_language(), PrimaryLanguage::Slovak);
+        assert_eq!(super::from_lang_id(SLOVAK).primary_language(), PrimaryLanguage::Slovak);
     }
 
     #[test]
     fn it_recognizes_slovenian_as_slovenian_language() {
-        assert_eq!(::language::from_lang_id(SLOVENIAN).primary_language(), PrimaryLanguage::Slovenian);
+        assert_eq!(super::from_lang_id(SLOVENIAN).primary_language(), PrimaryLanguage::Slovenian);
     }
 
     #[test]
     fn it_recognizes_spanish_traditional_sort_as_spanish_language() {
-        assert_eq!(::language::from_lang_id(SPANISH_TRADITIONAL_SORT).primary_language(), PrimaryLanguage::Spanish);
+        assert_eq!(super::from_lang_id(SPANISH_TRADITIONAL_SORT).primary_language(), PrimaryLanguage::Spanish);
     }
 
     #[test]
     fn it_recognizes_spanish_traditional_sort_as_traditional_sub_language() {
-        assert_eq!(::language::from_lang_id(SPANISH_TRADITIONAL_SORT).sub_language(), SubLanguage::Traditional);
+        assert_eq!(super::from_lang_id(SPANISH_TRADITIONAL_SORT).sub_language(), SubLanguage::Traditional);
     }
 
     #[test]
     fn it_recognizes_spanish_from_mexico_as_spanish_language() {
-        assert_eq!(::language::from_lang_id(SPANISH_MEXICAN).primary_language(), PrimaryLanguage::Spanish);
+        assert_eq!(super::from_lang_id(SPANISH_MEXICAN).primary_language(), PrimaryLanguage::Spanish);
     }
 
     #[test]
     fn it_recognizes_spanish_from_mexico_as_mexico_sub_language() {
-        assert_eq!(::language::from_lang_id(SPANISH_MEXICAN).sub_language(), SubLanguage::Mexico);
+        assert_eq!(super::from_lang_id(SPANISH_MEXICAN).sub_language(), SubLanguage::Mexico);
     }
 
     #[test]
     fn it_recognizes_spanish_modern_sort_as_spanish_language() {
-        assert_eq!(::language::from_lang_id(SPANISH_MODERN_SORT).primary_language(), PrimaryLanguage::Spanish);
+        assert_eq!(super::from_lang_id(SPANISH_MODERN_SORT).primary_language(), PrimaryLanguage::Spanish);
     }
 
     #[test]
     fn it_recognizes_spanish_modern_sort_as_modern_sub_language() {
-        assert_eq!(::language::from_lang_id(SPANISH_MODERN_SORT).sub_language(), SubLanguage::Modern);
+        assert_eq!(super::from_lang_id(SPANISH_MODERN_SORT).sub_language(), SubLanguage::Modern);
     }
 
     #[test]
     fn it_recognizes_spanish_from_guatemala_as_spanish_language() {
-        assert_eq!(::language::from_lang_id(SPANISH_GUATEMALA).primary_language(), PrimaryLanguage::Spanish);
+        assert_eq!(super::from_lang_id(SPANISH_GUATEMALA).primary_language(), PrimaryLanguage::Spanish);
     }
 
     #[test]
     fn it_recognizes_spanish_from_guatemala_as_guatemala_sub_language() {
-        assert_eq!(::language::from_lang_id(SPANISH_GUATEMALA).sub_language(), SubLanguage::Guatemala);
+        assert_eq!(super::from_lang_id(SPANISH_GUATEMALA).sub_language(), SubLanguage::Guatemala);
     }
 
     #[test]
     fn it_recognizes_spanish_from_costa_rica_as_spanish_language() {
-        assert_eq!(::language::from_lang_id(SPANISH_COSTA_RICA).primary_language(), PrimaryLanguage::Spanish);
+        assert_eq!(super::from_lang_id(SPANISH_COSTA_RICA).primary_language(), PrimaryLanguage::Spanish);
     }
 
     #[test]
     fn it_recognizes_spanish_from_costa_rica_as_costa_rica_sub_language() {
-        assert_eq!(::language::from_lang_id(SPANISH_COSTA_RICA).sub_language(), SubLanguage::CostaRica);
+        assert_eq!(super::from_lang_id(SPANISH_COSTA_RICA).sub_language(), SubLanguage::CostaRica);
     }
 
     #[test]
     fn it_recognizes_spanish_from_panama_as_spanish_language() {
-        assert_eq!(::language::from_lang_id(SPANISH_PANAMA).primary_language(), PrimaryLanguage::Spanish);
+        assert_eq!(super::from_lang_id(SPANISH_PANAMA).primary_language(), PrimaryLanguage::Spanish);
     }
 
     #[test]
     fn it_recognizes_spanish_from_panama_as_panama_sub_language() {
-        assert_eq!(::language::from_lang_id(SPANISH_PANAMA).sub_language(), SubLanguage::Panama);
+        assert_eq!(super::from_lang_id(SPANISH_PANAMA).sub_language(), SubLanguage::Panama);
     }
 
     #[test]
     fn it_recognizes_spanish_from_dominican_republic_as_spanish_language() {
-        assert_eq!(::language::from_lang_id(SPANISH_DOMINICAN_REPUBLIC).primary_language(), PrimaryLanguage::Spanish);
+        assert_eq!(super::from_lang_id(SPANISH_DOMINICAN_REPUBLIC).primary_language(), PrimaryLanguage::Spanish);
     }
 
     #[test]
     fn it_recognizes_spanish_from_dominican_republic_as_dominican_republic_sub_language() {
-        assert_eq!(::language::from_lang_id(SPANISH_DOMINICAN_REPUBLIC).sub_language(), SubLanguage::DominicanRepublic);
+        assert_eq!(super::from_lang_id(SPANISH_DOMINICAN_REPUBLIC).sub_language(), SubLanguage::DominicanRepublic);
     }
 
     #[test]
     fn it_recognizes_spanish_from_venezuela_as_spanish_language() {
-        assert_eq!(::language::from_lang_id(SPANISH_VENEZUELA).primary_language(), PrimaryLanguage::Spanish);
+        assert_eq!(super::from_lang_id(SPANISH_VENEZUELA).primary_language(), PrimaryLanguage::Spanish);
     }
 
     #[test]
     fn it_recognizes_spanish_from_venezuela_as_venezuela_sub_language() {
-        assert_eq!(::language::from_lang_id(SPANISH_VENEZUELA).sub_language(), SubLanguage::Venezuela);
+        assert_eq!(super::from_lang_id(SPANISH_VENEZUELA).sub_language(), SubLanguage::Venezuela);
     }
 
     #[test]
     fn it_recognizes_spanish_from_colombia_as_spanish_language() {
-        assert_eq!(::language::from_lang_id(SPANISH_COLOMBIA).primary_language(), PrimaryLanguage::Spanish);
+        assert_eq!(super::from_lang_id(SPANISH_COLOMBIA).primary_language(), PrimaryLanguage::Spanish);
     }
 
     #[test]
     fn it_recognizes_spanish_from_colombia_as_colombia_sub_language() {
-        assert_eq!(::language::from_lang_id(SPANISH_COLOMBIA).sub_language(), SubLanguage::Colombia);
+        assert_eq!(super::from_lang_id(SPANISH_COLOMBIA).sub_language(), SubLanguage::Colombia);
     }
 
     #[test]
     fn it_recognizes_spanish_from_peru_as_spanish_language() {
-        assert_eq!(::language::from_lang_id(SPANISH_PERU).primary_language(), PrimaryLanguage::Spanish);
+        assert_eq!(super::from_lang_id(SPANISH_PERU).primary_language(), PrimaryLanguage::Spanish);
     }
 
     #[test]
     fn it_recognizes_spanish_from_peru_as_peru_sub_language() {
-        assert_eq!(::language::from_lang_id(SPANISH_PERU).sub_language(), SubLanguage::Peru);
+        assert_eq!(super::from_lang_id(SPANISH_PERU).sub_language(), SubLanguage::Peru);
     }
 
     #[test]
     fn it_recognizes_spanish_from_argentina_as_spanish_language() {
-        assert_eq!(::language::from_lang_id(SPANISH_ARGENTINA).primary_language(), PrimaryLanguage::Spanish);
+        assert_eq!(super::from_lang_id(SPANISH_ARGENTINA).primary_language(), PrimaryLanguage::Spanish);
     }
 
     #[test]
     fn it_recognizes_spanish_from_argentina_as_argentina_sub_language() {
-        assert_eq!(::language::from_lang_id(SPANISH_ARGENTINA).sub_language(), SubLanguage::Argentina);
+        assert_eq!(super::from_lang_id(SPANISH_ARGENTINA).sub_language(), SubLanguage::Argentina);
     }
 
     #[test]
     fn it_recognizes_spanish_from_ecuador_as_spanish_language() {
-        assert_eq!(::language::from_lang_id(SPANISH_ECUADOR).primary_language(), PrimaryLanguage::Spanish);
+        assert_eq!(super::from_lang_id(SPANISH_ECUADOR).primary_language(), PrimaryLanguage::Spanish);
     }
 
     #[test]
     fn it_recognizes_spanish_from_ecuador_as_ecuador_sub_language() {
-        assert_eq!(::language::from_lang_id(SPANISH_ECUADOR).sub_language(), SubLanguage::Ecuador);
+        assert_eq!(super::from_lang_id(SPANISH_ECUADOR).sub_language(), SubLanguage::Ecuador);
     }
 
     #[test]
     fn it_recognizes_spanish_from_chile_as_spanish_language() {
-        assert_eq!(::language::from_lang_id(SPANISH_CHILE).primary_language(), PrimaryLanguage::Spanish);
+        assert_eq!(super::from_lang_id(SPANISH_CHILE).primary_language(), PrimaryLanguage::Spanish);
     }
 
     #[test]
     fn it_recognizes_spanish_from_chile_as_chile_sub_language() {
-        assert_eq!(::language::from_lang_id(SPANISH_CHILE).sub_language(), SubLanguage::Chile);
+        assert_eq!(super::from_lang_id(SPANISH_CHILE).sub_language(), SubLanguage::Chile);
     }
 
     #[test]
     fn it_recognizes_spanish_from_uruguay_as_spanish_language() {
-        assert_eq!(::language::from_lang_id(SPANISH_URUGUAY).primary_language(), PrimaryLanguage::Spanish);
+        assert_eq!(super::from_lang_id(SPANISH_URUGUAY).primary_language(), PrimaryLanguage::Spanish);
     }
 
     #[test]
     fn it_recognizes_spanish_from_uruguay_as_uruguay_sub_language() {
-        assert_eq!(::language::from_lang_id(SPANISH_URUGUAY).sub_language(), SubLanguage::Uruguay);
+        assert_eq!(super::from_lang_id(SPANISH_URUGUAY).sub_language(), SubLanguage::Uruguay);
     }
 
     #[test]
     fn it_recognizes_spanish_from_paraguay_as_spanish_language() {
-        assert_eq!(::language::from_lang_id(SPANISH_PARAGUAY).primary_language(), PrimaryLanguage::Spanish);
+        assert_eq!(super::from_lang_id(SPANISH_PARAGUAY).primary_language(), PrimaryLanguage::Spanish);
     }
 
     #[test]
     fn it_recognizes_spanish_from_paraguay_as_paraguay_sub_language() {
-        assert_eq!(::language::from_lang_id(SPANISH_PARAGUAY).sub_language(), SubLanguage::Paraguay);
+        assert_eq!(super::from_lang_id(SPANISH_PARAGUAY).sub_language(), SubLanguage::Paraguay);
     }
 
     #[test]
     fn it_recognizes_spanish_from_bolivia_as_spanish_language() {
-        assert_eq!(::language::from_lang_id(SPANISH_BOLIVIA).primary_language(), PrimaryLanguage::Spanish);
+        assert_eq!(super::from_lang_id(SPANISH_BOLIVIA).primary_language(), PrimaryLanguage::Spanish);
     }
 
     #[test]
     fn it_recognizes_spanish_from_bolivia_as_bolivia_sub_language() {
-        assert_eq!(::language::from_lang_id(SPANISH_BOLIVIA).sub_language(), SubLanguage::Bolivia);
+        assert_eq!(super::from_lang_id(SPANISH_BOLIVIA).sub_language(), SubLanguage::Bolivia);
     }
 
     #[test]
     fn it_recognizes_spanish_from_el_salvador_as_spanish_language() {
-        assert_eq!(::language::from_lang_id(SPANISH_EL_SALVADOR).primary_language(), PrimaryLanguage::Spanish);
+        assert_eq!(super::from_lang_id(SPANISH_EL_SALVADOR).primary_language(), PrimaryLanguage::Spanish);
     }
 
     #[test]
     fn it_recognizes_spanish_from_el_salvador_as_el_salvador_sub_language() {
-        assert_eq!(::language::from_lang_id(SPANISH_EL_SALVADOR).sub_language(), SubLanguage::ElSalvador);
+        assert_eq!(super::from_lang_id(SPANISH_EL_SALVADOR).sub_language(), SubLanguage::ElSalvador);
     }
 
     #[test]
     fn it_recognizes_spanish_from_honduras_as_spanish_language() {
-        assert_eq!(::language::from_lang_id(SPANISH_HONDURAS).primary_language(), PrimaryLanguage::Spanish);
+        assert_eq!(super::from_lang_id(SPANISH_HONDURAS).primary_language(), PrimaryLanguage::Spanish);
     }
 
     #[test]
     fn it_recognizes_spanish_from_honduras_as_honduras_sub_language() {
-        assert_eq!(::language::from_lang_id(SPANISH_HONDURAS).sub_language(), SubLanguage::Honduras);
+        assert_eq!(super::from_lang_id(SPANISH_HONDURAS).sub_language(), SubLanguage::Honduras);
     }
 
     #[test]
     fn it_recognizes_spanish_from_nicaragua_as_spanish_language() {
-        assert_eq!(::language::from_lang_id(SPANISH_NICARAGUA).primary_language(), PrimaryLanguage::Spanish);
+        assert_eq!(super::from_lang_id(SPANISH_NICARAGUA).primary_language(), PrimaryLanguage::Spanish);
     }
 
     #[test]
     fn it_recognizes_spanish_from_nicaragua_as_nicaragua_sub_language() {
-        assert_eq!(::language::from_lang_id(SPANISH_NICARAGUA).sub_language(), SubLanguage::Nicaragua);
+        assert_eq!(super::from_lang_id(SPANISH_NICARAGUA).sub_language(), SubLanguage::Nicaragua);
     }
 
     #[test]
     fn it_recognizes_spanish_from_puerto_rico_as_spanish_language() {
-        assert_eq!(::language::from_lang_id(SPANISH_PUERTO_RICO).primary_language(), PrimaryLanguage::Spanish);
+        assert_eq!(super::from_lang_id(SPANISH_PUERTO_RICO).primary_language(), PrimaryLanguage::Spanish);
     }
 
     #[test]
     fn it_recognizes_spanish_from_puerto_rico_as_puerto_rico_sub_language() {
-        assert_eq!(::language::from_lang_id(SPANISH_PUERTO_RICO).sub_language(), SubLanguage::PuertoRico);
+        assert_eq!(super::from_lang_id(SPANISH_PUERTO_RICO).sub_language(), SubLanguage::PuertoRico);
     }
 
     #[test]
     fn it_recognizes_sutu_as_sutu_language() {
-        assert_eq!(::language::from_lang_id(SUTU).primary_language(), PrimaryLanguage::Sutu);
+        assert_eq!(super::from_lang_id(SUTU).primary_language(), PrimaryLanguage::Sutu);
     }
 
     #[test]
     fn it_recognizes_swahili_as_swahili_language() {
-        assert_eq!(::language::from_lang_id(SWAHILI_KENYA).primary_language(), PrimaryLanguage::Swahili);
+        assert_eq!(super::from_lang_id(SWAHILI_KENYA).primary_language(), PrimaryLanguage::Swahili);
     }
 
     #[test]
     fn it_recognizes_swedish_as_swedish_language() {
-        assert_eq!(::language::from_lang_id(SWEDISH).primary_language(), PrimaryLanguage::Swedish);
+        assert_eq!(super::from_lang_id(SWEDISH).primary_language(), PrimaryLanguage::Swedish);
     }
 
     #[test]
     fn it_recognizes_swedish_as_standard_sub_language() {
-        assert_eq!(::language::from_lang_id(SWEDISH).sub_language(), SubLanguage::Standard);
+        assert_eq!(super::from_lang_id(SWEDISH).sub_language(), SubLanguage::Standard);
     }
 
     #[test]
     fn it_recognizes_swedish_from_finland_as_swedish_language() {
-        assert_eq!(::language::from_lang_id(SWEDISH_FINLAND).primary_language(), PrimaryLanguage::Swedish);
+        assert_eq!(super::from_lang_id(SWEDISH_FINLAND).primary_language(), PrimaryLanguage::Swedish);
     }
 
     #[test]
     fn it_recognizes_swedish_from_finland_as_finland_sub_language() {
-        assert_eq!(::language::from_lang_id(SWEDISH_FINLAND).sub_language(), SubLanguage::Finland);
+        assert_eq!(super::from_lang_id(SWEDISH_FINLAND).sub_language(), SubLanguage::Finland);
     }
 
     #[test]
     fn it_recognizes_tamil_as_tamil_language() {
-        assert_eq!(::language::from_lang_id(TAMIL).primary_language(), PrimaryLanguage::Tamil);
+        assert_eq!(super::from_lang_id(TAMIL).primary_language(), PrimaryLanguage::Tamil);
     }
 
     #[test]
     fn it_recognizes_tatar_as_tatar_language() {
-        assert_eq!(::language::from_lang_id(TATAR_TATARSTAN).primary_language(), PrimaryLanguage::Tatar);
+        assert_eq!(super::from_lang_id(TATAR_TATARSTAN).primary_language(), PrimaryLanguage::Tatar);
     }
 
     #[test]
     fn it_recognizes_telugu_as_telugu_language() {
-        assert_eq!(::language::from_lang_id(TELUGU).primary_language(), PrimaryLanguage::Telugu);
+        assert_eq!(super::from_lang_id(TELUGU).primary_language(), PrimaryLanguage::Telugu);
     }
 
     #[test]
     fn it_recognizes_thai_as_thai_language() {
-        assert_eq!(::language::from_lang_id(THAI).primary_language(), PrimaryLanguage::Thai);
+        assert_eq!(super::from_lang_id(THAI).primary_language(), PrimaryLanguage::Thai);
     }
 
     #[test]
     fn it_recognizes_turkish_as_turkish_language() {
-        assert_eq!(::language::from_lang_id(TURKISH).primary_language(), PrimaryLanguage::Turkish);
+        assert_eq!(super::from_lang_id(TURKISH).primary_language(), PrimaryLanguage::Turkish);
     }
 
     #[test]
     fn it_recognizes_ukrainian_as_ukrainian_language() {
-        assert_eq!(::language::from_lang_id(UKRAINIAN).primary_language(), PrimaryLanguage::Ukrainian);
+        assert_eq!(super::from_lang_id(UKRAINIAN).primary_language(), PrimaryLanguage::Ukrainian);
     }
 
     #[test]
     fn it_recognizes_urdu_from_pakistan_as_urdu_language() {
-        assert_eq!(::language::from_lang_id(URDU_PAKISTAN).primary_language(), PrimaryLanguage::Urdu);
+        assert_eq!(super::from_lang_id(URDU_PAKISTAN).primary_language(), PrimaryLanguage::Urdu);
     }
 
     #[test]
     fn it_recognizes_urdu_from_pakistan_as_pakistan_sub_language() {
-        assert_eq!(::language::from_lang_id(URDU_PAKISTAN).sub_language(), SubLanguage::Pakistan);
+        assert_eq!(super::from_lang_id(URDU_PAKISTAN).sub_language(), SubLanguage::Pakistan);
     }
 
     #[test]
     fn it_recognizes_urdu_from_india_as_urdu_language() {
-        assert_eq!(::language::from_lang_id(URDU_INDIA).primary_language(), PrimaryLanguage::Urdu);
+        assert_eq!(super::from_lang_id(URDU_INDIA).primary_language(), PrimaryLanguage::Urdu);
     }
 
     #[test]
     fn it_recognizes_urdu_from_india_as_india_sub_language() {
-        assert_eq!(::language::from_lang_id(URDU_INDIA).sub_language(), SubLanguage::India);
+        assert_eq!(super::from_lang_id(URDU_INDIA).sub_language(), SubLanguage::India);
     }
 
     #[test]
     fn it_recognizes_uzbek_latin_as_uzbek_language() {
-        assert_eq!(::language::from_lang_id(UZBEK_LATIN).primary_language(), PrimaryLanguage::Uzbek);
+        assert_eq!(super::from_lang_id(UZBEK_LATIN).primary_language(), PrimaryLanguage::Uzbek);
     }
 
     #[test]
     fn it_recognizes_uzbek_latin_as_latin_sub_language() {
-        assert_eq!(::language::from_lang_id(UZBEK_LATIN).sub_language(), SubLanguage::Latin);
+        assert_eq!(super::from_lang_id(UZBEK_LATIN).sub_language(), SubLanguage::Latin);
     }
 
     #[test]
     fn it_recognizes_uzbek_cyrillic_as_uzbek_language() {
-        assert_eq!(::language::from_lang_id(UZBEK_CYRILLIC).primary_language(), PrimaryLanguage::Uzbek);
+        assert_eq!(super::from_lang_id(UZBEK_CYRILLIC).primary_language(), PrimaryLanguage::Uzbek);
     }
 
     #[test]
     fn it_recognizes_uzbek_cyrillic_as_cyrillic_sub_language() {
-        assert_eq!(::language::from_lang_id(UZBEK_CYRILLIC).sub_language(), SubLanguage::Cyrillic);
+        assert_eq!(super::from_lang_id(UZBEK_CYRILLIC).sub_language(), SubLanguage::Cyrillic);
     }
 
     #[test]
     fn it_recognizes_vietnamese_as_vietnamese_language() {
-        assert_eq!(::language::from_lang_id(VIETNAMESE).primary_language(), PrimaryLanguage::Vietnamese);
+        assert_eq!(super::from_lang_id(VIETNAMESE).primary_language(), PrimaryLanguage::Vietnamese);
     }
 
     #[test]
     fn it_recognizes_hid_usage_data_descriptor_as_hid_language() {
-        assert_eq!(::language::from_lang_id(HID_USAGE_DATA_DESCRIPTOR).primary_language(), PrimaryLanguage::HID);
+        assert_eq!(super::from_lang_id(HID_USAGE_DATA_DESCRIPTOR).primary_language(), PrimaryLanguage::HID);
     }
 
     #[test]
     fn it_recognizes_hid_usage_data_descriptor_as_usage_data_descriptor_sub_language() {
-        assert_eq!(::language::from_lang_id(HID_USAGE_DATA_DESCRIPTOR).sub_language(), SubLanguage::UsageDataDescriptor);
+        assert_eq!(super::from_lang_id(HID_USAGE_DATA_DESCRIPTOR).sub_language(), SubLanguage::UsageDataDescriptor);
     }
 
     #[test]
     fn it_recognizes_hid_vendor_defined_1_as_hid_language() {
-        assert_eq!(::language::from_lang_id(HID_VENDOR_DEFINED_1).primary_language(), PrimaryLanguage::HID);
+        assert_eq!(super::from_lang_id(HID_VENDOR_DEFINED_1).primary_language(), PrimaryLanguage::HID);
     }
 
     #[test]
     fn it_recognizes_hid_vendor_defined_1_as_vendor_defined_1_sub_language() {
-        assert_eq!(::language::from_lang_id(HID_VENDOR_DEFINED_1).sub_language(), SubLanguage::VendorDefined1);
+        assert_eq!(super::from_lang_id(HID_VENDOR_DEFINED_1).sub_language(), SubLanguage::VendorDefined1);
     }
 
     #[test]
     fn it_recognizes_hid_vendor_defined_2_as_hid_language() {
-        assert_eq!(::language::from_lang_id(HID_VENDOR_DEFINED_2).primary_language(), PrimaryLanguage::HID);
+        assert_eq!(super::from_lang_id(HID_VENDOR_DEFINED_2).primary_language(), PrimaryLanguage::HID);
     }
 
     #[test]
     fn it_recognizes_hid_vendor_defined_1_as_vendor_defined_2_sub_language() {
-        assert_eq!(::language::from_lang_id(HID_VENDOR_DEFINED_2).sub_language(), SubLanguage::VendorDefined2);
+        assert_eq!(super::from_lang_id(HID_VENDOR_DEFINED_2).sub_language(), SubLanguage::VendorDefined2);
     }
 
     #[test]
     fn it_recognizes_hid_vendor_defined_3_as_hid_language() {
-        assert_eq!(::language::from_lang_id(HID_VENDOR_DEFINED_3).primary_language(), PrimaryLanguage::HID);
+        assert_eq!(super::from_lang_id(HID_VENDOR_DEFINED_3).primary_language(), PrimaryLanguage::HID);
     }
 
     #[test]
     fn it_recognizes_hid_vendor_defined_1_as_vendor_defined_3_sub_language() {
-        assert_eq!(::language::from_lang_id(HID_VENDOR_DEFINED_3).sub_language(), SubLanguage::VendorDefined3);
+        assert_eq!(super::from_lang_id(HID_VENDOR_DEFINED_3).sub_language(), SubLanguage::VendorDefined3);
     }
 
     #[test]
     fn it_recognizes_hid_vendor_defined_4_as_hid_language() {
-        assert_eq!(::language::from_lang_id(HID_VENDOR_DEFINED_4).primary_language(), PrimaryLanguage::HID);
+        assert_eq!(super::from_lang_id(HID_VENDOR_DEFINED_4).primary_language(), PrimaryLanguage::HID);
     }
 
     #[test]
     fn it_recognizes_hid_vendor_defined_1_as_vendor_defined_4_sub_language() {
-        assert_eq!(::language::from_lang_id(HID_VENDOR_DEFINED_4).sub_language(), SubLanguage::VendorDefined4);
+        assert_eq!(super::from_lang_id(HID_VENDOR_DEFINED_4).sub_language(), SubLanguage::VendorDefined4);
     }
 
     #[test]
     fn it_recognizes_other_as_other_language() {
-        assert_eq!(::language::from_lang_id(0xFFFF).primary_language(), PrimaryLanguage::Other(PRIMARY_LANGUAGE_MASK));
+        assert_eq!(super::from_lang_id(0xFFFF).primary_language(), PrimaryLanguage::Other(PRIMARY_LANGUAGE_MASK));
     }
 
     #[test]
     fn it_recognizes_other_as_other_sub_language() {
-        assert_eq!(::language::from_lang_id(0xFFFF).sub_language(), SubLanguage::Other(SUB_LANGUAGE_MASK));
+        assert_eq!(super::from_lang_id(0xFFFF).sub_language(), SubLanguage::Other(SUB_LANGUAGE_MASK));
     }
 }

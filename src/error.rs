@@ -2,8 +2,8 @@ use std::fmt;
 use std::error::Error as StdError;
 use std::result::Result as StdResult;
 
-use libc::{c_int};
-
+use libc::c_int;
+use libusb::*;
 
 /// A result of a function that may return a `Error`.
 pub type Result<T> = StdResult<T, Error>;
@@ -93,20 +93,20 @@ impl StdError for Error {
 #[doc(hidden)]
 pub fn from_libusb(err: c_int) -> Error {
     match err {
-        ::libusb::LIBUSB_SUCCESS             => Error::Success,
-        ::libusb::LIBUSB_ERROR_IO            => Error::Io,
-        ::libusb::LIBUSB_ERROR_INVALID_PARAM => Error::InvalidParam,
-        ::libusb::LIBUSB_ERROR_ACCESS        => Error::Access,
-        ::libusb::LIBUSB_ERROR_NO_DEVICE     => Error::NoDevice,
-        ::libusb::LIBUSB_ERROR_NOT_FOUND     => Error::NotFound,
-        ::libusb::LIBUSB_ERROR_BUSY          => Error::Busy,
-        ::libusb::LIBUSB_ERROR_TIMEOUT       => Error::Timeout,
-        ::libusb::LIBUSB_ERROR_OVERFLOW      => Error::Overflow,
-        ::libusb::LIBUSB_ERROR_PIPE          => Error::Pipe,
-        ::libusb::LIBUSB_ERROR_INTERRUPTED   => Error::Interrupted,
-        ::libusb::LIBUSB_ERROR_NO_MEM        => Error::NoMem,
-        ::libusb::LIBUSB_ERROR_NOT_SUPPORTED => Error::NotSupported,
-        ::libusb::LIBUSB_ERROR_OTHER | _     => Error::Other
+        LIBUSB_SUCCESS             => Error::Success,
+        LIBUSB_ERROR_IO            => Error::Io,
+        LIBUSB_ERROR_INVALID_PARAM => Error::InvalidParam,
+        LIBUSB_ERROR_ACCESS        => Error::Access,
+        LIBUSB_ERROR_NO_DEVICE     => Error::NoDevice,
+        LIBUSB_ERROR_NOT_FOUND     => Error::NotFound,
+        LIBUSB_ERROR_BUSY          => Error::Busy,
+        LIBUSB_ERROR_TIMEOUT       => Error::Timeout,
+        LIBUSB_ERROR_OVERFLOW      => Error::Overflow,
+        LIBUSB_ERROR_PIPE          => Error::Pipe,
+        LIBUSB_ERROR_INTERRUPTED   => Error::Interrupted,
+        LIBUSB_ERROR_NO_MEM        => Error::NoMem,
+        LIBUSB_ERROR_NOT_SUPPORTED => Error::NotSupported,
+        LIBUSB_ERROR_OTHER | _     => Error::Other
     }
 }
 
@@ -115,7 +115,7 @@ macro_rules! try_unsafe {
     ($x:expr) => {
         match unsafe { $x } {
             0 => (),
-            err => return Err(::error::from_libusb(err)),
+            err => return Err($crate::error::from_libusb(err)),
         }
     }
 }
