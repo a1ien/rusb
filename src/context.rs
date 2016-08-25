@@ -1,9 +1,11 @@
+use std::marker::PhantomData;
 use std::mem;
 
 use libc::c_int;
 use libusb::*;
 
 use device_list::{self, DeviceList};
+use device_handle::{self, DeviceHandle};
 use error;
 
 /// A `libusb` context.
@@ -78,6 +80,25 @@ impl Context {
         }
         else {
             Ok(unsafe { device_list::from_libusb(self, list, n as usize) })
+        }
+    }
+
+    /// Convenience function to open a device by its vendor ID and product ID.
+    ///
+    /// This function is provided as a convenience for building prototypes without having to
+    /// iterate a [`DeviceList`](struct.DeviceList.html). It is not meant for production
+    /// applications.
+    ///
+    /// Returns a device handle for the first device found matching `vendor_id` and `product_id`.
+    /// On error, or if the device could not be found, it returns `None`.
+    pub fn open_device_with_vid_pid<'a>(&'a self, vendor_id: u16, product_id: u16) -> Option<DeviceHandle<'a>> {
+        let handle = unsafe { libusb_open_device_with_vid_pid(self.context, vendor_id, product_id) };
+
+        if handle.is_null() {
+            None
+        }
+        else {
+            Some(unsafe { device_handle::from_libusb(PhantomData, handle) })
         }
     }
 }
