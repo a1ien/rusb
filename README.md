@@ -23,7 +23,7 @@ Add `libusb` as a dependency in `Cargo.toml`:
 
 ```toml
 [dependencies]
-libusb = "0.2"
+libusb = "0.3"
 ```
 
 Import the `libusb` crate. The starting point for nearly all `libusb` functionality is to create a
