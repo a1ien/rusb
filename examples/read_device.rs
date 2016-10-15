@@ -16,7 +16,7 @@ fn main() {
     let args: Vec<String> = std::env::args().collect();
 
     if args.len() < 3 {
-        println!("usage: show_device <vendor-id> <product-id>");
+        println!("usage: read_device <vendor-id-in-base-10> <product-id-in-base-10>");
         return;
     }
 
