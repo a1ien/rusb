@@ -13,12 +13,14 @@ fn main() {
 	}
 	if cfg!(target_os = "linux") {
 		base_config.define("OS_LINUX", Some("1"));
-		base_config.define("DEFAULT_VISIBILITY", Some("__attribute__((visibility(\"default\")))"));
+		base_config.define("HAVE_ASM_TYPES_H", Some("1"));
+		base_config.define("HAVE_LINUX_NETLINK_H", Some("1"));
+		base_config.define("HAVE_SYS_SOCKET_H", Some("1"));
+		base_config.define("USBI_TIMERFD_AVAILABLE", Some("1"));
 		base_config.file("libusb/libusb/os/linux_netlink.c");
-		base_config.file("libusb/libusb/os/linux_udev.c");
 		base_config.file("libusb/libusb/os/linux_usbfs.c");
-		base_config.file("libusb/libusb/os/poll_posix.c");
-		base_config.file("libusb/libusb/os/threads_posix.c");
+		base_config.define("POLL_NFDS_TYPE", Some("nfds_t"));
+		base_config.define("_GNU_SOURCE", Some("1"));
 	}
 
 	if cfg!(unix) {
