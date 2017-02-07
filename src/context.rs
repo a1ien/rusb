@@ -1,12 +1,21 @@
 use std::marker::PhantomData;
 use std::mem;
+use std::ptr;
+use std::time::Duration;
 
-use libc::c_int;
+use libc::{c_int, c_void, timeval};
 use libusb::*;
 
+use device::{self, Device};
 use device_list::{self, DeviceList};
 use device_handle::{self, DeviceHandle};
 use error;
+
+#[cfg(windows)]
+type Seconds = ::libc::c_long;
+
+#[cfg(not(windows))]
+type Seconds = ::libc::time_t;
 
 /// A `libusb` context.
 pub struct Context {
@@ -24,6 +33,13 @@ impl Drop for Context {
 
 unsafe impl Sync for Context {}
 unsafe impl Send for Context {}
+
+pub trait Hotplug {
+	fn device_arrived(&mut self, device: Device);
+	fn device_left(&mut self, device: Device);
+}
+
+pub type Registration = c_int;
 
 impl Context {
     /// Opens a new `libusb` context.
@@ -101,8 +117,69 @@ impl Context {
             Some(unsafe { device_handle::from_libusb(PhantomData, handle) })
         }
     }
+
+	pub fn register_callback(&self, vendor_id: Option<u16>, product_id: Option<u16>, class: Option<u8>, callback: Box<Hotplug>) -> ::Result<Registration> {
+		let mut handle: libusb_hotplug_callback_handle = 0;
+		let to = Box::new(callback);
+		let n = unsafe { libusb_hotplug_register_callback(
+			self.context,
+			LIBUSB_HOTPLUG_EVENT_DEVICE_ARRIVED | LIBUSB_HOTPLUG_EVENT_DEVICE_LEFT,
+			LIBUSB_HOTPLUG_NO_FLAGS,
+			vendor_id.map(|v| v as c_int).unwrap_or(LIBUSB_HOTPLUG_MATCH_ANY),
+			product_id.map(|v| v as c_int).unwrap_or(LIBUSB_HOTPLUG_MATCH_ANY),
+			class.map(|v| v as c_int).unwrap_or(LIBUSB_HOTPLUG_MATCH_ANY),
+			hotplug_callback,
+			Box::into_raw(to) as *mut c_void,
+			&mut handle
+		)};
+        if n < 0 {
+            Err(error::from_libusb(n as c_int))
+        }
+        else {
+            Ok(handle)
+        }
+	}
+
+	pub fn unregister_callback(&self, reg: Registration) {
+		/// TODO: fix handler leak
+		unsafe { libusb_hotplug_deregister_callback(self.context, reg) }
+	}
+
+	pub fn handle_events(&self, timeout: Option<Duration>) -> ::Result<()>{
+		let n = unsafe {
+			match timeout {
+				Some(t) => {
+					let tv = timeval {
+						tv_sec: t.as_secs() as Seconds,
+						tv_usec: t.subsec_nanos() as i32 / 1000,
+					};
+					libusb_handle_events_timeout_completed(self.context, &tv, ptr::null_mut())
+				},
+				None => libusb_handle_events_completed(self.context, ptr::null_mut())
+			}
+		};
+		if n < 0 {
+			Err(error::from_libusb(n as c_int))
+		}
+		else {
+			Ok(())
+		}
+	}
 }
 
+extern "C" fn hotplug_callback(_ctx: *mut libusb_context, device: *mut libusb_device, event: libusb_hotplug_event, reg: *mut c_void) -> c_int {
+	let ctx = PhantomData::default();
+	unsafe {
+		let device = device::from_libusb(ctx, device);
+		let reg = reg as *mut Box<Hotplug>;
+		match event {
+			LIBUSB_HOTPLUG_EVENT_DEVICE_ARRIVED => (*reg).device_arrived(device),
+			LIBUSB_HOTPLUG_EVENT_DEVICE_LEFT => (*reg).device_left(device),
+			_ => (),
+		}
+	}
+	return 0;
+}
 
 /// Library logging levels.
 pub enum LogLevel {

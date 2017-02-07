@@ -7,7 +7,7 @@ extern crate libc;
 pub use version::{LibraryVersion, version};
 pub use error::{Result, Error};
 
-pub use context::{Context, LogLevel};
+pub use context::{Context, LogLevel, Hotplug, Registration};
 pub use device_list::{DeviceList, Devices};
 pub use device::Device;
 pub use device_handle::DeviceHandle;
