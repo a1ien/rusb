@@ -11,11 +11,12 @@ use device_list::{self, DeviceList};
 use device_handle::{self, DeviceHandle};
 use error;
 
-#[cfg(windows)]
-type Seconds = ::libc::c_long;
+#[cfg(windows)] type Seconds = ::libc::c_long;
+#[cfg(windows)] type MicroSeconds = ::libc::c_long;
 
-#[cfg(not(windows))]
-type Seconds = ::libc::time_t;
+#[cfg(not(windows))] type Seconds = ::libc::time_t;
+#[cfg(not(windows))] type MicroSeconds = ::libc::suseconds_t;
+
 
 /// A `libusb` context.
 pub struct Context {
@@ -151,7 +152,7 @@ impl Context {
 				Some(t) => {
 					let tv = timeval {
 						tv_sec: t.as_secs() as Seconds,
-						tv_usec: t.subsec_nanos() as i32 / 1000,
+						tv_usec: t.subsec_nanos() as MicroSeconds / 1000,
 					};
 					libusb_handle_events_timeout_completed(self.context, &tv, ptr::null_mut())
 				},
