@@ -51,16 +51,14 @@ fn main() {
 		base_config.define("OS_WINDOWS", Some("1"));
 		base_config.file("libusb/libusb/os/poll_windows.c");
 		base_config.file("libusb/libusb/os/threads_windows.c");
-		base_config.file("libusb/libusb/os/windows_nt_common.c");
-		base_config.file("libusb/libusb/os/windows_winusb.c");
+		base_config.file("libusb/libusb/os/windows_usb.c");
 
 		base_config.define("DEFAULT_VISIBILITY", Some(""));
 		base_config.define("_TIMESPEC_DEFINED", Some("1"));
 		base_config.define("POLL_NFDS_TYPE", Some("unsigned int"));
 		base_config.define("HAVE_SIGNAL_H", Some("1"));
 		base_config.define("HAVE_SYS_TYPES_H", Some("1"));
-		 
-		//link("Mswsock", false);
+		link("user32", false);
 	}
 
 	base_config.file("libusb/libusb/core.c");
