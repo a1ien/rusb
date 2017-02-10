@@ -10,6 +10,7 @@ fn main() {
 		base_config.file("libusb/libusb/os/darwin_usb.c");
 		link_framework("CoreFoundation");
 		link_framework("IOKit");
+		link("objc", false);
 	}
 	if cfg!(target_os = "linux") {
 		base_config.define("OS_LINUX", Some("1"));
