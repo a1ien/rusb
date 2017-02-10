@@ -313,18 +313,6 @@ static void *darwin_event_thread_main (void *arg0) {
   struct libusb_context *ctx = (struct libusb_context *)arg0;
   CFRunLoopRef runloop;
 
-  /* Set this thread's name, so it can be seen in the debugger
-     and crash reports. */
-#if MAC_OS_X_VERSION_MIN_REQUIRED >= 1060
-  pthread_setname_np ("org.libusb.device-hotplug");
-
-  /* Tell the Objective-C garbage collector about this thread.
-     This is required because, unlike NSThreads, pthreads are
-     not automatically registered. Although we don't use
-     Objective-C, we use CoreFoundation, which does. */
-  objc_registerThreadWithCollector();
-#endif
-
   /* hotplug (device arrival/removal) sources */
   CFRunLoopSourceRef     libusb_notification_cfsource;
   io_notification_port_t libusb_notification_port;
