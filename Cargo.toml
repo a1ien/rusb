@@ -12,7 +12,7 @@ keywords = ["usb", "libusb", "hardware", "bindings"]
 
 [dependencies]
 bit-set = "0.2.0"
-libusb-sys = { git = "https://github.com/ethcore/libusb-sys" }
+libusb-sys = { git = "https://github.com/paritytech/libusb-sys" }
 libc = "0.2"
 
 [dev-dependencies]
