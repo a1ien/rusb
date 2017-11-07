@@ -552,7 +552,7 @@ static SP_DEVICE_INTERFACE_DETAIL_DATA_A *get_interface_details_filter(struct li
 static char *parse_device_interface_path(const char *interface_path)
 {
 	char *device_id, *guid_start;
-	unsigned int i, len;
+	int i, len;
 
 	len = safe_strlen(interface_path);
 	if (len < 4) {
