@@ -1,7 +1,7 @@
-extern crate gcc;
+extern crate cc;
 
 fn main() {
-	let mut base_config = gcc::Config::new();
+	let mut base_config = cc::Build::new();
 	base_config.include(".");
 	base_config.include("libusb/libusb");
 
