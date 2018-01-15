@@ -105,7 +105,7 @@ impl<'a> DeviceHandle<'a> {
     /// Releases a claimed interface.
     pub fn release_interface(&mut self, iface: u8) -> ::Result<()> {
         try_unsafe!(libusb_release_interface(self.handle, iface as c_int));
-        self.interfaces.remove(&(iface as usize));
+        self.interfaces.remove(iface as usize);
         Ok(())
     }
 
