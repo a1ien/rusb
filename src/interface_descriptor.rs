@@ -102,6 +102,18 @@ impl<'a> InterfaceDescriptor<'a> {
 
         EndpointDescriptors { iter: endpoints.iter() }
     }
+
+    /// Returns the unknown 'extra' bytes that libusb does not understand.
+    pub fn extra(&'a self) -> Option<&'a [u8]> {
+        unsafe {
+            match (*self.descriptor).extra_length {
+                len if len > 0 => {
+                    Some( slice::from_raw_parts((*self.descriptor).extra, len as usize) )
+                },
+                _ => None
+            }
+        }
+    }
 }
 
 impl<'a> fmt::Debug for InterfaceDescriptor<'a> {

@@ -1,4 +1,5 @@
 use std::fmt;
+use std::slice;
 
 use libusb::*;
 
@@ -70,6 +71,18 @@ impl<'a> EndpointDescriptor<'a> {
     /// Returns the endpoint's polling interval.
     pub fn interval(&self) -> u8 {
         self.descriptor.bInterval
+    }
+
+    /// Returns the unknown 'extra' bytes that libusb does not understand.
+    pub fn extra(&'a self) -> Option<&'a [u8]> {
+        unsafe {
+            match (*self.descriptor).extra_length {
+                len if len > 0 => {
+                    Some(slice::from_raw_parts((*self.descriptor).extra, len as usize))
+                },
+                _ => None
+            }
+        }
     }
 }
 
