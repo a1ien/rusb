@@ -106,6 +106,10 @@ fn print_config(config_desc: &libusb::ConfigDescriptor, handle: &mut Option<UsbD
     println!("      Self Powered     {:>5}", config_desc.self_powered());
     println!("      Remote Wakeup    {:>5}", config_desc.remote_wakeup());
     println!("    bMaxPower           {:4}mW", config_desc.max_power());
+
+    if let Some(extra) = config_desc.extra() {
+        println!("    {:?}", extra);
+    }
 }
 
 fn print_interface(interface_desc: &libusb::InterfaceDescriptor, handle: &mut Option<UsbDevice>) {
@@ -119,6 +123,10 @@ fn print_interface(interface_desc: &libusb::InterfaceDescriptor, handle: &mut Op
     println!("      iInterface           {:3} {}",
              interface_desc.description_string_index().unwrap_or(0),
              handle.as_mut().map_or(String::new(), |h| h.handle.read_interface_string(h.language, interface_desc, h.timeout).unwrap_or(String::new())));
+
+    if let Some(extra) = interface_desc.extra() {
+        println!("    {:?}", extra);
+    }
 }
 
 fn print_endpoint(endpoint_desc: &libusb::EndpointDescriptor) {
@@ -130,6 +138,10 @@ fn print_endpoint(endpoint_desc: &libusb::EndpointDescriptor) {
     println!("          Usage Type             {:?}", endpoint_desc.usage_type());
     println!("        wMaxPacketSize    {:#06x}", endpoint_desc.max_packet_size());
     println!("        bInterval            {:3}", endpoint_desc.interval());
+
+    if let Some(extra) = endpoint_desc.extra() {
+        println!("    {:?}", extra);
+    }
 }
 
 fn get_speed(speed: libusb::Speed) -> &'static str {

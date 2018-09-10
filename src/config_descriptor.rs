@@ -22,7 +22,7 @@ impl Drop for ConfigDescriptor {
 unsafe impl Sync for ConfigDescriptor {}
 unsafe impl Send for ConfigDescriptor {}
 
-impl ConfigDescriptor {
+impl<'a> ConfigDescriptor {
     /// Returns the configuration number.
     pub fn number(&self) -> u8 {
         unsafe {
@@ -78,6 +78,19 @@ impl ConfigDescriptor {
         };
 
         Interfaces { iter: interfaces.iter() }
+    }
+
+    /// Returns the unknown 'extra' bytes that libusb does not understand.
+    pub fn extra(&'a self) -> Option<&'a [u8]> {
+        unsafe {
+            match (*self.descriptor).extra_length {
+                len if len > 0 => Some(slice::from_raw_parts(
+                    (*self.descriptor).extra,
+                    len as usize,
+                )),
+                _ => None,
+            }
+        }
     }
 }
 
