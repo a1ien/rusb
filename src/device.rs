@@ -86,6 +86,11 @@ impl<'a> Device<'a> {
 
         Ok(unsafe { device_handle::from_libusb(self.context, handle) })
     }
+
+    /// Returns the device's port number
+    pub fn port_number(&self) -> u8 {
+        unsafe { libusb_get_port_number(self.device) }
+    }
 }
 
 #[doc(hidden)]
