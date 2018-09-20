@@ -88,7 +88,8 @@ impl<'a> Device<'a> {
     }
 
     /// Returns the device's port number
-    pub fn get_port_number(&self) -> u8 {
+    pub fn port_number(&self) -> u8 {
+
         unsafe { libusb_get_port_number(self.device) }
     }
 }
