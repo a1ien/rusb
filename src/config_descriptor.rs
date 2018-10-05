@@ -22,33 +22,25 @@ impl Drop for ConfigDescriptor {
 unsafe impl Sync for ConfigDescriptor {}
 unsafe impl Send for ConfigDescriptor {}
 
-impl ConfigDescriptor {
+impl<'c> ConfigDescriptor {
     /// Returns the configuration number.
     pub fn number(&self) -> u8 {
-        unsafe {
-            (*self.descriptor).bConfigurationValue
-        }
+        unsafe { (*self.descriptor).bConfigurationValue }
     }
 
     /// Returns the device's maximum power consumption (in milliwatts) in this configuration.
     pub fn max_power(&self) -> u16 {
-        unsafe {
-            (*self.descriptor).bMaxPower as u16 * 2
-        }
+        unsafe { (*self.descriptor).bMaxPower as u16 * 2 }
     }
 
     /// Indicates if the device is self-powered in this configuration.
     pub fn self_powered(&self) -> bool {
-        unsafe {
-            (*self.descriptor).bmAttributes & 0x40 != 0
-        }
+        unsafe { (*self.descriptor).bmAttributes & 0x40 != 0 }
     }
 
     /// Indicates if the device has remote wakeup capability in this configuration.
     pub fn remote_wakeup(&self) -> bool {
-        unsafe {
-            (*self.descriptor).bmAttributes & 0x20 != 0
-        }
+        unsafe { (*self.descriptor).bmAttributes & 0x20 != 0 }
     }
 
     /// Returns the index of the string descriptor that describes the configuration.
@@ -63,9 +55,7 @@ impl ConfigDescriptor {
 
     /// Returns the number of interfaces for this configuration.
     pub fn num_interfaces(&self) -> u8 {
-        unsafe {
-            (*self.descriptor).bNumInterfaces
-        }
+        unsafe { (*self.descriptor).bNumInterfaces }
     }
 
     /// Returns a collection of the configuration's interfaces.
@@ -73,11 +63,26 @@ impl ConfigDescriptor {
         let interfaces = unsafe {
             slice::from_raw_parts(
                 (*self.descriptor).interface,
-                (*self.descriptor).bNumInterfaces as usize
+                (*self.descriptor).bNumInterfaces as usize,
             )
         };
 
-        Interfaces { iter: interfaces.iter() }
+        Interfaces {
+            iter: interfaces.iter(),
+        }
+    }
+
+    /// Returns the unknown 'extra' bytes that libusb does not understand.
+    pub fn extra(&'c self) -> Option<&'c [u8]> {
+        unsafe {
+            match (*self.descriptor).extra_length {
+                len if len > 0 => Some(slice::from_raw_parts(
+                    (*self.descriptor).extra,
+                    len as usize,
+                )),
+                _ => None,
+            }
+        }
     }
 }
 
@@ -85,9 +90,7 @@ impl fmt::Debug for ConfigDescriptor {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> Result<(), fmt::Error> {
         let mut debug = fmt.debug_struct("ConfigDescriptor");
 
-        let descriptor: &libusb_config_descriptor = unsafe {
-            mem::transmute(self.descriptor)
-        };
+        let descriptor: &libusb_config_descriptor = unsafe { mem::transmute(self.descriptor) };
 
         debug.field("bLength", &descriptor.bLength);
         debug.field("bDescriptorType", &descriptor.bDescriptorType);
@@ -111,9 +114,9 @@ impl<'a> Iterator for Interfaces<'a> {
     type Item = Interface<'a>;
 
     fn next(&mut self) -> Option<Interface<'a>> {
-        self.iter.next().map(|interface| {
-            unsafe { interface_descriptor::from_libusb(interface) }
-        })
+        self.iter
+            .next()
+            .map(|interface| unsafe { interface_descriptor::from_libusb(interface) })
     }
 
     fn size_hint(&self) -> (usize, Option<usize>) {
@@ -121,12 +124,10 @@ impl<'a> Iterator for Interfaces<'a> {
     }
 }
 
-
 #[doc(hidden)]
 pub unsafe fn from_libusb(config: *const libusb_config_descriptor) -> ConfigDescriptor {
     ConfigDescriptor { descriptor: config }
 }
-
 
 #[cfg(test)]
 mod test {
@@ -139,13 +140,11 @@ mod test {
     // use mem::forget() to prevent the Drop trait impl from running. The config descriptor passed
     // as `$config` should be stack-allocated to prevent memory leaks in the test suite.
     macro_rules! with_config {
-        ($name:ident : $config:expr => $body:block) => {
-            {
-                let $name = unsafe { super::from_libusb(&$config) };
-                $body;
-                mem::forget($name);
-            }
-        }
+        ($name:ident : $config:expr => $body:block) => {{
+            let $name = unsafe { super::from_libusb(&$config) };
+            $body;
+            mem::forget($name);
+        }};
     }
 
     #[test]
