@@ -58,12 +58,12 @@ fn open_device(context: &mut libusb::Context, vid: u16, pid: u16) -> Option<(lib
 }
 
 fn read_device(device: &mut libusb::Device, device_desc: &libusb::DeviceDescriptor, handle: &mut libusb::DeviceHandle) -> libusb::Result<()> {
-    try!(handle.reset());
+    handle.reset()?;
 
     let timeout = Duration::from_secs(1);
-    let languages = try!(handle.read_languages(timeout));
+    let languages = handle.read_languages(timeout)?;
 
-    println!("Active configuration: {}", try!(handle.active_configuration()));
+    println!("Active configuration: {}", handle.active_configuration()?);
     println!("Languages: {:?}", languages);
 
     if languages.len() > 0 {
@@ -164,8 +164,8 @@ fn read_endpoint(handle: &mut libusb::DeviceHandle, endpoint: Endpoint, transfer
 }
 
 fn configure_endpoint<'a>(handle: &'a mut libusb::DeviceHandle, endpoint: &Endpoint) -> libusb::Result<()> {
-    try!(handle.set_active_configuration(endpoint.config));
-    try!(handle.claim_interface(endpoint.iface));
-    try!(handle.set_alternate_setting(endpoint.iface, endpoint.setting));
+    handle.set_active_configuration(endpoint.config)?;
+    handle.claim_interface(endpoint.iface)?;
+    handle.set_alternate_setting(endpoint.iface, endpoint.setting)?;
     Ok(())
 }

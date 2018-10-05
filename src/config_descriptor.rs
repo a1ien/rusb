@@ -2,9 +2,9 @@ use std::fmt;
 use std::mem;
 use std::slice;
 
-use libusb::*;
+use crate::libusb::*;
 
-use interface_descriptor::{self, Interface};
+use crate::interface_descriptor::{self, Interface};
 
 /// Describes a configuration.
 pub struct ConfigDescriptor {

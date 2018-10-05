@@ -1,9 +1,9 @@
 use std::fmt;
 use std::slice;
 
-use libusb::*;
+use crate::libusb::*;
 
-use endpoint_descriptor::{self, EndpointDescriptor};
+use crate::endpoint_descriptor::{self, EndpointDescriptor};
 
 /// A device interface.
 ///

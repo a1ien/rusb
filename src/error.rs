@@ -3,7 +3,7 @@ use std::error::Error as StdError;
 use std::result::Result as StdResult;
 
 use libc::c_int;
-use libusb::*;
+use crate::libusb::*;
 
 /// A result of a function that may return a `Error`.
 pub type Result<T> = StdResult<T, Error>;

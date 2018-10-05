@@ -16,9 +16,9 @@ fn main() {
 fn list_devices() -> libusb::Result<()> {
     let timeout = Duration::from_secs(1);
 
-    let context = try!(libusb::Context::new());
+    let context = libusb::Context::new()?;
 
-    for device in try!(context.devices()).iter() {
+    for device in context.devices()?.iter() {
         let device_desc = match device.device_descriptor() {
             Ok(d) => d,
             Err(_) => continue

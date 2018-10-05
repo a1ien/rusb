@@ -1,10 +1,10 @@
 use std::marker::PhantomData;
 use std::slice;
 
-use libusb::*;
+use crate::libusb::*;
 
-use context::Context;
-use device::{self, Device};
+use crate::context::Context;
+use crate::device::{self, Device};
 
 /// A list of detected USB devices.
 pub struct DeviceList<'a> {

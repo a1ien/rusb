@@ -15,7 +15,7 @@ macro_rules! merge {
 macro_rules! endpoint_descriptor {
     ($($key:ident : $value:expr),*) => {
         merge!(
-            ::libusb::libusb_endpoint_descriptor {
+            crate::libusb::libusb_endpoint_descriptor {
                 bLength:          7,
                 bDescriptorType:  0x05,
                 bEndpointAddress: 0x00,
@@ -35,7 +35,7 @@ macro_rules! endpoint_descriptor {
 macro_rules! interface_descriptor {
     ($($key:ident : $value:expr),*) => {
         merge!(
-            ::libusb::libusb_interface_descriptor {
+            crate::libusb::libusb_interface_descriptor {
                 bLength:            9,
                 bDescriptorType:    0x04,
                 bInterfaceNumber:   0,
@@ -55,7 +55,7 @@ macro_rules! interface_descriptor {
         {
             let endpoints = vec![$($endpoint),+];
 
-            let r = ::libusb::libusb_interface_descriptor {
+            let r = crate::libusb::libusb_interface_descriptor {
                 bLength:            9,
                 bDescriptorType:    0x04,
                 bInterfaceNumber:   0,
@@ -83,7 +83,7 @@ macro_rules! interface {
         {
             let descriptors = vec![$($descriptor),*];
 
-            let r = ::libusb::libusb_interface {
+            let r = crate::libusb::libusb_interface {
                 altsetting:     descriptors.as_ptr(),
                 num_altsetting: descriptors.len() as ::libc::c_int
             };
@@ -99,7 +99,7 @@ macro_rules! interface {
 macro_rules! config_descriptor {
     ($($key:ident : $value:expr),*) => {
         merge!(
-            ::libusb::libusb_config_descriptor {
+            crate::libusb::libusb_config_descriptor {
                 bLength:             9,
                 bDescriptorType:     0x02,
                 wTotalLength:        9,
@@ -118,7 +118,7 @@ macro_rules! config_descriptor {
         {
             let interfaces = vec![$($interface),+];
 
-            let r = ::libusb::libusb_config_descriptor {
+            let r = crate::libusb::libusb_config_descriptor {
                 bLength:             9,
                 bDescriptorType:     0x02,
                 wTotalLength:        9,
@@ -143,7 +143,7 @@ macro_rules! config_descriptor {
 macro_rules! device_descriptor {
     ($($key:ident : $value:expr),*) => {
         merge!(
-            ::libusb::libusb_device_descriptor {
+            crate::libusb::libusb_device_descriptor {
                 bLength:            18,
                 bDescriptorType:    0x01,
                 bcdUSB:             0x0110,

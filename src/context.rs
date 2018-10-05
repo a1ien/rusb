@@ -4,12 +4,12 @@ use std::ptr;
 use std::time::Duration;
 
 use libc::{c_int, c_void, timeval};
-use libusb::*;
+use crate::libusb::*;
 
-use device::{self, Device};
-use device_list::{self, DeviceList};
-use device_handle::{self, DeviceHandle};
-use error;
+use crate::device::{self, Device};
+use crate::device_list::{self, DeviceList};
+use crate::device_handle::{self, DeviceHandle};
+use crate::error;
 
 #[cfg(windows)] type Seconds = ::libc::c_long;
 #[cfg(windows)] type MicroSeconds = ::libc::c_long;
@@ -44,7 +44,7 @@ pub type Registration = c_int;
 
 impl Context {
     /// Opens a new `libusb` context.
-    pub fn new() -> ::Result<Self> {
+    pub fn new() -> crate::Result<Self> {
         let mut context = unsafe { mem::uninitialized() };
 
         try_unsafe!(libusb_init(&mut context));
@@ -87,7 +87,7 @@ impl Context {
     }
 
     /// Returns a list of the current USB devices. The context must outlive the device list.
-    pub fn devices<'a>(&'a self) -> ::Result<DeviceList<'a>> {
+    pub fn devices<'a>(&'a self) -> crate::Result<DeviceList<'a>> {
         let mut list: *const *mut libusb_device = unsafe { mem::uninitialized() };
 
         let n = unsafe { libusb_get_device_list(self.context, &mut list) };
@@ -119,7 +119,7 @@ impl Context {
         }
     }
 
-	pub fn register_callback(&self, vendor_id: Option<u16>, product_id: Option<u16>, class: Option<u8>, callback: Box<Hotplug>) -> ::Result<Registration> {
+	pub fn register_callback(&self, vendor_id: Option<u16>, product_id: Option<u16>, class: Option<u8>, callback: Box<Hotplug>) -> crate::Result<Registration> {
 		let mut handle: libusb_hotplug_callback_handle = 0;
 		let to = Box::new(callback);
 		let n = unsafe { libusb_hotplug_register_callback(
@@ -142,11 +142,11 @@ impl Context {
 	}
 
 	pub fn unregister_callback(&self, reg: Registration) {
-		/// TODO: fix handler leak
+		// TODO: fix handler leak
 		unsafe { libusb_hotplug_deregister_callback(self.context, reg) }
 	}
 
-	pub fn handle_events(&self, timeout: Option<Duration>) -> ::Result<()>{
+	pub fn handle_events(&self, timeout: Option<Duration>) -> crate::Result<()>{
 		let n = unsafe {
 			match timeout {
 				Some(t) => {

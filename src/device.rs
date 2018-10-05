@@ -1,13 +1,13 @@
 use std::marker::PhantomData;
 use std::mem;
 
-use libusb::*;
+use crate::libusb::*;
 
-use context::Context;
-use device_handle::{self, DeviceHandle};
-use device_descriptor::{self, DeviceDescriptor};
-use config_descriptor::{self, ConfigDescriptor};
-use fields::{self, Speed};
+use crate::context::Context;
+use crate::device_handle::{self, DeviceHandle};
+use crate::device_descriptor::{self, DeviceDescriptor};
+use crate::config_descriptor::{self, ConfigDescriptor};
+use crate::fields::{self, Speed};
 
 
 /// A reference to a USB device.
@@ -30,7 +30,7 @@ unsafe impl<'a> Sync for Device<'a> {}
 
 impl<'a> Device<'a> {
     /// Reads the device descriptor.
-    pub fn device_descriptor(&self) -> ::Result<DeviceDescriptor> {
+    pub fn device_descriptor(&self) -> crate::Result<DeviceDescriptor> {
         let mut descriptor: libusb_device_descriptor = unsafe { mem::uninitialized() };
 
         // since libusb 1.0.16, this function always succeeds
@@ -40,7 +40,7 @@ impl<'a> Device<'a> {
     }
 
     /// Reads a configuration descriptor.
-    pub fn config_descriptor(&self, config_index: u8) -> ::Result<ConfigDescriptor> {
+    pub fn config_descriptor(&self, config_index: u8) -> crate::Result<ConfigDescriptor> {
         let mut config: *const libusb_config_descriptor = unsafe { mem::uninitialized() };
 
         try_unsafe!(libusb_get_config_descriptor(self.device, config_index, &mut config));
@@ -49,7 +49,7 @@ impl<'a> Device<'a> {
     }
 
     /// Reads the configuration descriptor for the current configuration.
-    pub fn active_config_descriptor(&self) -> ::Result<ConfigDescriptor> {
+    pub fn active_config_descriptor(&self) -> crate::Result<ConfigDescriptor> {
         let mut config: *const libusb_config_descriptor = unsafe { mem::uninitialized() };
 
         try_unsafe!(libusb_get_active_config_descriptor(self.device, &mut config));
@@ -79,7 +79,7 @@ impl<'a> Device<'a> {
     }
 
     /// Opens the device.
-    pub fn open(&self) -> ::Result<DeviceHandle<'a>> {
+    pub fn open(&self) -> crate::Result<DeviceHandle<'a>> {
         let mut handle: *mut libusb_device_handle = unsafe { mem::uninitialized() };
 
         try_unsafe!(libusb_open(self.device, &mut handle));
