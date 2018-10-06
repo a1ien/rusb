@@ -82,7 +82,7 @@ impl Context {
     }
 
     /// Returns a list of the current USB devices. The context must outlive the device list.
-    pub fn devices<'a>(&'a self) -> crate::Result<DeviceList<'a>> {
+    pub fn devices(&self) -> crate::Result<DeviceList> {
         let mut list: *const *mut libusb_device = unsafe { mem::uninitialized() };
 
         let n = unsafe { libusb_get_device_list(self.context, &mut list) };
@@ -102,11 +102,11 @@ impl Context {
     ///
     /// Returns a device handle for the first device found matching `vendor_id` and `product_id`.
     /// On error, or if the device could not be found, it returns `None`.
-    pub fn open_device_with_vid_pid<'a>(
-        &'a self,
+    pub fn open_device_with_vid_pid(
+        &self,
         vendor_id: u16,
         product_id: u16,
-    ) -> Option<DeviceHandle<'a>> {
+    ) -> Option<DeviceHandle> {
         let handle =
             unsafe { libusb_open_device_with_vid_pid(self.context, vendor_id, product_id) };
 

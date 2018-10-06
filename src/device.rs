@@ -94,10 +94,10 @@ impl<'a> Device<'a> {
 }
 
 #[doc(hidden)]
-pub unsafe fn from_libusb<'a>(
-    context: PhantomData<&'a Context>,
+pub unsafe fn from_libusb(
+    context: PhantomData<&Context>,
     device: *mut libusb_device,
-) -> Device<'a> {
+) -> Device {
     libusb_ref_device(device);
 
     Device {

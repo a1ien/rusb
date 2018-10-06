@@ -68,11 +68,11 @@ impl<'a, 'b> Iterator for Devices<'a, 'b> {
 }
 
 #[doc(hidden)]
-pub unsafe fn from_libusb<'a>(
-    _context: &'a Context,
+pub unsafe fn from_libusb(
+    _context: &Context,
     list: *const *mut libusb_device,
     len: usize,
-) -> DeviceList<'a> {
+) -> DeviceList {
     DeviceList {
         context: PhantomData,
         list: list,
