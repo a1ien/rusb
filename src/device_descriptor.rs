@@ -108,83 +108,127 @@ pub fn from_libusb(device: libusb_device_descriptor) -> DeviceDescriptor {
     DeviceDescriptor { descriptor: device }
 }
 
-
 #[cfg(test)]
 mod test {
     use crate::fields::Version;
 
     #[test]
     fn it_has_usb_version() {
-        assert_eq!(Version::from_bcd(0x1234), super::from_libusb(device_descriptor!(bcdUSB: 0x1234)).usb_version());
+        assert_eq!(
+            Version::from_bcd(0x1234),
+            super::from_libusb(device_descriptor!(bcdUSB: 0x1234)).usb_version()
+        );
     }
 
     #[test]
     fn it_has_device_version() {
-        assert_eq!(Version::from_bcd(0x1234), super::from_libusb(device_descriptor!(bcdDevice: 0x1234)).device_version());
+        assert_eq!(
+            Version::from_bcd(0x1234),
+            super::from_libusb(device_descriptor!(bcdDevice: 0x1234)).device_version()
+        );
     }
 
     #[test]
     fn it_has_manufacturer_string_index() {
-        assert_eq!(Some(42), super::from_libusb(device_descriptor!(iManufacturer: 42)).manufacturer_string_index());
+        assert_eq!(
+            Some(42),
+            super::from_libusb(device_descriptor!(iManufacturer: 42)).manufacturer_string_index()
+        );
     }
 
     #[test]
     fn it_handles_missing_manufacturer_string_index() {
-        assert_eq!(None, super::from_libusb(device_descriptor!(iManufacturer: 0)).manufacturer_string_index());
+        assert_eq!(
+            None,
+            super::from_libusb(device_descriptor!(iManufacturer: 0)).manufacturer_string_index()
+        );
     }
 
     #[test]
     fn it_has_product_string_index() {
-        assert_eq!(Some(42), super::from_libusb(device_descriptor!(iProduct: 42)).product_string_index());
+        assert_eq!(
+            Some(42),
+            super::from_libusb(device_descriptor!(iProduct: 42)).product_string_index()
+        );
     }
 
     #[test]
     fn it_handles_missing_product_string_index() {
-        assert_eq!(None, super::from_libusb(device_descriptor!(iProduct: 0)).product_string_index());
+        assert_eq!(
+            None,
+            super::from_libusb(device_descriptor!(iProduct: 0)).product_string_index()
+        );
     }
 
     #[test]
     fn it_has_serial_number_string_index() {
-        assert_eq!(Some(42), super::from_libusb(device_descriptor!(iSerialNumber: 42)).serial_number_string_index());
+        assert_eq!(
+            Some(42),
+            super::from_libusb(device_descriptor!(iSerialNumber: 42)).serial_number_string_index()
+        );
     }
 
     #[test]
     fn it_handles_missing_serial_number_string_index() {
-        assert_eq!(None, super::from_libusb(device_descriptor!(iSerialNumber: 0)).serial_number_string_index());
+        assert_eq!(
+            None,
+            super::from_libusb(device_descriptor!(iSerialNumber: 0)).serial_number_string_index()
+        );
     }
 
     #[test]
     fn it_has_class_code() {
-        assert_eq!(42, super::from_libusb(device_descriptor!(bDeviceClass: 42)).class_code());
+        assert_eq!(
+            42,
+            super::from_libusb(device_descriptor!(bDeviceClass: 42)).class_code()
+        );
     }
 
     #[test]
     fn it_has_sub_class_code() {
-        assert_eq!(42, super::from_libusb(device_descriptor!(bDeviceSubClass: 42)).sub_class_code());
+        assert_eq!(
+            42,
+            super::from_libusb(device_descriptor!(bDeviceSubClass: 42)).sub_class_code()
+        );
     }
 
     #[test]
     fn it_has_protocol_code() {
-        assert_eq!(42, super::from_libusb(device_descriptor!(bDeviceProtocol: 42)).protocol_code());
+        assert_eq!(
+            42,
+            super::from_libusb(device_descriptor!(bDeviceProtocol: 42)).protocol_code()
+        );
     }
 
     #[test]
     fn it_has_vendor_id() {
-        assert_eq!(42, super::from_libusb(device_descriptor!(idVendor: 42)).vendor_id());
+        assert_eq!(
+            42,
+            super::from_libusb(device_descriptor!(idVendor: 42)).vendor_id()
+        );
     }
 
     #[test]
     fn it_has_product_id() {
-        assert_eq!(42, super::from_libusb(device_descriptor!(idProduct: 42)).product_id());
+        assert_eq!(
+            42,
+            super::from_libusb(device_descriptor!(idProduct: 42)).product_id()
+        );
     }
 
     #[test]
     fn it_has_max_packet_size() {
-        assert_eq!(42, super::from_libusb(device_descriptor!(bMaxPacketSize0: 42)).max_packet_size());
+        assert_eq!(
+            42,
+            super::from_libusb(device_descriptor!(bMaxPacketSize0: 42)).max_packet_size()
+        );
     }
 
     #[test]
     fn it_has_num_configurations() {
-        assert_eq!(3, super::from_libusb(device_descriptor!(bNumConfigurations: 3)).num_configurations());
+        assert_eq!(
+            3,
+            super::from_libusb(device_descriptor!(bNumConfigurations: 3)).num_configurations()
+        );
     }
 }

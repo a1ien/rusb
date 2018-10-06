@@ -4,15 +4,15 @@ use std::slice;
 use std::time::Duration;
 
 use bit_set::BitSet;
-use libc::{c_int, c_uint, c_uchar};
 use crate::libusb::*;
+use libc::{c_int, c_uchar, c_uint};
 
-use crate::context::Context;
-use crate::error::{self, Error};
-use crate::device_descriptor::DeviceDescriptor;
 use crate::config_descriptor::ConfigDescriptor;
+use crate::context::Context;
+use crate::device_descriptor::DeviceDescriptor;
+use crate::error::{self, Error};
+use crate::fields::{request_type, Direction, Recipient, RequestType};
 use crate::interface_descriptor::InterfaceDescriptor;
-use crate::fields::{Direction, RequestType, Recipient, request_type};
 use crate::language::Language;
 
 /// A handle to an open USB device.
@@ -111,7 +111,11 @@ impl<'a> DeviceHandle<'a> {
 
     /// Sets an interface's active setting.
     pub fn set_alternate_setting(&mut self, iface: u8, setting: u8) -> crate::Result<()> {
-        try_unsafe!(libusb_set_interface_alt_setting(self.handle, iface as c_int, setting as c_int));
+        try_unsafe!(libusb_set_interface_alt_setting(
+            self.handle,
+            iface as c_int,
+            setting as c_int
+        ));
         Ok(())
     }
 
@@ -137,7 +141,12 @@ impl<'a> DeviceHandle<'a> {
     /// * `Overflow` if the device offered more data.
     /// * `NoDevice` if the device has been disconnected.
     /// * `Io` if the transfer encountered an I/O error.
-    pub fn read_interrupt(&self, endpoint: u8, buf: &mut [u8], timeout: Duration) -> crate::Result<usize> {
+    pub fn read_interrupt(
+        &self,
+        endpoint: u8,
+        buf: &mut [u8],
+        timeout: Duration,
+    ) -> crate::Result<usize> {
         if endpoint & LIBUSB_ENDPOINT_DIR_MASK != LIBUSB_ENDPOINT_IN {
             return Err(Error::InvalidParam);
         }
@@ -146,20 +155,27 @@ impl<'a> DeviceHandle<'a> {
 
         let ptr = buf.as_mut_ptr() as *mut c_uchar;
         let len = buf.len() as c_int;
-        let timeout_ms = (timeout.as_secs() * 1000 + timeout.subsec_nanos() as u64 / 1_000_000) as c_uint;
+        let timeout_ms =
+            (timeout.as_secs() * 1000 + timeout.subsec_nanos() as u64 / 1_000_000) as c_uint;
 
-        match unsafe { libusb_interrupt_transfer(self.handle, endpoint, ptr, len, &mut transferred, timeout_ms) } {
-            0 => {
-                Ok(transferred as usize)
-            },
+        match unsafe {
+            libusb_interrupt_transfer(
+                self.handle,
+                endpoint,
+                ptr,
+                len,
+                &mut transferred,
+                timeout_ms,
+            )
+        } {
+            0 => Ok(transferred as usize),
             err => {
                 if err == LIBUSB_ERROR_INTERRUPTED && transferred > 0 {
                     Ok(transferred as usize)
-                }
-                else {
+                } else {
                     Err(error::from_libusb(err))
                 }
-            },
+            }
         }
     }
 
@@ -183,7 +199,12 @@ impl<'a> DeviceHandle<'a> {
     /// * `Pipe` if the endpoint halted.
     /// * `NoDevice` if the device has been disconnected.
     /// * `Io` if the transfer encountered an I/O error.
-    pub fn write_interrupt(&self, endpoint: u8, buf: &[u8], timeout: Duration) -> crate::Result<usize> {
+    pub fn write_interrupt(
+        &self,
+        endpoint: u8,
+        buf: &[u8],
+        timeout: Duration,
+    ) -> crate::Result<usize> {
         if endpoint & LIBUSB_ENDPOINT_DIR_MASK != LIBUSB_ENDPOINT_OUT {
             return Err(Error::InvalidParam);
         }
@@ -192,20 +213,27 @@ impl<'a> DeviceHandle<'a> {
 
         let ptr = buf.as_ptr() as *mut c_uchar;
         let len = buf.len() as c_int;
-        let timeout_ms = (timeout.as_secs() * 1000 + timeout.subsec_nanos() as u64 / 1_000_000) as c_uint;
+        let timeout_ms =
+            (timeout.as_secs() * 1000 + timeout.subsec_nanos() as u64 / 1_000_000) as c_uint;
 
-        match unsafe { libusb_interrupt_transfer(self.handle, endpoint, ptr, len, &mut transferred, timeout_ms) } {
-            0 => {
-                Ok(transferred as usize)
-            },
+        match unsafe {
+            libusb_interrupt_transfer(
+                self.handle,
+                endpoint,
+                ptr,
+                len,
+                &mut transferred,
+                timeout_ms,
+            )
+        } {
+            0 => Ok(transferred as usize),
             err => {
                 if err == LIBUSB_ERROR_INTERRUPTED && transferred > 0 {
                     Ok(transferred as usize)
-                }
-                else {
+                } else {
                     Err(error::from_libusb(err))
                 }
-            },
+            }
         }
     }
 
@@ -231,7 +259,12 @@ impl<'a> DeviceHandle<'a> {
     /// * `Overflow` if the device offered more data.
     /// * `NoDevice` if the device has been disconnected.
     /// * `Io` if the transfer encountered an I/O error.
-    pub fn read_bulk(&self, endpoint: u8, buf: &mut [u8], timeout: Duration) -> crate::Result<usize> {
+    pub fn read_bulk(
+        &self,
+        endpoint: u8,
+        buf: &mut [u8],
+        timeout: Duration,
+    ) -> crate::Result<usize> {
         if endpoint & LIBUSB_ENDPOINT_DIR_MASK != LIBUSB_ENDPOINT_IN {
             return Err(Error::InvalidParam);
         }
@@ -240,20 +273,27 @@ impl<'a> DeviceHandle<'a> {
 
         let ptr = buf.as_mut_ptr() as *mut c_uchar;
         let len = buf.len() as c_int;
-        let timeout_ms = (timeout.as_secs() * 1000 + timeout.subsec_nanos() as u64 / 1_000_000) as c_uint;
+        let timeout_ms =
+            (timeout.as_secs() * 1000 + timeout.subsec_nanos() as u64 / 1_000_000) as c_uint;
 
-        match unsafe { libusb_bulk_transfer(self.handle, endpoint, ptr, len, &mut transferred, timeout_ms) } {
-            0 => {
-                Ok(transferred as usize)
-            },
+        match unsafe {
+            libusb_bulk_transfer(
+                self.handle,
+                endpoint,
+                ptr,
+                len,
+                &mut transferred,
+                timeout_ms,
+            )
+        } {
+            0 => Ok(transferred as usize),
             err => {
                 if err == LIBUSB_ERROR_INTERRUPTED && transferred > 0 {
                     Ok(transferred as usize)
-                }
-                else {
+                } else {
                     Err(error::from_libusb(err))
                 }
-            },
+            }
         }
     }
 
@@ -286,20 +326,27 @@ impl<'a> DeviceHandle<'a> {
 
         let ptr = buf.as_ptr() as *mut c_uchar;
         let len = buf.len() as c_int;
-        let timeout_ms = (timeout.as_secs() * 1000 + timeout.subsec_nanos() as u64 / 1_000_000) as c_uint;
+        let timeout_ms =
+            (timeout.as_secs() * 1000 + timeout.subsec_nanos() as u64 / 1_000_000) as c_uint;
 
-        match unsafe { libusb_bulk_transfer(self.handle, endpoint, ptr, len, &mut transferred, timeout_ms) } {
-            0 => {
-                Ok(transferred as usize)
-            },
+        match unsafe {
+            libusb_bulk_transfer(
+                self.handle,
+                endpoint,
+                ptr,
+                len,
+                &mut transferred,
+                timeout_ms,
+            )
+        } {
+            0 => Ok(transferred as usize),
             err => {
                 if err == LIBUSB_ERROR_INTERRUPTED && transferred > 0 {
                     Ok(transferred as usize)
-                }
-                else {
+                } else {
                     Err(error::from_libusb(err))
                 }
-            },
+            }
         }
     }
 
@@ -330,17 +377,35 @@ impl<'a> DeviceHandle<'a> {
     /// * `Pipe` if the control request was not supported by the device.
     /// * `NoDevice` if the device has been disconnected.
     /// * `Io` if the transfer encountered an I/O error.
-    pub fn read_control(&self, request_type: u8, request: u8, value: u16, index: u16, buf: &mut [u8], timeout: Duration) -> crate::Result<usize> {
+    pub fn read_control(
+        &self,
+        request_type: u8,
+        request: u8,
+        value: u16,
+        index: u16,
+        buf: &mut [u8],
+        timeout: Duration,
+    ) -> crate::Result<usize> {
         if request_type & LIBUSB_ENDPOINT_DIR_MASK != LIBUSB_ENDPOINT_IN {
             return Err(Error::InvalidParam);
         }
 
         let ptr = buf.as_mut_ptr() as *mut c_uchar;
         let len = buf.len() as u16;
-        let timeout_ms = (timeout.as_secs() * 1000 + timeout.subsec_nanos() as u64 / 1_000_000) as c_uint;
+        let timeout_ms =
+            (timeout.as_secs() * 1000 + timeout.subsec_nanos() as u64 / 1_000_000) as c_uint;
 
         let res = unsafe {
-            libusb_control_transfer(self.handle, request_type, request, value, index, ptr, len, timeout_ms)
+            libusb_control_transfer(
+                self.handle,
+                request_type,
+                request,
+                value,
+                index,
+                ptr,
+                len,
+                timeout_ms,
+            )
         };
 
         if res < 0 {
@@ -376,17 +441,35 @@ impl<'a> DeviceHandle<'a> {
     /// * `Pipe` if the control request was not supported by the device.
     /// * `NoDevice` if the device has been disconnected.
     /// * `Io` if the transfer encountered an I/O error.
-    pub fn write_control(&self, request_type: u8, request: u8, value: u16, index: u16, buf: &[u8], timeout: Duration) -> crate::Result<usize> {
+    pub fn write_control(
+        &self,
+        request_type: u8,
+        request: u8,
+        value: u16,
+        index: u16,
+        buf: &[u8],
+        timeout: Duration,
+    ) -> crate::Result<usize> {
         if request_type & LIBUSB_ENDPOINT_DIR_MASK != LIBUSB_ENDPOINT_OUT {
             return Err(Error::InvalidParam);
         }
 
         let ptr = buf.as_ptr() as *mut c_uchar;
         let len = buf.len() as u16;
-        let timeout_ms = (timeout.as_secs() * 1000 + timeout.subsec_nanos() as u64 / 1_000_000) as c_uint;
+        let timeout_ms =
+            (timeout.as_secs() * 1000 + timeout.subsec_nanos() as u64 / 1_000_000) as c_uint;
 
         let res = unsafe {
-            libusb_control_transfer(self.handle, request_type, request, value, index, ptr, len, timeout_ms)
+            libusb_control_transfer(
+                self.handle,
+                request_type,
+                request,
+                value,
+                index,
+                ptr,
+                len,
+                timeout_ms,
+            )
         };
 
         if res < 0 {
@@ -403,98 +486,138 @@ impl<'a> DeviceHandle<'a> {
     pub fn read_languages(&self, timeout: Duration) -> crate::Result<Vec<Language>> {
         let mut buf = Vec::<u8>::with_capacity(256);
 
-        let buf_slice = unsafe {
-            slice::from_raw_parts_mut((&mut buf[..]).as_mut_ptr(), buf.capacity())
-        };
+        let buf_slice =
+            unsafe { slice::from_raw_parts_mut((&mut buf[..]).as_mut_ptr(), buf.capacity()) };
 
-        let len = r#try!(self.read_control(request_type(Direction::In, RequestType::Standard, Recipient::Device),
-                                         LIBUSB_REQUEST_GET_DESCRIPTOR,
-                                         (LIBUSB_DT_STRING as u16) << 8,
-                                         0,
-                                         buf_slice,
-                                         timeout));
+        let len = r#try!(self.read_control(
+            request_type(Direction::In, RequestType::Standard, Recipient::Device),
+            LIBUSB_REQUEST_GET_DESCRIPTOR,
+            (LIBUSB_DT_STRING as u16) << 8,
+            0,
+            buf_slice,
+            timeout
+        ));
 
         unsafe {
             buf.set_len(len);
         }
 
-        Ok(buf.chunks(2).skip(1).map(|chunk| {
-            let lang_id = chunk[0] as u16 | (chunk[1] as u16) << 8;
-            crate::language::from_lang_id(lang_id)
-        }).collect())
+        Ok(buf
+            .chunks(2)
+            .skip(1)
+            .map(|chunk| {
+                let lang_id = chunk[0] as u16 | (chunk[1] as u16) << 8;
+                crate::language::from_lang_id(lang_id)
+            }).collect())
     }
 
     /// Reads a string descriptor from the device.
     ///
     /// `language` should be one of the languages returned from [`read_languages`](#method.read_languages).
-    pub fn read_string_descriptor(&self, language: Language, index: u8, timeout: Duration) -> crate::Result<String> {
+    pub fn read_string_descriptor(
+        &self,
+        language: Language,
+        index: u8,
+        timeout: Duration,
+    ) -> crate::Result<String> {
         let mut buf = Vec::<u8>::with_capacity(256);
 
-        let buf_slice = unsafe {
-            slice::from_raw_parts_mut((&mut buf[..]).as_mut_ptr(), buf.capacity())
-        };
+        let buf_slice =
+            unsafe { slice::from_raw_parts_mut((&mut buf[..]).as_mut_ptr(), buf.capacity()) };
 
-        let len = r#try!(self.read_control(request_type(Direction::In, RequestType::Standard, Recipient::Device),
-                                         LIBUSB_REQUEST_GET_DESCRIPTOR,
-                                         (LIBUSB_DT_STRING as u16) << 8 | index as u16,
-                                         language.lang_id(),
-                                         buf_slice,
-                                         timeout));
+        let len = r#try!(self.read_control(
+            request_type(Direction::In, RequestType::Standard, Recipient::Device),
+            LIBUSB_REQUEST_GET_DESCRIPTOR,
+            (LIBUSB_DT_STRING as u16) << 8 | index as u16,
+            language.lang_id(),
+            buf_slice,
+            timeout
+        ));
 
         unsafe {
             buf.set_len(len);
         }
 
-        let utf16: Vec<u16> = buf.chunks(2).skip(1).map(|chunk| {
-            chunk[0] as u16 | (chunk[1] as u16) << 8
-        }).collect();
+        let utf16: Vec<u16> = buf
+            .chunks(2)
+            .skip(1)
+            .map(|chunk| chunk[0] as u16 | (chunk[1] as u16) << 8)
+            .collect();
 
         String::from_utf16(&utf16[..]).map_err(|_| Error::Other)
     }
 
     /// Reads the device's manufacturer string descriptor.
-    pub fn read_manufacturer_string(&self, language: Language, device: &DeviceDescriptor, timeout: Duration) -> crate::Result<String> {
+    pub fn read_manufacturer_string(
+        &self,
+        language: Language,
+        device: &DeviceDescriptor,
+        timeout: Duration,
+    ) -> crate::Result<String> {
         match device.manufacturer_string_index() {
             None => Err(Error::InvalidParam),
-            Some(n) => self.read_string_descriptor(language, n, timeout)
+            Some(n) => self.read_string_descriptor(language, n, timeout),
         }
     }
 
     /// Reads the device's product string descriptor.
-    pub fn read_product_string(&self, language: Language, device: &DeviceDescriptor, timeout: Duration) -> crate::Result<String> {
+    pub fn read_product_string(
+        &self,
+        language: Language,
+        device: &DeviceDescriptor,
+        timeout: Duration,
+    ) -> crate::Result<String> {
         match device.product_string_index() {
             None => Err(Error::InvalidParam),
-            Some(n) => self.read_string_descriptor(language, n, timeout)
+            Some(n) => self.read_string_descriptor(language, n, timeout),
         }
     }
 
     /// Reads the device's serial number string descriptor.
-    pub fn read_serial_number_string(&self, language: Language, device: &DeviceDescriptor, timeout: Duration) -> crate::Result<String> {
+    pub fn read_serial_number_string(
+        &self,
+        language: Language,
+        device: &DeviceDescriptor,
+        timeout: Duration,
+    ) -> crate::Result<String> {
         match device.serial_number_string_index() {
             None => Err(Error::InvalidParam),
-            Some(n) => self.read_string_descriptor(language, n, timeout)
+            Some(n) => self.read_string_descriptor(language, n, timeout),
         }
     }
 
     /// Reads the string descriptor for a configuration's description.
-    pub fn read_configuration_string(&self, language: Language, configuration: &ConfigDescriptor, timeout: Duration) -> crate::Result<String> {
+    pub fn read_configuration_string(
+        &self,
+        language: Language,
+        configuration: &ConfigDescriptor,
+        timeout: Duration,
+    ) -> crate::Result<String> {
         match configuration.description_string_index() {
             None => Err(Error::InvalidParam),
-            Some(n) => self.read_string_descriptor(language, n, timeout)
+            Some(n) => self.read_string_descriptor(language, n, timeout),
         }
     }
 
     /// Reads the string descriptor for a interface's description.
-    pub fn read_interface_string(&self, language: Language, interface: &InterfaceDescriptor, timeout: Duration) -> crate::Result<String> {
+    pub fn read_interface_string(
+        &self,
+        language: Language,
+        interface: &InterfaceDescriptor,
+        timeout: Duration,
+    ) -> crate::Result<String> {
         match interface.description_string_index() {
             None => Err(Error::InvalidParam),
-            Some(n) => self.read_string_descriptor(language, n, timeout)
+            Some(n) => self.read_string_descriptor(language, n, timeout),
         }
     }
 }
 
 #[doc(hidden)]
-pub unsafe fn from_libusb<'a>(context: PhantomData<&'a Context>, handle: *mut libusb_device_handle) -> DeviceHandle<'a> {
+pub unsafe fn from_libusb<'a>(
+    context: PhantomData<&'a Context>,
+    handle: *mut libusb_device_handle,
+) -> DeviceHandle<'a> {
     DeviceHandle {
         _context: context,
         handle: handle,

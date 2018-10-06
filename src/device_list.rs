@@ -56,8 +56,7 @@ impl<'a, 'b> Iterator for Devices<'a, 'b> {
 
             self.index += 1;
             Some(unsafe { device::from_libusb(self.context, device) })
-        }
-        else {
+        } else {
             None
         }
     }
@@ -68,9 +67,12 @@ impl<'a, 'b> Iterator for Devices<'a, 'b> {
     }
 }
 
-
 #[doc(hidden)]
-pub unsafe fn from_libusb<'a>(_context: &'a Context, list: *const *mut libusb_device, len: usize,) -> DeviceList<'a> {
+pub unsafe fn from_libusb<'a>(
+    _context: &'a Context,
+    list: *const *mut libusb_device,
+    len: usize,
+) -> DeviceList<'a> {
     DeviceList {
         context: PhantomData,
         list: list,

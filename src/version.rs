@@ -39,14 +39,11 @@ impl LibraryVersion {
             Ok(s) => {
                 if s.len() > 0 {
                     Some(s)
-                }
-                else {
+                } else {
                     None
                 }
-            },
-            Err(_) => {
-                None
-            },
+            }
+            Err(_) => None,
         }
     }
 }
@@ -67,9 +64,7 @@ impl fmt::Debug for LibraryVersion {
 
 /// Returns a structure with the version of the running libusb library.
 pub fn version() -> LibraryVersion {
-    let version: &'static libusb_version = unsafe {
-        mem::transmute(libusb_get_version())
-    };
+    let version: &'static libusb_version = unsafe { mem::transmute(libusb_get_version()) };
 
     LibraryVersion { inner: version }
 }

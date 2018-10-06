@@ -1,8 +1,8 @@
-use libc::c_int;
 use crate::libusb::*;
+use libc::c_int;
 
 /// Device speeds. Indicates the speed at which a device is operating.
-#[derive(Debug,PartialEq,Eq,Clone,Copy,Hash)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
 pub enum Speed {
     /// The operating system doesn't know the device speed.
     Unknown,
@@ -24,16 +24,16 @@ pub enum Speed {
 pub fn speed_from_libusb(n: c_int) -> Speed {
     match n {
         LIBUSB_SPEED_SUPER => Speed::Super,
-        LIBUSB_SPEED_HIGH  => Speed::High,
-        LIBUSB_SPEED_FULL  => Speed::Full,
-        LIBUSB_SPEED_LOW   => Speed::Low,
+        LIBUSB_SPEED_HIGH => Speed::High,
+        LIBUSB_SPEED_FULL => Speed::Full,
+        LIBUSB_SPEED_LOW => Speed::Low,
 
         LIBUSB_SPEED_UNKNOWN | _ => Speed::Unknown,
     }
 }
 
 /// Transfer and endpoint directions.
-#[derive(Debug,PartialEq,Eq,Clone,Copy,Hash)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
 pub enum Direction {
     /// Direction for read (device to host) transfers.
     In,
@@ -43,7 +43,7 @@ pub enum Direction {
 }
 
 /// An endpoint's transfer type.
-#[derive(Debug,PartialEq,Eq,Clone,Copy,Hash)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
 pub enum TransferType {
     /// Control endpoint.
     Control,
@@ -58,9 +58,8 @@ pub enum TransferType {
     Interrupt,
 }
 
-
 /// Isochronous synchronization mode.
-#[derive(Debug,PartialEq,Eq,Clone,Copy,Hash)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
 pub enum SyncType {
     /// No synchronisation.
     NoSync,
@@ -75,9 +74,8 @@ pub enum SyncType {
     Synchronous,
 }
 
-
 /// Isochronous usage type.
-#[derive(Debug,PartialEq,Eq,Clone,Copy,Hash)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
 pub enum UsageType {
     /// Data endpoint.
     Data,
@@ -92,9 +90,8 @@ pub enum UsageType {
     Reserved,
 }
 
-
 /// Types of control transfers.
-#[derive(Debug,PartialEq,Eq,Clone,Copy,Hash)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
 pub enum RequestType {
     /// Requests that are defined by the USB standard.
     Standard,
@@ -110,7 +107,7 @@ pub enum RequestType {
 }
 
 /// Recipients of control transfers.
-#[derive(Debug,PartialEq,Eq,Clone,Copy,Hash)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
 pub enum Recipient {
     /// The recipient is a device.
     Device,
@@ -139,7 +136,7 @@ pub enum Recipient {
 ///
 /// The intended use case of `Version` is to extract meaning from the version fields in USB
 /// descriptors, such as `bcdUSB` and `bcdDevice` in device descriptors.
-#[derive(Debug,PartialEq,Eq,Clone,Copy,Hash)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
 pub struct Version(pub u8, pub u8, pub u8);
 
 impl Version {
@@ -199,26 +196,25 @@ impl Version {
 pub fn request_type(direction: Direction, request_type: RequestType, recipient: Recipient) -> u8 {
     let mut value: u8 = match direction {
         Direction::Out => LIBUSB_ENDPOINT_OUT,
-        Direction::In  => LIBUSB_ENDPOINT_IN,
+        Direction::In => LIBUSB_ENDPOINT_IN,
     };
 
     value |= match request_type {
         RequestType::Standard => LIBUSB_REQUEST_TYPE_STANDARD,
-        RequestType::Class    => LIBUSB_REQUEST_TYPE_CLASS,
-        RequestType::Vendor   => LIBUSB_REQUEST_TYPE_VENDOR,
+        RequestType::Class => LIBUSB_REQUEST_TYPE_CLASS,
+        RequestType::Vendor => LIBUSB_REQUEST_TYPE_VENDOR,
         RequestType::Reserved => LIBUSB_REQUEST_TYPE_RESERVED,
     };
 
     value |= match recipient {
-        Recipient::Device    => LIBUSB_RECIPIENT_DEVICE,
+        Recipient::Device => LIBUSB_RECIPIENT_DEVICE,
         Recipient::Interface => LIBUSB_RECIPIENT_INTERFACE,
-        Recipient::Endpoint  => LIBUSB_RECIPIENT_ENDPOINT,
-        Recipient::Other     => LIBUSB_RECIPIENT_OTHER,
+        Recipient::Endpoint => LIBUSB_RECIPIENT_ENDPOINT,
+        Recipient::Other => LIBUSB_RECIPIENT_OTHER,
     };
 
     value
 }
-
 
 #[cfg(test)]
 mod test {
@@ -275,55 +271,85 @@ mod test {
 
     #[test]
     fn request_type_builds_value_for_out_direction() {
-        assert_eq!(request_type(Direction::Out, RequestType::Standard, Recipient::Device) & 0x80, 0x00);
+        assert_eq!(
+            request_type(Direction::Out, RequestType::Standard, Recipient::Device) & 0x80,
+            0x00
+        );
     }
 
     #[test]
     fn request_type_builds_value_for_in_direction() {
-        assert_eq!(request_type(Direction::In, RequestType::Standard, Recipient::Device) & 0x80, 0x80);
+        assert_eq!(
+            request_type(Direction::In, RequestType::Standard, Recipient::Device) & 0x80,
+            0x80
+        );
     }
 
     // request_type for request type
 
     #[test]
     fn request_type_builds_value_for_standard_request() {
-        assert_eq!(request_type(Direction::Out, RequestType::Standard, Recipient::Device) & 0x60, 0x00);
+        assert_eq!(
+            request_type(Direction::Out, RequestType::Standard, Recipient::Device) & 0x60,
+            0x00
+        );
     }
 
     #[test]
     fn request_type_builds_value_for_class_request() {
-        assert_eq!(request_type(Direction::Out, RequestType::Class, Recipient::Device) & 0x60, 0x20);
+        assert_eq!(
+            request_type(Direction::Out, RequestType::Class, Recipient::Device) & 0x60,
+            0x20
+        );
     }
 
     #[test]
     fn request_type_builds_value_for_vendor_request() {
-        assert_eq!(request_type(Direction::Out, RequestType::Vendor, Recipient::Device) & 0x60, 0x40);
+        assert_eq!(
+            request_type(Direction::Out, RequestType::Vendor, Recipient::Device) & 0x60,
+            0x40
+        );
     }
 
     #[test]
     fn request_type_builds_value_for_reserved_request() {
-        assert_eq!(request_type(Direction::Out, RequestType::Reserved, Recipient::Device) & 0x60, 0x60);
+        assert_eq!(
+            request_type(Direction::Out, RequestType::Reserved, Recipient::Device) & 0x60,
+            0x60
+        );
     }
 
     // request_type for recipient
 
     #[test]
     fn request_type_builds_value_for_device_recipient() {
-        assert_eq!(request_type(Direction::Out, RequestType::Standard, Recipient::Device) & 0x0F, 0x00);
+        assert_eq!(
+            request_type(Direction::Out, RequestType::Standard, Recipient::Device) & 0x0F,
+            0x00
+        );
     }
 
     #[test]
     fn request_type_builds_value_for_interface_recipient() {
-        assert_eq!(request_type(Direction::Out, RequestType::Standard, Recipient::Interface) & 0x0F, 0x01);
+        assert_eq!(
+            request_type(Direction::Out, RequestType::Standard, Recipient::Interface) & 0x0F,
+            0x01
+        );
     }
 
     #[test]
     fn request_type_builds_value_for_endpoint_recipient() {
-        assert_eq!(request_type(Direction::Out, RequestType::Standard, Recipient::Endpoint) & 0x0F, 0x02);
+        assert_eq!(
+            request_type(Direction::Out, RequestType::Standard, Recipient::Endpoint) & 0x0F,
+            0x02
+        );
     }
 
     #[test]
     fn request_type_builds_value_for_other_recipient() {
-        assert_eq!(request_type(Direction::Out, RequestType::Standard, Recipient::Other) & 0x0F, 0x03);
+        assert_eq!(
+            request_type(Direction::Out, RequestType::Standard, Recipient::Other) & 0x0F,
+            0x03
+        );
     }
 }
