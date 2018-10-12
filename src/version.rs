@@ -3,7 +3,7 @@ use std::fmt;
 use std::mem;
 use std::str;
 
-use crate::libusb::*;
+use libusb_sys::{libusb_version, libusb_get_version};
 
 /// A structure that describes the version of the underlying `libusb` library.
 pub struct LibraryVersion {

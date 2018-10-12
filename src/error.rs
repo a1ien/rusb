@@ -2,7 +2,7 @@ use std::error::Error as StdError;
 use std::fmt;
 use std::result::Result as StdResult;
 
-use crate::libusb::*;
+use libusb_sys::constants::*;
 use libc::c_int;
 
 /// A result of a function that may return a `Error`.

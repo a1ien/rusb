@@ -1,7 +1,7 @@
 use std::fmt;
 use std::slice;
 
-use crate::libusb::*;
+use libusb_sys::{libusb_interface_descriptor, libusb_endpoint_descriptor, libusb_interface};
 
 use crate::endpoint_descriptor::{self, EndpointDescriptor};
 

@@ -1,7 +1,7 @@
 use std::marker::PhantomData;
 use std::slice;
 
-use crate::libusb::*;
+use libusb_sys::*;
 
 use crate::context::Context;
 use crate::device::{self, Device};
@@ -75,7 +75,7 @@ pub unsafe fn from_libusb(
 ) -> DeviceList {
     DeviceList {
         context: PhantomData,
-        list: list,
-        len: len,
+        list,
+        len,
     }
 }

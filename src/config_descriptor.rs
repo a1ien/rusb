@@ -2,7 +2,7 @@ use std::fmt;
 use std::mem;
 use std::slice;
 
-use crate::libusb::*;
+use libusb_sys::*;
 
 use crate::interface_descriptor::{self, Interface};
 

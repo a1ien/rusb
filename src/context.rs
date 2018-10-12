@@ -3,8 +3,8 @@ use std::mem;
 use std::ptr;
 use std::time::Duration;
 
-use crate::libusb::*;
 use libc::{c_int, c_void, timeval};
+use libusb_sys::{constants::*, *};
 
 use crate::device::{self, Device};
 use crate::device_handle::{self, DeviceHandle};

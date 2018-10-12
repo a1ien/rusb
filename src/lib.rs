@@ -1,8 +1,6 @@
 //! This crate provides a safe wrapper around the native `libusb` library.
 
-extern crate bit_set;
-extern crate libc;
-extern crate libusb_sys as libusb;
+pub use libusb_sys::constants;
 
 pub use crate::error::{Error, Result};
 pub use crate::version::{version, LibraryVersion};
