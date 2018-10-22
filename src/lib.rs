@@ -306,5 +306,5 @@ extern "C" {
 // defined as static inline in libusb.h
 pub unsafe fn libusb_get_string_descriptor(dev_handle: *mut libusb_device_handle, desc_index: u8, langid: u16, data: *mut c_uchar, length: c_int) -> c_int
 {
-    libusb_control_transfer(dev_handle, LIBUSB_ENDPOINT_IN, LIBUSB_REQUEST_GET_DESCRIPTOR, (LIBUSB_DT_STRING as u16) << 8 | desc_index as u16, langid, data, length as u16, 1000)
+    libusb_control_transfer(dev_handle, LIBUSB_ENDPOINT_IN, LIBUSB_REQUEST_GET_DESCRIPTOR, u16::from(LIBUSB_DT_STRING) << 8 | u16::from(desc_index), langid, data, length as u16, 1000)
 }
