@@ -1,6 +1,6 @@
 [package]
 name = "libusb"
-version = "0.3.0"
+version = "0.4.0"
 authors = ["David Cuddeback <david.cuddeback@gmail.com>"]
 description = "Rust library for accessing USB devices."
 license = "MIT"
@@ -17,4 +17,4 @@ libusb-sys = { git = "https://github.com/a1ien/libusb-sys" }
 libc = "0.2"
 
 [dev-dependencies]
-regex = "0.1.26"
+regex = "0.1"
