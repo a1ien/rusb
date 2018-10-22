@@ -18,24 +18,24 @@ impl Language {
     ///
     /// Each language's `LANGID` is defined by the USB forum
     /// (http://www.usb.org/developers/docs/USB_LANGIDs.pdf).
-    pub fn lang_id(&self) -> u16 {
+    pub fn lang_id(self) -> u16 {
         self.raw
     }
 
     /// Returns the primary language.
-    pub fn primary_language(&self) -> PrimaryLanguage {
+    pub fn primary_language(self) -> PrimaryLanguage {
         PrimaryLanguage::from_raw(self.raw)
     }
 
     /// Returns the sub language.
-    pub fn sub_language(&self) -> SubLanguage {
+    pub fn sub_language(self) -> SubLanguage {
         SubLanguage::from_raw(self.primary_language(), self.raw)
     }
 }
 
 #[doc(hidden)]
 pub fn from_lang_id(raw: u16) -> Language {
-    Language { raw: raw }
+    Language { raw }
 }
 
 /// Primary language families.

@@ -106,7 +106,7 @@ pub unsafe fn from_libusb(
     libusb_ref_device(device);
 
     Device {
-        context: context,
-        device: device,
+        context,
+        device,
     }
 }

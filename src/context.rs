@@ -52,7 +52,7 @@ impl Context {
 
         try_unsafe!(libusb_init(&mut context));
 
-        Ok(Context { context: context })
+        Ok(Context { context })
     }
 
     /// Get the raw libusb_context pointer, for advanced use in unsafe code.
@@ -137,13 +137,13 @@ impl Context {
                 LIBUSB_HOTPLUG_EVENT_DEVICE_ARRIVED | LIBUSB_HOTPLUG_EVENT_DEVICE_LEFT,
                 LIBUSB_HOTPLUG_NO_FLAGS,
                 vendor_id
-                    .map(|v| v as c_int)
+                    .map(c_int::from)
                     .unwrap_or(LIBUSB_HOTPLUG_MATCH_ANY),
                 product_id
-                    .map(|v| v as c_int)
+                    .map(c_int::from)
                     .unwrap_or(LIBUSB_HOTPLUG_MATCH_ANY),
                 class
-                    .map(|v| v as c_int)
+                    .map(c_int::from)
                     .unwrap_or(LIBUSB_HOTPLUG_MATCH_ANY),
                 hotplug_callback,
                 Box::into_raw(to) as *mut c_void,
@@ -151,7 +151,7 @@ impl Context {
             )
         };
         if n < 0 {
-            Err(error::from_libusb(n as c_int))
+            Err(error::from_libusb(n))
         } else {
             Ok(handle)
         }
@@ -199,10 +199,11 @@ extern "C" fn hotplug_callback(
             _ => (),
         }
     }
-    return 0;
+    0
 }
 
 /// Library logging levels.
+#[derive(Clone, Copy)]
 pub enum LogLevel {
     /// No messages are printed by `libusb` (default).
     None,
@@ -223,8 +224,8 @@ pub enum LogLevel {
 }
 
 impl LogLevel {
-    fn as_c_int(&self) -> c_int {
-        match *self {
+    fn as_c_int(self) -> c_int {
+        match self {
             LogLevel::None => LIBUSB_LOG_LEVEL_NONE,
             LogLevel::Error => LIBUSB_LOG_LEVEL_ERROR,
             LogLevel::Warning => LIBUSB_LOG_LEVEL_WARNING,

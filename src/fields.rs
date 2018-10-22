@@ -160,20 +160,20 @@ impl Version {
     }
 
     /// Returns the major version.
-    pub fn major(&self) -> u8 {
-        let Version(major, _, _) = *self;
+    pub fn major(self) -> u8 {
+        let Version(major, _, _) = self;
         major
     }
 
     /// Returns the minor version.
-    pub fn minor(&self) -> u8 {
-        let Version(_, minor, _) = *self;
+    pub fn minor(self) -> u8 {
+        let Version(_, minor, _) = self;
         minor
     }
 
     /// Returns the sub minor version.
-    pub fn sub_minor(&self) -> u8 {
-        let Version(_, _, sub_minor) = *self;
+    pub fn sub_minor(self) -> u8 {
+        let Version(_, _, sub_minor) = self;
         sub_minor
     }
 }

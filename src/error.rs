@@ -3,7 +3,6 @@ use std::fmt;
 use std::result::Result as StdResult;
 
 use libusb_sys::constants::*;
-use libc::c_int;
 
 /// A result of a function that may return a `Error`.
 pub type Result<T> = StdResult<T, Error>;
@@ -89,7 +88,7 @@ impl StdError for Error {
 }
 
 #[doc(hidden)]
-pub fn from_libusb(err: c_int) -> Error {
+pub fn from_libusb(err: i32) -> Error {
     match err {
         LIBUSB_SUCCESS => Error::Success,
         LIBUSB_ERROR_IO => Error::Io,

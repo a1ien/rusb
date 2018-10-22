@@ -1,6 +1,5 @@
 use std::ffi::CStr;
 use std::fmt;
-use std::mem;
 use std::str;
 
 use libusb_sys::{libusb_version, libusb_get_version};
@@ -37,10 +36,10 @@ impl LibraryVersion {
 
         match str::from_utf8(cstr.to_bytes()) {
             Ok(s) => {
-                if s.len() > 0 {
-                    Some(s)
-                } else {
+                if s.is_empty() {
                     None
+                } else {
+                    Some(s)
                 }
             }
             Err(_) => None,
@@ -64,7 +63,7 @@ impl fmt::Debug for LibraryVersion {
 
 /// Returns a structure with the version of the running libusb library.
 pub fn version() -> LibraryVersion {
-    let version: &'static libusb_version = unsafe { mem::transmute(libusb_get_version()) };
+    let version: &'static libusb_version = unsafe { &*libusb_get_version() };
 
     LibraryVersion { inner: version }
 }

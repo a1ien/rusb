@@ -50,7 +50,7 @@ impl<'d> Transfer<'d> {
         buffer: &'d mut [u8],
         timeout: Duration,
     ) -> Transfer<'d> {
-        let timeout_ms = timeout.as_secs() * 1000 + timeout.subsec_nanos() as u64 / 1_000_000;
+        let timeout_ms = timeout.as_secs() * 1000 + u64::from(timeout.subsec_nanos()) / 1_000_000;
         unsafe {
             let t = libusb_sys::libusb_alloc_transfer(0);
             (*t).status = -1;
@@ -183,7 +183,7 @@ impl<'d> AsyncGroup<'d> {
     /// Creates an AsyncGroup to process transfers for devices from the given context.
     pub fn new(context: &'d Context) -> AsyncGroup<'d> {
         AsyncGroup {
-            context: context,
+            context,
             callback_data: Box::new(CallbackData {
                 completed: Mutex::new(VecDeque::new()),
                 flag: UnsafeCell::new(0),
@@ -209,7 +209,7 @@ impl<'d> AsyncGroup<'d> {
 
     /// Waits for any pending transfer to complete, and return it.
     pub fn wait_any(&mut self) -> Result<Transfer<'d>> {
-        if self.pending.len() == 0 {
+        if self.pending.is_empty() {
             // Otherwise this function would block forever waiting for a transfer to complete
             return Err(Error::NotFound);
         }
@@ -236,7 +236,7 @@ impl<'d> AsyncGroup<'d> {
             }
 
             Ok(Transfer {
-                transfer: transfer,
+                transfer,
                 _handle: PhantomData,
                 _buffer: PhantomData,
             })
@@ -252,7 +252,7 @@ impl<'d> AsyncGroup<'d> {
             try_unsafe!(libusb_sys::libusb_cancel_transfer(transfer))
         }
 
-        while self.pending.len() > 0 {
+        while !self.pending.is_empty() {
             self.wait_any()?;
         }
 

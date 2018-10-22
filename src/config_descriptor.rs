@@ -1,5 +1,4 @@
 use std::fmt;
-use std::mem;
 use std::slice;
 
 use libusb_sys::*;
@@ -30,7 +29,7 @@ impl<'c> ConfigDescriptor {
 
     /// Returns the device's maximum power consumption (in milliamps) in this configuration.
     pub fn max_power(&self) -> u16 {
-        unsafe { (*self.descriptor).bMaxPower as u16 * 2 }
+        unsafe { u16::from((*self.descriptor).bMaxPower) * 2 }
     }
 
     /// Indicates if the device is self-powered in this configuration.
@@ -90,7 +89,7 @@ impl fmt::Debug for ConfigDescriptor {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> Result<(), fmt::Error> {
         let mut debug = fmt.debug_struct("ConfigDescriptor");
 
-        let descriptor: &libusb_config_descriptor = unsafe { mem::transmute(self.descriptor) };
+        let descriptor: &libusb_config_descriptor = unsafe { &*self.descriptor };
 
         debug.field("bLength", &descriptor.bLength);
         debug.field("bDescriptorType", &descriptor.bDescriptorType);
@@ -99,7 +98,8 @@ impl fmt::Debug for ConfigDescriptor {
         debug.field("bConfigurationValue", &descriptor.bConfigurationValue);
         debug.field("iConfiguration", &descriptor.iConfiguration);
         debug.field("bmAttributes", &descriptor.bmAttributes);
-        debug.field("bMaxPower	", &descriptor.bMaxPower);
+        debug.field("bMaxPower", &descriptor.bMaxPower);
+        debug.field("extra", &self.extra());
 
         debug.finish()
     }
