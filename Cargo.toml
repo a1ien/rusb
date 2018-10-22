@@ -9,6 +9,7 @@ homepage = "https://github.com/dcuddeback/libusb-sys"
 repository = "https://github.com/dcuddeback/libusb-sys.git"
 readme = "README.md"
 keywords = ["usb", "libusb", "hardware", "bindings"]
+edition = "2018"
 
 build = "build.rs"
 
