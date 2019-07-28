@@ -1,4 +1,4 @@
-use libusb_sys::constants::*;
+use libusb1_sys::constants::*;
 use libc::c_int;
 
 /// Device speeds. Indicates the speed at which a device is operating.

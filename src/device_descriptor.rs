@@ -1,6 +1,6 @@
 use std::fmt;
 
-use libusb_sys::*;
+use libusb1_sys::*;
 
 use crate::fields::Version;
 

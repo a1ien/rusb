@@ -2,7 +2,7 @@ use std::error::Error as StdError;
 use std::fmt;
 use std::result::Result as StdResult;
 
-use libusb_sys::constants::*;
+use libusb1_sys::constants::*;
 
 /// A result of a function that may return a `Error`.
 pub type Result<T> = StdResult<T, Error>;

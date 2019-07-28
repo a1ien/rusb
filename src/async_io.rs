@@ -2,6 +2,7 @@ use libc::{c_int, c_uchar, c_uint, c_void};
 use std::cell::UnsafeCell;
 use std::collections::{HashSet, VecDeque};
 use std::{marker::PhantomData, mem, slice, sync::Mutex, time::Duration};
+use libusb1_sys::*;
 
 use crate::{constants::*, Context, DeviceHandle, Error, Result};
 
@@ -11,7 +12,7 @@ use crate::{constants::*, Context, DeviceHandle, Error, Result};
 pub struct Transfer<'d> {
     _handle: PhantomData<&'d DeviceHandle<'d>>, // transfer.dev_handle
     _buffer: PhantomData<&'d mut [u8]>,         // transfer.data
-    transfer: *mut libusb_sys::libusb_transfer,
+    transfer: *mut libusb1_sys::libusb_transfer,
 }
 
 /// The status of a Transfer returned by wait_any.
@@ -52,7 +53,7 @@ impl<'d> Transfer<'d> {
     ) -> Transfer<'d> {
         let timeout_ms = timeout.as_secs() * 1000 + u64::from(timeout.subsec_nanos()) / 1_000_000;
         unsafe {
-            let t = libusb_sys::libusb_alloc_transfer(0);
+            let t = libusb_alloc_transfer(0);
             (*t).status = -1;
             (*t).dev_handle = handle.as_raw();
             (*t).endpoint = endpoint as c_uchar;
@@ -139,7 +140,7 @@ impl<'d> Transfer<'d> {
 impl<'d> Drop for Transfer<'d> {
     fn drop(&mut self) {
         unsafe {
-            libusb_sys::libusb_free_transfer(self.transfer);
+            libusb_free_transfer(self.transfer);
         }
     }
 }
@@ -147,7 +148,7 @@ impl<'d> Drop for Transfer<'d> {
 /// Internal type holding data touched by libusb completion callback.
 struct CallbackData {
     /// Transfers that have completed, but haven't yet been returned from `wait_any`.
-    completed: Mutex<VecDeque<*mut libusb_sys::libusb_transfer>>,
+    completed: Mutex<VecDeque<*mut libusb_transfer>>,
 
     /// Signals a completion to avoid race conditions between callback and
     /// `libusb_handle_events_completed`. This is synchronized with the
@@ -166,11 +167,11 @@ pub struct AsyncGroup<'d> {
 
     /// The set of pending transfers. We need to keep track of them so they can be cancelled on
     /// drop.
-    pending: HashSet<*mut libusb_sys::libusb_transfer>,
+    pending: HashSet<*mut libusb_transfer>,
 }
 
 /// The libusb transfer completion callback. Careful: libusb may call this on any thread!
-extern "C" fn async_group_callback(transfer: *mut libusb_sys::libusb_transfer) {
+extern "C" fn async_group_callback(transfer: *mut libusb_transfer) {
     unsafe {
         let callback_data: &CallbackData = &*((*transfer).user_data as *const CallbackData);
         let mut completed = callback_data.completed.lock().unwrap();
@@ -201,7 +202,7 @@ impl<'d> AsyncGroup<'d> {
             (*t.transfer).user_data = &mut *self.callback_data as *mut _ as *mut c_void;
             (*t.transfer).callback = async_group_callback;
         }
-        try_unsafe!(libusb_sys::libusb_submit_transfer(t.transfer));
+        try_unsafe!(libusb_submit_transfer(t.transfer));
         self.pending.insert(t.transfer);
         mem::forget(t);
         Ok(())
@@ -225,7 +226,7 @@ impl<'d> AsyncGroup<'d> {
                     }
                     unsafe  {*self.callback_data.flag.get() = 0};
                 }
-                try_unsafe!(libusb_sys::libusb_handle_events_completed(
+                try_unsafe!(libusb_handle_events_completed(
                     self.context.as_raw(),
                     self.callback_data.flag.get()
                 ));
@@ -249,7 +250,7 @@ impl<'d> AsyncGroup<'d> {
     /// collected by `wait_any`.
     pub fn cancel_all(&mut self) -> Result<()> {
         for &transfer in self.pending.iter() {
-            try_unsafe!(libusb_sys::libusb_cancel_transfer(transfer))
+            try_unsafe!(libusb_cancel_transfer(transfer))
         }
 
         while !self.pending.is_empty() {

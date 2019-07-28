@@ -1,7 +1,7 @@
 use std::marker::PhantomData;
 use std::mem;
 
-use libusb_sys::*;
+use libusb1_sys::*;
 
 use crate::config_descriptor::{self, ConfigDescriptor};
 use crate::context::Context;

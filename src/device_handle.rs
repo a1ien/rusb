@@ -5,7 +5,7 @@ use std::time::Duration;
 
 use bit_set::BitSet;
 use libc::{c_int, c_uchar, c_uint};
-use libusb_sys::{constants::*, *};
+use libusb1_sys::{constants::*, *};
 
 use crate::config_descriptor::ConfigDescriptor;
 use crate::context::Context;

@@ -1,6 +1,6 @@
 //! This crate provides a safe wrapper around the native `libusb` library.
 
-pub use libusb_sys::constants;
+pub use libusb1_sys::constants;
 
 pub use crate::async_io::{AsyncGroup, Transfer, TransferStatus};
 pub use crate::error::{Error, Result};

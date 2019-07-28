@@ -1,7 +1,7 @@
 use std::marker::PhantomData;
 use std::slice;
 
-use libusb_sys::*;
+use libusb1_sys::*;
 
 use crate::context::Context;
 use crate::device::{self, Device};
