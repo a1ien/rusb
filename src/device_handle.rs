@@ -303,7 +303,7 @@ impl<'a> DeviceHandle<'a> {
                 timeout_ms,
             ) {
                 0 => Ok(transferred.assume_init() as usize),
-                err if err == LIBUSB_ERROR_INTERRUPTED => {
+                err if err == LIBUSB_ERROR_INTERRUPTED || err == LIBUSB_ERROR_TIMEOUT => {
                     let transferred = transferred.assume_init();
                     if transferred > 0 {
                         Ok(transferred as usize)
@@ -357,7 +357,7 @@ impl<'a> DeviceHandle<'a> {
                 timeout_ms,
             ) {
                 0 => Ok(transferred.assume_init() as usize),
-                err if err == LIBUSB_ERROR_INTERRUPTED => {
+                err if err == LIBUSB_ERROR_INTERRUPTED || err == LIBUSB_ERROR_TIMEOUT => {
                     let transferred = transferred.assume_init();
                     if transferred > 0 {
                         Ok(transferred as usize)
