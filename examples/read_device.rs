@@ -1,276 +1,355 @@
-extern crate libusb_sys as ffi;
-extern crate libc;
-
-use libc::{c_int,c_uint,c_uchar};
+use libc::{c_int, c_uchar, c_uint};
 
 use std::mem;
 use std::slice;
 
-use std::io::{Read,Cursor};
+use std::io::{Cursor, Read};
 use std::str::FromStr;
 
 #[derive(Debug)]
 struct Endpoint {
-  config: u8,
-  iface: u8,
-  setting: u8,
-  address: u8
+    config: u8,
+    iface: u8,
+    setting: u8,
+    address: u8,
 }
 
 fn main() {
-  let args: Vec<String> = std::env::args().collect();
+    let args: Vec<String> = std::env::args().collect();
 
-  if args.len() < 3 {
-    println!("usage: show_device <vendor-id> <product-id>");
-    return;
-  }
-
-  let vid: u16 = FromStr::from_str(args[1].as_ref()).unwrap();
-  let pid: u16 = FromStr::from_str(args[2].as_ref()).unwrap();
-
-  let mut context: *mut ::ffi::libusb_context = unsafe { mem::uninitialized() };
-  let mut device_list: *const *mut ::ffi::libusb_device = unsafe { mem::uninitialized() };
-
-  match unsafe { ::ffi::libusb_init(&mut context) } {
-    0 => (),
-    e => panic!("libusb_init: {}", e)
-  };
-
-  let handle = unsafe { ::ffi::libusb_open_device_with_vid_pid(context, vid, pid) };
-
-  if !handle.is_null() {
-    match unsafe { ::ffi::libusb_reset_device(handle) } {
-      0 => {
-        unsafe { ::ffi::libusb_set_auto_detach_kernel_driver(handle, 0) };
-
-        let device = unsafe { ::ffi::libusb_get_device(handle) };
-        unsafe { ::ffi::libusb_ref_device(device) };
-
-        if unsafe { ::ffi::libusb_get_device_list(context, &mut device_list) } >= 0 {
-          print_device_tree(device);
-          println!("");
-
-          unsafe { ::ffi::libusb_free_device_list(device_list, 1) };
-        }
-
-        let languages = get_language_ids(handle);
-        println!("Supported languages: {:?}", languages);
-
-        let mut active_config: c_int = unsafe { mem::uninitialized() };
-        match unsafe { ::ffi::libusb_get_configuration(handle, &mut active_config) } {
-          0 => println!("Active configuration: {}", active_config),
-          e => println!("libusb_get_configuration: {}", e)
-        }
-        println!("");
-
-        match find_readable_endpoint(device, ::ffi::LIBUSB_TRANSFER_TYPE_INTERRUPT) {
-          Some(ep) => read_endpoint(handle, device, ep, ::ffi::LIBUSB_TRANSFER_TYPE_INTERRUPT),
-          None => println!("No readable interrupt endpoint")
-        }
-        println!("");
-
-        match find_readable_endpoint(device, ::ffi::LIBUSB_TRANSFER_TYPE_BULK) {
-          Some(ep) => read_endpoint(handle, device, ep, ::ffi::LIBUSB_TRANSFER_TYPE_BULK),
-          None => println!("No readable bulk endpoint")
-        }
-
-        unsafe { ::ffi::libusb_unref_device(device) };
-      },
-      e => println!("libusb_reset_device: {}", e)
+    if args.len() < 3 {
+        println!("usage: show_device <vendor-id> <product-id>");
+        return;
     }
 
-    unsafe { ::ffi::libusb_close(handle) };
-  }
+    let vid: u16 = FromStr::from_str(args[1].as_ref()).unwrap();
+    let pid: u16 = FromStr::from_str(args[2].as_ref()).unwrap();
 
-  unsafe { ::ffi::libusb_exit(context) };
-}
+    let mut context: *mut libusb1_sys::libusb_context = unsafe { mem::uninitialized() };
+    let mut device_list: *const *mut libusb1_sys::libusb_device = unsafe { mem::uninitialized() };
 
-fn print_device_tree(device: *mut ::ffi::libusb_device) -> usize {
-  if device.is_null() {
-    return 0;
-  }
-
-  let parent = unsafe { ::ffi::libusb_get_parent(device) };
-  let depth = print_device_tree(parent);
-
-  for _ in 0..depth {
-    print!("  ");
-  }
-
-  let bus = unsafe { ::ffi::libusb_get_bus_number(device) };
-  let address = unsafe { ::ffi::libusb_get_device_address(device) };
-
-  println!("Bus {:03} Device {:03}", bus, address);
-
-  return depth + 1;
-}
-
-fn get_language_ids(handle: *mut ::ffi::libusb_device_handle) -> Vec<u16> {
-  let mut buf = Vec::<u8>::with_capacity(255);
-  let len = unsafe { ::ffi::libusb_get_string_descriptor(handle, 0, 0, (&mut buf[..]).as_mut_ptr() as *mut c_uchar, buf.capacity() as c_int) };
-
-  let mut languages = Vec::<u16>::new();
-
-  if len >= 0 {
-    unsafe { buf.set_len(len as usize) };
-
-    if buf.len() >= 2 {
-      let num_languages = (buf.len() - 2) / 2;
-      languages.reserve(num_languages);
-
-      let mut cursor = Cursor::new(buf);
-      cursor.set_position(2);
-
-      for _ in 0..num_languages {
-        let mut bytes = Vec::<u8>::with_capacity(2);
-
-        match cursor.read(unsafe { slice::from_raw_parts_mut((&mut bytes[..]).as_mut_ptr(), bytes.capacity()) }) {
-          Ok(len) => {
-            if len == 2 {
-              unsafe { bytes.set_len(len) };
-
-              let langid = (bytes[1] as u16) << 8 | (bytes[0] as u16);
-              languages.push(langid)
-            }
-            else {
-              return languages;
-            }
-          },
-          Err(_) => return languages
-        }
-      }
-    }
-  }
-  else {
-    println!("libusb_get_string_descriptor: {}", len);
-  }
-
-  languages
-}
-
-fn find_readable_endpoint(device: *mut ::ffi::libusb_device, transfer_type: u8) -> Option<Endpoint> {
-  let mut device_descriptor: ::ffi::libusb_device_descriptor = unsafe { mem::uninitialized() };
-
-  match unsafe { ::ffi::libusb_get_device_descriptor(device, &mut device_descriptor) } {
-    0 => {
-      for i in 0..device_descriptor.bNumConfigurations {
-        let mut config_ptr: *const ::ffi::libusb_config_descriptor = unsafe { mem::uninitialized() };
-
-        match unsafe { ::ffi::libusb_get_config_descriptor(device, i, &mut config_ptr) } {
-          0 => {
-            let config_descriptor = unsafe { &*config_ptr };
-            let interfaces = unsafe { slice::from_raw_parts(config_descriptor.interface, config_descriptor.bNumInterfaces as usize) };
-
-            for iface in interfaces {
-              let settings = unsafe { slice::from_raw_parts(iface.altsetting, iface.num_altsetting as usize) };
-
-              for iface_descriptor in settings {
-                let endpoints = unsafe { slice::from_raw_parts(iface_descriptor.endpoint, iface_descriptor.bNumEndpoints as usize) };
-
-                for endpoint_descriptor in endpoints {
-                  let is_input = endpoint_descriptor.bEndpointAddress & ::ffi::LIBUSB_ENDPOINT_DIR_MASK == ::ffi::LIBUSB_ENDPOINT_IN;
-                  let matches_type = endpoint_descriptor.bmAttributes & ::ffi::LIBUSB_TRANSFER_TYPE_MASK == transfer_type;
-
-                  if is_input && matches_type {
-                    return Some(Endpoint {
-                      config: config_descriptor.bConfigurationValue,
-                      iface: iface_descriptor.bInterfaceNumber,
-                      setting: iface_descriptor.bAlternateSetting,
-                      address: endpoint_descriptor.bEndpointAddress
-                    });
-                  }
-                }
-              }
-            }
-          },
-          e => println!("libusb_get_config_descriptor: {}", e)
-        }
-      }
-
-      None
-    },
-    e => {
-      println!("libusb_get_device_descriptor: {}", e);
-      None
-    }
-  }
-}
-
-fn read_endpoint(handle: *mut ::ffi::libusb_device_handle, device: *mut ::ffi::libusb_device, endpoint: Endpoint, transfer_type: u8) {
-  println!("Reading from endpoint: {:?}", endpoint);
-
-  let has_kernel_driver = unsafe {
-    if ::ffi::libusb_kernel_driver_active(handle, endpoint.iface as c_int) == 1 {
-      match ::ffi::libusb_detach_kernel_driver(handle, endpoint.iface as c_int) {
+    match unsafe { libusb1_sys::libusb_init(&mut context) } {
         0 => (),
-        e => println!("libusb_detach_kernel_driver: {}", e)
-      }
+        e => panic!("libusb_init: {}", e),
+    };
 
-      true
-    }
-    else {
-      false
-    }
-  };
+    let handle = unsafe { libusb1_sys::libusb_open_device_with_vid_pid(context, vid, pid) };
 
-  println!(" - kernel driver? {}", has_kernel_driver);
-
-  match unsafe { ::ffi::libusb_set_configuration(handle, endpoint.config as c_int) } {
-    0 => {
-      println!(" - max packet size: {}", unsafe { ::ffi::libusb_get_max_packet_size(device, endpoint.address as c_uchar) });
-      println!(" - max iso packet size: {}", unsafe { ::ffi::libusb_get_max_iso_packet_size(device, endpoint.address as c_uchar) });
-
-      match unsafe { ::ffi::libusb_claim_interface(handle, endpoint.iface as c_int) } {
-        0 => {
-          match unsafe { ::ffi::libusb_set_interface_alt_setting(handle, endpoint.iface as c_int, endpoint.setting as c_int) } {
+    if !handle.is_null() {
+        match unsafe { libusb1_sys::libusb_reset_device(handle) } {
             0 => {
-              let mut vec = Vec::<u8>::with_capacity(256);
-              let timeout: c_uint = 1000;
+                unsafe { libusb1_sys::libusb_set_auto_detach_kernel_driver(handle, 0) };
 
-              let mut transferred: c_int = unsafe { mem::uninitialized() };
+                let device = unsafe { libusb1_sys::libusb_get_device(handle) };
+                unsafe { libusb1_sys::libusb_ref_device(device) };
 
-              match transfer_type {
-                ::ffi::LIBUSB_TRANSFER_TYPE_INTERRUPT => {
-                  match unsafe { ::ffi::libusb_interrupt_transfer(handle, endpoint.address as c_uchar, (&vec[..]).as_ptr() as *mut c_uchar, vec.capacity() as c_int, &mut transferred, timeout) } {
-                    0 => {
-                      unsafe { vec.set_len(transferred as usize) };
-                      println!(" - read: {:?}", vec);
-                    },
-                    e => println!("libusb_interrupt_transfer: {}", e)
-                  }
-                },
-                ::ffi::LIBUSB_TRANSFER_TYPE_BULK => {
-                  match unsafe { ::ffi::libusb_bulk_transfer(handle, endpoint.address as c_uchar, (&vec[..]).as_ptr() as *mut c_uchar, vec.capacity() as c_int, &mut transferred, timeout) } {
-                    0 => {
-                      unsafe { vec.set_len(transferred as usize) };
-                      println!(" - read: {:?}", vec);
-                    },
-                    e => println!("libusb_interrupt_transfer: {}", e)
-                  }
-                },
-                tt => println!(" - can't read endpoint with transfer type {}", tt)
-              }
-            },
-            e => println!("libusb_set_interface_alt_setting: {}", e)
-          }
+                if unsafe { libusb1_sys::libusb_get_device_list(context, &mut device_list) } >= 0 {
+                    print_device_tree(device);
+                    println!("");
 
-          match unsafe { ::ffi::libusb_release_interface(handle, endpoint.iface as c_int) } {
-            0 => (),
-            e => println!("libusb_release_interface: {}", e)
-          }
-        },
-        e => println!("libusb_claim_interface: {}", e)
-      }
-    },
-    e => println!("libusb_set_configuration: {}", e)
-  }
+                    unsafe { libusb1_sys::libusb_free_device_list(device_list, 1) };
+                }
 
+                let languages = get_language_ids(handle);
+                println!("Supported languages: {:?}", languages);
 
+                let mut active_config: c_int = unsafe { mem::uninitialized() };
+                match unsafe { libusb1_sys::libusb_get_configuration(handle, &mut active_config) } {
+                    0 => println!("Active configuration: {}", active_config),
+                    e => println!("libusb_get_configuration: {}", e),
+                }
+                println!("");
 
-  if has_kernel_driver {
-    match unsafe { ::ffi::libusb_attach_kernel_driver(handle, endpoint.iface as c_int) } {
-      0 => (),
-      e => println!("libusb_attach_kernel_driver: {}", e)
+                match find_readable_endpoint(
+                    device,
+                    libusb1_sys::constants::LIBUSB_TRANSFER_TYPE_INTERRUPT,
+                ) {
+                    Some(ep) => read_endpoint(
+                        handle,
+                        device,
+                        ep,
+                        libusb1_sys::constants::LIBUSB_TRANSFER_TYPE_INTERRUPT,
+                    ),
+                    None => println!("No readable interrupt endpoint"),
+                }
+                println!("");
+
+                match find_readable_endpoint(
+                    device,
+                    libusb1_sys::constants::LIBUSB_TRANSFER_TYPE_BULK,
+                ) {
+                    Some(ep) => read_endpoint(
+                        handle,
+                        device,
+                        ep,
+                        libusb1_sys::constants::LIBUSB_TRANSFER_TYPE_BULK,
+                    ),
+                    None => println!("No readable bulk endpoint"),
+                }
+
+                unsafe { libusb1_sys::libusb_unref_device(device) };
+            }
+            e => println!("libusb_reset_device: {}", e),
+        }
+
+        unsafe { libusb1_sys::libusb_close(handle) };
     }
-  }
+
+    unsafe { libusb1_sys::libusb_exit(context) };
+}
+
+fn print_device_tree(device: *mut libusb1_sys::libusb_device) -> usize {
+    if device.is_null() {
+        return 0;
+    }
+
+    let parent = unsafe { libusb1_sys::libusb_get_parent(device) };
+    let depth = print_device_tree(parent);
+
+    for _ in 0..depth {
+        print!("  ");
+    }
+
+    let bus = unsafe { libusb1_sys::libusb_get_bus_number(device) };
+    let address = unsafe { libusb1_sys::libusb_get_device_address(device) };
+
+    println!("Bus {:03} Device {:03}", bus, address);
+
+    return depth + 1;
+}
+
+fn get_language_ids(handle: *mut libusb1_sys::libusb_device_handle) -> Vec<u16> {
+    let mut buf = Vec::<u8>::with_capacity(255);
+    let len = unsafe {
+        libusb1_sys::libusb_get_string_descriptor(
+            handle,
+            0,
+            0,
+            (&mut buf[..]).as_mut_ptr() as *mut c_uchar,
+            buf.capacity() as c_int,
+        )
+    };
+
+    let mut languages = Vec::<u16>::new();
+
+    if len >= 0 {
+        unsafe { buf.set_len(len as usize) };
+
+        if buf.len() >= 2 {
+            let num_languages = (buf.len() - 2) / 2;
+            languages.reserve(num_languages);
+
+            let mut cursor = Cursor::new(buf);
+            cursor.set_position(2);
+
+            for _ in 0..num_languages {
+                let mut bytes = Vec::<u8>::with_capacity(2);
+
+                match cursor.read(unsafe {
+                    slice::from_raw_parts_mut((&mut bytes[..]).as_mut_ptr(), bytes.capacity())
+                }) {
+                    Ok(len) => {
+                        if len == 2 {
+                            unsafe { bytes.set_len(len) };
+
+                            let langid = (bytes[1] as u16) << 8 | (bytes[0] as u16);
+                            languages.push(langid)
+                        } else {
+                            return languages;
+                        }
+                    }
+                    Err(_) => return languages,
+                }
+            }
+        }
+    } else {
+        println!("libusb_get_string_descriptor: {}", len);
+    }
+
+    languages
+}
+
+fn find_readable_endpoint(
+    device: *mut libusb1_sys::libusb_device,
+    transfer_type: u8,
+) -> Option<Endpoint> {
+    let mut device_descriptor: libusb1_sys::libusb_device_descriptor =
+        unsafe { mem::uninitialized() };
+
+    match unsafe { libusb1_sys::libusb_get_device_descriptor(device, &mut device_descriptor) } {
+        0 => {
+            for i in 0..device_descriptor.bNumConfigurations {
+                let mut config_ptr: *const libusb1_sys::libusb_config_descriptor =
+                    unsafe { mem::uninitialized() };
+
+                match unsafe {
+                    libusb1_sys::libusb_get_config_descriptor(device, i, &mut config_ptr)
+                } {
+                    0 => {
+                        let config_descriptor = unsafe { &*config_ptr };
+                        let interfaces = unsafe {
+                            slice::from_raw_parts(
+                                config_descriptor.interface,
+                                config_descriptor.bNumInterfaces as usize,
+                            )
+                        };
+
+                        for iface in interfaces {
+                            let settings = unsafe {
+                                slice::from_raw_parts(
+                                    iface.altsetting,
+                                    iface.num_altsetting as usize,
+                                )
+                            };
+
+                            for iface_descriptor in settings {
+                                let endpoints = unsafe {
+                                    slice::from_raw_parts(
+                                        iface_descriptor.endpoint,
+                                        iface_descriptor.bNumEndpoints as usize,
+                                    )
+                                };
+
+                                for endpoint_descriptor in endpoints {
+                                    let is_input = endpoint_descriptor.bEndpointAddress
+                                        & libusb1_sys::constants::LIBUSB_ENDPOINT_DIR_MASK
+                                        == libusb1_sys::constants::LIBUSB_ENDPOINT_IN;
+                                    let matches_type = endpoint_descriptor.bmAttributes
+                                        & libusb1_sys::constants::LIBUSB_TRANSFER_TYPE_MASK
+                                        == transfer_type;
+
+                                    if is_input && matches_type {
+                                        return Some(Endpoint {
+                                            config: config_descriptor.bConfigurationValue,
+                                            iface: iface_descriptor.bInterfaceNumber,
+                                            setting: iface_descriptor.bAlternateSetting,
+                                            address: endpoint_descriptor.bEndpointAddress,
+                                        });
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    e => println!("libusb_get_config_descriptor: {}", e),
+                }
+            }
+
+            None
+        }
+        e => {
+            println!("libusb_get_device_descriptor: {}", e);
+            None
+        }
+    }
+}
+
+fn read_endpoint(
+    handle: *mut libusb1_sys::libusb_device_handle,
+    device: *mut libusb1_sys::libusb_device,
+    endpoint: Endpoint,
+    transfer_type: u8,
+) {
+    println!("Reading from endpoint: {:?}", endpoint);
+
+    let has_kernel_driver = unsafe {
+        if libusb1_sys::libusb_kernel_driver_active(handle, endpoint.iface as c_int) == 1 {
+            match libusb1_sys::libusb_detach_kernel_driver(handle, endpoint.iface as c_int) {
+                0 => (),
+                e => println!("libusb_detach_kernel_driver: {}", e),
+            }
+
+            true
+        } else {
+            false
+        }
+    };
+
+    println!(" - kernel driver? {}", has_kernel_driver);
+
+    match unsafe { libusb1_sys::libusb_set_configuration(handle, endpoint.config as c_int) } {
+        0 => {
+            println!(" - max packet size: {}", unsafe {
+                libusb1_sys::libusb_get_max_packet_size(device, endpoint.address as c_uchar)
+            });
+            println!(" - max iso packet size: {}", unsafe {
+                libusb1_sys::libusb_get_max_iso_packet_size(device, endpoint.address as c_uchar)
+            });
+
+            match unsafe { libusb1_sys::libusb_claim_interface(handle, endpoint.iface as c_int) } {
+                0 => {
+                    match unsafe {
+                        libusb1_sys::libusb_set_interface_alt_setting(
+                            handle,
+                            endpoint.iface as c_int,
+                            endpoint.setting as c_int,
+                        )
+                    } {
+                        0 => {
+                            let mut vec = Vec::<u8>::with_capacity(256);
+                            let timeout: c_uint = 1000;
+
+                            let mut transferred: c_int = unsafe { mem::uninitialized() };
+
+                            match transfer_type {
+                                libusb1_sys::constants::LIBUSB_TRANSFER_TYPE_INTERRUPT => {
+                                    match unsafe {
+                                        libusb1_sys::libusb_interrupt_transfer(
+                                            handle,
+                                            endpoint.address as c_uchar,
+                                            (&vec[..]).as_ptr() as *mut c_uchar,
+                                            vec.capacity() as c_int,
+                                            &mut transferred,
+                                            timeout,
+                                        )
+                                    } {
+                                        0 => {
+                                            unsafe { vec.set_len(transferred as usize) };
+                                            println!(" - read: {:?}", vec);
+                                        }
+                                        e => println!("libusb_interrupt_transfer: {}", e),
+                                    }
+                                }
+                                libusb1_sys::constants::LIBUSB_TRANSFER_TYPE_BULK => {
+                                    match unsafe {
+                                        libusb1_sys::libusb_bulk_transfer(
+                                            handle,
+                                            endpoint.address as c_uchar,
+                                            (&vec[..]).as_ptr() as *mut c_uchar,
+                                            vec.capacity() as c_int,
+                                            &mut transferred,
+                                            timeout,
+                                        )
+                                    } {
+                                        0 => {
+                                            unsafe { vec.set_len(transferred as usize) };
+                                            println!(" - read: {:?}", vec);
+                                        }
+                                        e => println!("libusb_interrupt_transfer: {}", e),
+                                    }
+                                }
+                                tt => println!(" - can't read endpoint with transfer type {}", tt),
+                            }
+                        }
+                        e => println!("libusb_set_interface_alt_setting: {}", e),
+                    }
+
+                    match unsafe {
+                        libusb1_sys::libusb_release_interface(handle, endpoint.iface as c_int)
+                    } {
+                        0 => (),
+                        e => println!("libusb_release_interface: {}", e),
+                    }
+                }
+                e => println!("libusb_claim_interface: {}", e),
+            }
+        }
+        e => println!("libusb_set_configuration: {}", e),
+    }
+
+    if has_kernel_driver {
+        match unsafe { libusb1_sys::libusb_attach_kernel_driver(handle, endpoint.iface as c_int) } {
+            0 => (),
+            e => println!("libusb_attach_kernel_driver: {}", e),
+        }
+    }
 }
