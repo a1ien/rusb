@@ -1,7 +1,7 @@
 use std::fmt;
 use std::slice;
 
-use libusb1_sys::{libusb_interface_descriptor, libusb_endpoint_descriptor, libusb_interface};
+use libusb1_sys::{libusb_endpoint_descriptor, libusb_interface, libusb_interface_descriptor};
 
 use crate::endpoint_descriptor::{self, EndpointDescriptor};
 
@@ -36,9 +36,9 @@ impl<'a> Iterator for InterfaceDescriptors<'a> {
     type Item = InterfaceDescriptor<'a>;
 
     fn next(&mut self) -> Option<InterfaceDescriptor<'a>> {
-        self.iter.next().map(|descriptor| InterfaceDescriptor {
-            descriptor,
-        })
+        self.iter
+            .next()
+            .map(|descriptor| InterfaceDescriptor { descriptor })
     }
 
     fn size_hint(&self) -> (usize, Option<usize>) {
@@ -161,9 +161,7 @@ pub unsafe fn from_libusb(interface: &libusb_interface) -> Interface {
         slice::from_raw_parts(interface.altsetting, interface.num_altsetting as usize);
     debug_assert!(!descriptors.is_empty());
 
-    Interface {
-        descriptors,
-    }
+    Interface { descriptors }
 }
 
 #[cfg(test)]
@@ -194,7 +192,8 @@ mod test {
             vec!(42),
             unsafe {
                 super::from_libusb(&interface!(interface_descriptor!(bAlternateSetting: 42)))
-            }.descriptors()
+            }
+            .descriptors()
             .map(|setting| setting.setting_number())
             .collect::<Vec<_>>()
         );
@@ -217,7 +216,8 @@ mod test {
             vec!(42),
             unsafe {
                 super::from_libusb(&interface!(interface_descriptor!(bInterfaceSubClass: 42)))
-            }.descriptors()
+            }
+            .descriptors()
             .map(|setting| setting.sub_class_code())
             .collect::<Vec<_>>()
         );
@@ -229,7 +229,8 @@ mod test {
             vec!(42),
             unsafe {
                 super::from_libusb(&interface!(interface_descriptor!(bInterfaceProtocol: 42)))
-            }.descriptors()
+            }
+            .descriptors()
             .map(|setting| setting.protocol_code())
             .collect::<Vec<_>>()
         );

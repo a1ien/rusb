@@ -1,7 +1,7 @@
 use std::fmt;
 use std::slice;
 
-use libusb1_sys::{libusb_endpoint_descriptor, constants::*};
+use libusb1_sys::{constants::*, libusb_endpoint_descriptor};
 
 use crate::fields::{Direction, SyncType, TransferType, UsageType};
 

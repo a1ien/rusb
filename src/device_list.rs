@@ -29,7 +29,9 @@ impl<'a> DeviceList<'a> {
     }
 
     /// Returns true if the list is empty, else returns false.
-    pub fn is_empty(&self) -> bool { self.len == 0 }
+    pub fn is_empty(&self) -> bool {
+        self.len == 0
+    }
 
     /// Returns an iterator over the devices in the list.
     ///

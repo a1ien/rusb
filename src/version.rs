@@ -2,7 +2,7 @@ use std::ffi::CStr;
 use std::fmt;
 use std::str;
 
-use libusb1_sys::{libusb_version, libusb_get_version};
+use libusb1_sys::{libusb_get_version, libusb_version};
 
 /// A structure that describes the version of the underlying `libusb` library.
 pub struct LibraryVersion {

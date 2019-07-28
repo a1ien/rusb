@@ -1,8 +1,8 @@
 use libc::{c_int, c_uchar, c_uint, c_void};
+use libusb1_sys::*;
 use std::cell::UnsafeCell;
 use std::collections::{HashSet, VecDeque};
 use std::{marker::PhantomData, mem, slice, sync::Mutex, time::Duration};
-use libusb1_sys::*;
 
 use crate::{constants::*, Context, DeviceHandle, Error, Result};
 
@@ -215,7 +215,7 @@ impl<'d> AsyncGroup<'d> {
             return Err(Error::NotFound);
         }
 
-         {
+        {
             let transfer;
             loop {
                 {
@@ -224,7 +224,7 @@ impl<'d> AsyncGroup<'d> {
                         transfer = t;
                         break;
                     }
-                    unsafe  {*self.callback_data.flag.get() = 0};
+                    unsafe { *self.callback_data.flag.get() = 0 };
                 }
                 try_unsafe!(libusb_handle_events_completed(
                     self.context.as_raw(),
