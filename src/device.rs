@@ -35,37 +35,42 @@ impl<'a> Device<'a> {
 
     /// Reads the device descriptor.
     pub fn device_descriptor(&self) -> crate::Result<DeviceDescriptor> {
-        let mut descriptor: libusb_device_descriptor = unsafe { mem::uninitialized() };
+        let mut descriptor = mem::MaybeUninit::<libusb_device_descriptor>::uninit();
 
         // since libusb 1.0.16, this function always succeeds
-        try_unsafe!(libusb_get_device_descriptor(self.device, &mut descriptor));
+        try_unsafe!(libusb_get_device_descriptor(
+            self.device,
+            descriptor.as_mut_ptr()
+        ));
 
-        Ok(device_descriptor::from_libusb(descriptor))
+        Ok(device_descriptor::from_libusb(unsafe {
+            descriptor.assume_init()
+        }))
     }
 
     /// Reads a configuration descriptor.
     pub fn config_descriptor(&self, config_index: u8) -> crate::Result<ConfigDescriptor> {
-        let mut config: *const libusb_config_descriptor = unsafe { mem::uninitialized() };
+        let mut config = mem::MaybeUninit::<*const libusb_config_descriptor>::uninit();
 
         try_unsafe!(libusb_get_config_descriptor(
             self.device,
             config_index,
-            &mut config
+            config.as_mut_ptr()
         ));
 
-        Ok(unsafe { config_descriptor::from_libusb(config) })
+        Ok(unsafe { config_descriptor::from_libusb(config.assume_init()) })
     }
 
     /// Reads the configuration descriptor for the current configuration.
     pub fn active_config_descriptor(&self) -> crate::Result<ConfigDescriptor> {
-        let mut config: *const libusb_config_descriptor = unsafe { mem::uninitialized() };
+        let mut config = mem::MaybeUninit::<*const libusb_config_descriptor>::uninit();
 
         try_unsafe!(libusb_get_active_config_descriptor(
             self.device,
-            &mut config
+            config.as_mut_ptr()
         ));
 
-        Ok(unsafe { config_descriptor::from_libusb(config) })
+        Ok(unsafe { config_descriptor::from_libusb(config.assume_init()) })
     }
 
     /// Returns the number of the bus that the device is connected to.
@@ -85,11 +90,11 @@ impl<'a> Device<'a> {
 
     /// Opens the device.
     pub fn open(&self) -> crate::Result<DeviceHandle<'a>> {
-        let mut handle: *mut libusb_device_handle = unsafe { mem::uninitialized() };
+        let mut handle = mem::MaybeUninit::<*mut libusb_device_handle>::uninit();
 
-        try_unsafe!(libusb_open(self.device, &mut handle));
+        try_unsafe!(libusb_open(self.device, handle.as_mut_ptr()));
 
-        Ok(unsafe { device_handle::from_libusb(self.context, handle) })
+        Ok(unsafe { device_handle::from_libusb(self.context, handle.assume_init()) })
     }
 
     /// Returns the device's port number
@@ -99,14 +104,8 @@ impl<'a> Device<'a> {
 }
 
 #[doc(hidden)]
-pub unsafe fn from_libusb(
-    context: PhantomData<&Context>,
-    device: *mut libusb_device,
-) -> Device {
+pub unsafe fn from_libusb(context: PhantomData<&Context>, device: *mut libusb_device) -> Device {
     libusb_ref_device(device);
 
-    Device {
-        context,
-        device,
-    }
+    Device { context, device }
 }
