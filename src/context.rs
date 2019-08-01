@@ -129,7 +129,7 @@ impl Context {
         vendor_id: Option<u16>,
         product_id: Option<u16>,
         class: Option<u8>,
-        callback: Box<Hotplug>,
+        callback: Box<dyn Hotplug>,
     ) -> crate::Result<Registration> {
         let mut handle: libusb_hotplug_callback_handle = 0;
         let to = Box::new(callback);
@@ -192,7 +192,7 @@ extern "C" fn hotplug_callback(
     let ctx = PhantomData::default();
     unsafe {
         let device = device::from_libusb(ctx, device);
-        let reg = reg as *mut Box<Hotplug>;
+        let reg = reg as *mut Box<dyn Hotplug>;
         match event {
             LIBUSB_HOTPLUG_EVENT_DEVICE_ARRIVED => (*reg).device_arrived(device),
             LIBUSB_HOTPLUG_EVENT_DEVICE_LEFT => (*reg).device_left(device),
