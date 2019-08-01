@@ -2,10 +2,7 @@ use std::slice;
 use std::str::FromStr;
 use std::time::Duration;
 
-use rusb::{
-    Context, Device, DeviceDescriptor, DeviceHandle, Direction, InterfaceDescriptor, Language,
-    Result, Speed, TransferType,
-};
+use rusb::{Context, Device, DeviceDescriptor, DeviceHandle, Direction, Result, TransferType};
 
 #[derive(Debug)]
 struct Endpoint {
