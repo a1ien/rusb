@@ -19,3 +19,5 @@ libc = "0.2"
 [build-dependencies]
 cc = "1.0"
 pkg-config = "0.3"
+tar = "0.4"
+libflate = "0.1"
