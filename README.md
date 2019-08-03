@@ -1,14 +1,14 @@
 # Libusb Rust Bindings
 
-The `libusb-sys` crate provides declarations and linkage for the `libusb` C library. Following the
-`*-sys` package conventions, the `libusb-sys` crate does not define higher-level abstractions over
+The `libusb1-sys` crate provides declarations and linkage for the `libusb` C library. Following the
+`*-sys` package conventions, the `libusb1-sys` crate does not define higher-level abstractions over
 the native `libusb` library functions.
 
 ## Dependencies
-In order to use the `libusb-sys` crate, you must have the `libusb` library installed where it can be
+In order to use the `libusb1-sys` crate, you must have the `libusb` library installed where it can be
 found by `pkg-config`.
 
-All systems supported by `libusb` are also supported by the `libusb-sys` crate. It's been tested on
+All systems supported by `libusb` are also supported by the `libusb1-sys` crate. It's been tested on
 Linux, OS X, and Windows.
 
 ### Cross-Compiling
@@ -19,7 +19,7 @@ cross-compilation](https://autotools.io/pkgconfig/cross-compiling.html) with `pk
 
 However, Rust's [`pkg-config` build helper](https://github.com/alexcrichton/pkg-config-rs) doesn't
 support calling a `$CHOST`-prefixed `pkg-config`. It will always call `pkg-config` without a prefix.
-To cross-compile `libusb-sys` with the `pkg-config` build helper, one must define the environment
+To cross-compile `libusb1-sys` with the `pkg-config` build helper, one must define the environment
 variables `PKG_CONFIG_DIR`, `PKG_CONFIG_LIBDIR`, and `PKG_CONFIG_SYSROOT_DIR` for the *default*
 `pkg-config`. It's also necessary to set `PKG_CONFIG_ALLOW_CROSS` to tell Rust's `pkg-config` helper
 that it's okay to proceed with a cross-compile.
@@ -41,19 +41,19 @@ cargo build
 ```
 
 ## Usage
-Add `libusb-sys` as a dependency in `Cargo.toml`:
+Add `libusb1-sys` as a dependency in `Cargo.toml`:
 
 ```toml
 [dependencies]
-libusb-sys = "0.2"
+libusb-sys = "0.3"
 ```
 
-Import the `libusb_sys` crate and use the functions as they're defined in the native `libusb`
+Import the `libusb1_sys` crate and use the functions as they're defined in the native `libusb`
 library. See the [`libusb` 1.0 API documention](http://libusb.sourceforge.net/api-1.0/) for more
 usage information.
 
 ```rust
-extern crate libusb_sys as ffi;
+extern crate libusb1_sys as ffi;
 
 fn main() {
   let version = unsafe { ffi::libusb_get_version() };
@@ -63,7 +63,7 @@ fn main() {
 ```
 
 ### Finding Help
-Since `libusb-sys` is no more than a wrapper around the native `libusb` library, the best source for
+Since `libusb1-sys` is no more than a wrapper around the native `libusb` library, the best source for
 help is the information already available for `libusb`:
 
 * [Home Page](http://libusb.info/)
