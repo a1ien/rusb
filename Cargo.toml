@@ -10,11 +10,19 @@ repository = "https://github.com/a1ien/libusb1-sys.git"
 readme = "README.md"
 keywords = ["usb", "libusb", "hardware", "bindings"]
 edition = "2018"
+exclude = [
+    ".travis.yml",
+    ".appveyor.yml"
+]
 
 build = "build.rs"
 
 [dependencies]
 libc = "0.2"
+
+[target.'cfg(target_env = "msvc")'.build-dependencies]
+vcpkg = "0.2"
+
 
 [build-dependencies]
 cc = "1.0"
