@@ -18,6 +18,9 @@ exclude = [
 
 build = "build.rs"
 
+[badges]
+travis-ci = { repository = "a1ien/libusb1-sys" }
+
 [dependencies]
 libc = "0.2"
 
