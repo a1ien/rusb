@@ -2,7 +2,8 @@
 
 name = "libusb1-sys"
 version = "0.3.0"
-authors = ["David Cuddeback <david.cuddeback@gmail.com>"]
+authors = ["David Cuddeback <david.cuddeback@gmail.com>",
+            "Ilya Averyanov <a1ien.n3t@gmail.com>"]
 description = "FFI bindings for libusb."
 license = "MIT"
 homepage = "https://github.com/a1ien/libusb1-sys"
