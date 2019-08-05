@@ -146,3 +146,6 @@ pub const LIBUSB_HOTPLUG_ENUMERATE: libusb_hotplug_flag = 1 << 0;
 pub const LIBUSB_HOTPLUG_EVENT_DEVICE_ARRIVED: libusb_hotplug_event = 0x01;
 pub const LIBUSB_HOTPLUG_EVENT_DEVICE_LEFT: libusb_hotplug_event = 0x02;
 pub const LIBUSB_HOTPLUG_MATCH_ANY: c_int = -1;
+
+pub const LIBUSB_OPTION_LOG_LEVEL: u32 = 0x00;
+pub const LIBUSB_OPTION_USE_USBDK: u32 = 0x01;

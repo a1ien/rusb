@@ -1,0 +1,44 @@
+image: Visual Studio 2017
+
+environment:
+  matrix:
+    # stable x86_64 with static libusb from sources
+    - TARGET: x86_64-pc-windows-msvc
+      RUST_CHANNEL: stable
+      RUST_BACKTRACE: 1
+
+    # stable x86_64 with static libusb from sources
+    - TARGET: x86_64-pc-windows-gnu
+      RUST_CHANNEL: stable
+      RUST_BACKTRACE: 1
+
+      # stable x86_64 with dynamic libusb from vcpkg
+    - TARGET: x86_64-pc-windows-msvc
+      RUST_CHANNEL: stable
+      VCPKG_TARGET: x64-windows
+      LIBUSB_USE_PKG_CONFIG: 1
+      VCPKGRS_DYNAMIC: 1
+      RUST_BACKTRACE: 1
+
+install:
+  - ps: |
+      # Install Rust
+      appveyor-retry appveyor DownloadFile https://win.rustup.rs/ -FileName rustup-init.exe
+      cmd.exe /c .\rustup-init.exe -y --default-host "$env:TARGET" --default-toolchain "$env:RUST_CHANNEL" 2`>`&1
+      $env:PATH += ";$env:USERPROFILE\.cargo\bin"
+      If ($env:LIBUSB_USE_PKG_CONFIG -eq '1') {
+        # Install libusb via vcpkg
+        vcpkg install "libusb:$env:VCPKG_TARGET"
+      }
+  # Add GCC to PATH if needed.
+  - if "%TARGET%" == "x86_64-pc-windows-gnu" set PATH=%PATH%;C:\msys64\mingw64\bin
+
+cache:
+  - C:\Users\appveyor\.cargo\registry
+  - C:\tools\vcpkg\installed\
+  - target
+
+build: false
+
+test_script:
+  - cargo test --target %TARGET%

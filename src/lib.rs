@@ -1,7 +1,5 @@
 #![allow(non_camel_case_types)]
 
-extern crate libc;
-
 pub mod constants;
 
 use self::constants::*;
@@ -442,6 +440,8 @@ extern "C" {
         ctx: *mut libusb_context,
         callback_handle: libusb_hotplug_callback_handle,
     );
+    pub fn libusb_set_option(ctx: *mut libusb_context, option: u32, ...) -> c_int;
+
 }
 
 // defined as static inline in libusb.h
@@ -457,6 +457,27 @@ pub unsafe fn libusb_get_string_descriptor(
         LIBUSB_ENDPOINT_IN,
         LIBUSB_REQUEST_GET_DESCRIPTOR,
         u16::from(LIBUSB_DT_STRING) << 8 | u16::from(desc_index),
+        langid,
+        data,
+        length as u16,
+        1000,
+    )
+}
+
+// defined as static inline in libusb.h
+pub unsafe fn libusb_get_descriptor(
+    dev_handle: *mut libusb_device_handle,
+    desc_type: u8,
+    desc_index: u8,
+    langid: u16,
+    data: *mut c_uchar,
+    length: c_int,
+) -> c_int {
+    libusb_control_transfer(
+        dev_handle,
+        LIBUSB_ENDPOINT_IN,
+        LIBUSB_REQUEST_GET_DESCRIPTOR,
+        u16::from(desc_type) << 8 | u16::from(desc_index),
         langid,
         data,
         length as u16,

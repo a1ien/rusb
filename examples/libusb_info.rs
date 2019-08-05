@@ -1,4 +1,5 @@
-use std::{ffi::CStr, mem, str};
+use libusb1_sys as ffi;
+use std::{ffi::CStr, str};
 
 fn main() {
     print_version();
@@ -6,8 +7,7 @@ fn main() {
 }
 
 fn print_version() {
-    let version: &libusb1_sys::libusb_version =
-        unsafe { mem::transmute(libusb1_sys::libusb_get_version()) };
+    let version = unsafe { &*ffi::libusb_get_version() };
 
     let rc = str::from_utf8(unsafe { CStr::from_ptr(version.rc) }.to_bytes()).unwrap_or("");
     let describe =
@@ -20,36 +20,34 @@ fn print_version() {
 }
 
 fn print_capabilities() {
-    let mut context: *mut libusb1_sys::libusb_context = unsafe { mem::uninitialized() };
+    let mut context = std::mem::MaybeUninit::<*mut ffi::libusb_context>::uninit();
 
     // library must be initialized before calling libusb_has_capabililty()
-    match unsafe { libusb1_sys::libusb_init(&mut context) } {
+    match unsafe { ffi::libusb_init(context.as_mut_ptr()) } {
         0 => (),
         e => panic!("libusb_init: {}", e),
     };
-
+    let context = unsafe { context.assume_init() };
     unsafe {
-        libusb1_sys::libusb_set_debug(context, libusb1_sys::constants::LIBUSB_LOG_LEVEL_DEBUG);
-        libusb1_sys::libusb_set_debug(context, libusb1_sys::constants::LIBUSB_LOG_LEVEL_INFO);
-        libusb1_sys::libusb_set_debug(context, libusb1_sys::constants::LIBUSB_LOG_LEVEL_WARNING);
-        libusb1_sys::libusb_set_debug(context, libusb1_sys::constants::LIBUSB_LOG_LEVEL_ERROR);
-        libusb1_sys::libusb_set_debug(context, libusb1_sys::constants::LIBUSB_LOG_LEVEL_NONE);
+        libusb1_sys::libusb_set_debug(context, ffi::constants::LIBUSB_LOG_LEVEL_DEBUG);
+        libusb1_sys::libusb_set_debug(context, ffi::constants::LIBUSB_LOG_LEVEL_INFO);
+        libusb1_sys::libusb_set_debug(context, ffi::constants::LIBUSB_LOG_LEVEL_WARNING);
+        libusb1_sys::libusb_set_debug(context, ffi::constants::LIBUSB_LOG_LEVEL_ERROR);
+        libusb1_sys::libusb_set_debug(context, ffi::constants::LIBUSB_LOG_LEVEL_NONE);
     }
 
     println!("has capability? {}", unsafe {
-        libusb1_sys::libusb_has_capability(libusb1_sys::constants::LIBUSB_CAP_HAS_CAPABILITY)
+        ffi::libusb_has_capability(ffi::constants::LIBUSB_CAP_HAS_CAPABILITY) != 0
     });
     println!("has hotplug? {}", unsafe {
-        libusb1_sys::libusb_has_capability(libusb1_sys::constants::LIBUSB_CAP_HAS_HOTPLUG)
+        ffi::libusb_has_capability(ffi::constants::LIBUSB_CAP_HAS_HOTPLUG) != 0
     });
     println!("has HID access? {}", unsafe {
-        libusb1_sys::libusb_has_capability(libusb1_sys::constants::LIBUSB_CAP_HAS_HID_ACCESS)
+        ffi::libusb_has_capability(ffi::constants::LIBUSB_CAP_HAS_HID_ACCESS) != 0
     });
     println!("supports detach kernel driver? {}", unsafe {
-        libusb1_sys::libusb_has_capability(
-            libusb1_sys::constants::LIBUSB_CAP_SUPPORTS_DETACH_KERNEL_DRIVER,
-        )
+        ffi::libusb_has_capability(ffi::constants::LIBUSB_CAP_SUPPORTS_DETACH_KERNEL_DRIVER) != 0
     });
 
-    unsafe { libusb1_sys::libusb_exit(context) };
+    unsafe { ffi::libusb_exit(context) };
 }
