@@ -635,7 +635,7 @@ impl<'a> DeviceHandle<'a> {
 }
 
 #[doc(hidden)]
-pub unsafe fn from_libusb(
+pub(crate) unsafe fn from_libusb(
     context: PhantomData<&Context>,
     handle: *mut libusb_device_handle,
 ) -> DeviceHandle {

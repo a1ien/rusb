@@ -125,7 +125,7 @@ impl<'a> Iterator for Interfaces<'a> {
 }
 
 #[doc(hidden)]
-pub unsafe fn from_libusb(config: *const libusb_config_descriptor) -> ConfigDescriptor {
+pub(crate) unsafe fn from_libusb(config: *const libusb_config_descriptor) -> ConfigDescriptor {
     ConfigDescriptor { descriptor: config }
 }
 

@@ -73,7 +73,7 @@ impl<'a, 'b> Iterator for Devices<'a, 'b> {
 }
 
 #[doc(hidden)]
-pub unsafe fn from_libusb(
+pub(crate) unsafe fn from_libusb(
     _context: &Context,
     list: *const *mut libusb_device,
     len: usize,

@@ -156,7 +156,7 @@ impl<'a> Iterator for EndpointDescriptors<'a> {
 }
 
 #[doc(hidden)]
-pub unsafe fn from_libusb(interface: &libusb_interface) -> Interface {
+pub(crate) unsafe fn from_libusb(interface: &libusb_interface) -> Interface {
     let descriptors =
         slice::from_raw_parts(interface.altsetting, interface.num_altsetting as usize);
     debug_assert!(!descriptors.is_empty());

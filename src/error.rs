@@ -88,7 +88,7 @@ impl StdError for Error {
 }
 
 #[doc(hidden)]
-pub fn from_libusb(err: i32) -> Error {
+pub(crate) fn from_libusb(err: i32) -> Error {
     match err {
         LIBUSB_SUCCESS => Error::Success,
         LIBUSB_ERROR_IO => Error::Io,
