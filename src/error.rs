@@ -8,7 +8,7 @@ use libusb1_sys::constants::*;
 pub type Result<T> = StdResult<T, Error>;
 
 /// Errors returned by the `libusb` library.
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub enum Error {
     /// Success (no error).
     Success,
