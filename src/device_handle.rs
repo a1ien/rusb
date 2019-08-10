@@ -164,21 +164,15 @@ impl<'a> DeviceHandle<'a> {
         if endpoint & LIBUSB_ENDPOINT_DIR_MASK != LIBUSB_ENDPOINT_IN {
             return Err(Error::InvalidParam);
         }
-
-        let ptr = buf.as_mut_ptr() as *mut c_uchar;
-        let len = buf.len() as c_int;
-        let timeout_ms =
-            (timeout.as_secs() * 1000 + u64::from(timeout.subsec_nanos()) / 1_000_000) as c_uint;
-
         let mut transferred = mem::MaybeUninit::<c_int>::uninit();
         unsafe {
             match libusb_interrupt_transfer(
                 self.handle,
                 endpoint,
-                ptr,
-                len,
+                buf.as_mut_ptr() as *mut c_uchar,
+                buf.len() as c_int,
                 transferred.as_mut_ptr(),
-                timeout_ms,
+                timeout.as_millis() as c_uint,
             ) {
                 0 => Ok(transferred.assume_init() as usize),
                 err if err == LIBUSB_ERROR_INTERRUPTED => {
@@ -223,22 +217,15 @@ impl<'a> DeviceHandle<'a> {
         if endpoint & LIBUSB_ENDPOINT_DIR_MASK != LIBUSB_ENDPOINT_OUT {
             return Err(Error::InvalidParam);
         }
-
-        let ptr = buf.as_ptr() as *mut c_uchar;
-        let len = buf.len() as c_int;
-        let timeout_ms =
-            (timeout.as_secs() * 1000 + u64::from(timeout.subsec_nanos()) / 1_000_000) as c_uint;
-
         let mut transferred = mem::MaybeUninit::<c_int>::uninit();
-
         unsafe {
             match libusb_interrupt_transfer(
                 self.handle,
                 endpoint,
-                ptr,
-                len,
+                buf.as_ptr() as *mut c_uchar,
+                buf.len() as c_int,
                 transferred.as_mut_ptr(),
-                timeout_ms,
+                timeout.as_millis() as c_uint,
             ) {
                 0 => Ok(transferred.assume_init() as usize),
                 err if err == LIBUSB_ERROR_INTERRUPTED => {
@@ -285,22 +272,16 @@ impl<'a> DeviceHandle<'a> {
         if endpoint & LIBUSB_ENDPOINT_DIR_MASK != LIBUSB_ENDPOINT_IN {
             return Err(Error::InvalidParam);
         }
-
-        let ptr = buf.as_mut_ptr() as *mut c_uchar;
-        let len = buf.len() as c_int;
-        let timeout_ms =
-            (timeout.as_secs() * 1000 + u64::from(timeout.subsec_nanos()) / 1_000_000) as c_uint;
-
         let mut transferred = mem::MaybeUninit::<c_int>::uninit();
 
         unsafe {
             match libusb_bulk_transfer(
                 self.handle,
                 endpoint,
-                ptr,
-                len,
+                buf.as_mut_ptr() as *mut c_uchar,
+                buf.len() as c_int,
                 transferred.as_mut_ptr(),
-                timeout_ms,
+                timeout.as_millis() as c_uint,
             ) {
                 0 => Ok(transferred.assume_init() as usize),
                 err if err == LIBUSB_ERROR_INTERRUPTED || err == LIBUSB_ERROR_TIMEOUT => {
@@ -340,21 +321,15 @@ impl<'a> DeviceHandle<'a> {
         if endpoint & LIBUSB_ENDPOINT_DIR_MASK != LIBUSB_ENDPOINT_OUT {
             return Err(Error::InvalidParam);
         }
-
-        let ptr = buf.as_ptr() as *mut c_uchar;
-        let len = buf.len() as c_int;
-        let timeout_ms =
-            (timeout.as_secs() * 1000 + u64::from(timeout.subsec_nanos()) / 1_000_000) as c_uint;
-
         let mut transferred = mem::MaybeUninit::<c_int>::uninit();
         unsafe {
             match libusb_bulk_transfer(
                 self.handle,
                 endpoint,
-                ptr,
-                len,
+                buf.as_ptr() as *mut c_uchar,
+                buf.len() as c_int,
                 transferred.as_mut_ptr(),
-                timeout_ms,
+                timeout.as_millis() as c_uint,
             ) {
                 0 => Ok(transferred.assume_init() as usize),
                 err if err == LIBUSB_ERROR_INTERRUPTED || err == LIBUSB_ERROR_TIMEOUT => {
@@ -409,12 +384,6 @@ impl<'a> DeviceHandle<'a> {
         if request_type & LIBUSB_ENDPOINT_DIR_MASK != LIBUSB_ENDPOINT_IN {
             return Err(Error::InvalidParam);
         }
-
-        let ptr = buf.as_mut_ptr() as *mut c_uchar;
-        let len = buf.len() as u16;
-        let timeout_ms =
-            (timeout.as_secs() * 1000 + u64::from(timeout.subsec_nanos()) / 1_000_000) as c_uint;
-
         let res = unsafe {
             libusb_control_transfer(
                 self.handle,
@@ -422,9 +391,9 @@ impl<'a> DeviceHandle<'a> {
                 request,
                 value,
                 index,
-                ptr,
-                len,
-                timeout_ms,
+                buf.as_mut_ptr() as *mut c_uchar,
+                buf.len() as u16,
+                timeout.as_millis() as c_uint,
             )
         };
 
@@ -473,12 +442,6 @@ impl<'a> DeviceHandle<'a> {
         if request_type & LIBUSB_ENDPOINT_DIR_MASK != LIBUSB_ENDPOINT_OUT {
             return Err(Error::InvalidParam);
         }
-
-        let ptr = buf.as_ptr() as *mut c_uchar;
-        let len = buf.len() as u16;
-        let timeout_ms =
-            (timeout.as_secs() * 1000 + u64::from(timeout.subsec_nanos()) / 1_000_000) as c_uint;
-
         let res = unsafe {
             libusb_control_transfer(
                 self.handle,
@@ -486,9 +449,9 @@ impl<'a> DeviceHandle<'a> {
                 request,
                 value,
                 index,
-                ptr,
-                len,
-                timeout_ms,
+                buf.as_ptr() as *mut c_uchar,
+                buf.len() as u16,
+                timeout.as_millis() as c_uint,
             )
         };
 
@@ -543,8 +506,7 @@ impl<'a> DeviceHandle<'a> {
     ) -> crate::Result<String> {
         let mut buf = Vec::<u8>::with_capacity(256);
 
-        let buf_slice =
-            unsafe { slice::from_raw_parts_mut((&mut buf[..]).as_mut_ptr(), buf.capacity()) };
+        let buf_slice = unsafe { slice::from_raw_parts_mut(buf.as_mut_ptr(), buf.capacity()) };
 
         let len = self.read_control(
             request_type(Direction::In, RequestType::Standard, Recipient::Device),
@@ -565,7 +527,7 @@ impl<'a> DeviceHandle<'a> {
             .map(|chunk| u16::from(chunk[0]) | u16::from(chunk[1]) << 8)
             .collect();
 
-        String::from_utf16(&utf16[..]).map_err(|_| Error::Other)
+        String::from_utf16(&utf16).map_err(|_| Error::Other)
     }
 
     /// Reads the device's manufacturer string descriptor.
