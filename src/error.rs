@@ -1,6 +1,4 @@
-use std::error::Error as StdError;
-use std::fmt;
-use std::result::Result as StdResult;
+use std::{error::Error as StdError, fmt, result::Result as StdResult};
 
 use libusb1_sys::constants::*;
 
@@ -55,8 +53,8 @@ pub enum Error {
 
 impl Error {
     /// Returns a description of an error suitable for display to an end user.
-    pub fn strerror(&self) -> &'static str {
-        match *self {
+    pub fn strerror(self) -> &'static str {
+        match self {
             Error::Success => "Success",
             Error::Io => "Input/Output Error",
             Error::InvalidParam => "Invalid parameter",

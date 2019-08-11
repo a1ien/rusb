@@ -1,5 +1,4 @@
-use std::fmt;
-use std::slice;
+use std::{fmt, slice};
 
 use libusb1_sys::*;
 
@@ -21,7 +20,7 @@ impl Drop for ConfigDescriptor {
 unsafe impl Sync for ConfigDescriptor {}
 unsafe impl Send for ConfigDescriptor {}
 
-impl<'c> ConfigDescriptor {
+impl ConfigDescriptor {
     /// Returns the configuration number.
     pub fn number(&self) -> u8 {
         unsafe { (*self.descriptor).bConfigurationValue }
@@ -72,7 +71,7 @@ impl<'c> ConfigDescriptor {
     }
 
     /// Returns the unknown 'extra' bytes that libusb does not understand.
-    pub fn extra(&'c self) -> Option<&'c [u8]> {
+    pub fn extra(&self) -> Option<&[u8]> {
         unsafe {
             match (*self.descriptor).extra_length {
                 len if len > 0 => Some(slice::from_raw_parts(

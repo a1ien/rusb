@@ -1,5 +1,4 @@
-use std::fmt;
-use std::slice;
+use std::{fmt, slice};
 
 use libusb1_sys::{constants::*, libusb_endpoint_descriptor};
 
