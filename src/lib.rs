@@ -67,3 +67,43 @@ pub fn supports_detach_kernel_driver() -> bool {
         libusb1_sys::libusb_has_capability(constants::LIBUSB_CAP_SUPPORTS_DETACH_KERNEL_DRIVER) != 0
     }
 }
+
+/// Returns a list of the current USB devices. Using global context
+pub fn devices() -> crate::Result<DeviceList<GlobalContext>> {
+    GlobalContext::default().devices()
+}
+
+/// Sets the log level of a `libusb` global context.
+pub fn set_log_level(level: LogLevel) {
+    unsafe {
+        libusb1_sys::libusb_set_debug(GlobalContext::default().as_raw(), level.as_c_int());
+    }
+}
+
+/// Convenience function to open a device by its vendor ID and product ID.
+/// Using global context
+///
+/// This function is provided as a convenience for building prototypes without having to
+/// iterate a [`DeviceList`](struct.DeviceList.html). It is not meant for production
+/// applications.
+///
+/// Returns a device handle for the first device found matching `vendor_id` and `product_id`.
+/// On error, or if the device could not be found, it returns `None`.
+pub fn open_device_with_vid_pid(
+    vendor_id: u16,
+    product_id: u16,
+) -> Option<DeviceHandle<GlobalContext>> {
+    let handle = unsafe {
+        libusb1_sys::libusb_open_device_with_vid_pid(
+            GlobalContext::default().as_raw(),
+            vendor_id,
+            product_id,
+        )
+    };
+
+    if handle.is_null() {
+        None
+    } else {
+        Some(unsafe { device_handle::from_libusb(GlobalContext::default(), handle) })
+    }
+}
