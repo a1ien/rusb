@@ -1,81 +1,86 @@
-use std::marker::PhantomData;
-use std::mem;
-use std::slice;
-use std::time::Duration;
+use std::{mem, ptr::NonNull, slice, time::Duration};
 
 use bit_set::BitSet;
 use libc::{c_int, c_uchar, c_uint};
 use libusb1_sys::{constants::*, *};
 
-use crate::config_descriptor::ConfigDescriptor;
-use crate::context::Context;
-use crate::device_descriptor::DeviceDescriptor;
-use crate::error::{self, Error};
-use crate::fields::{request_type, Direction, Recipient, RequestType};
-use crate::interface_descriptor::InterfaceDescriptor;
-use crate::language::Language;
+use crate::{
+    config_descriptor::ConfigDescriptor,
+    device_descriptor::DeviceDescriptor,
+    error::{self, Error},
+    fields::{request_type, Direction, Recipient, RequestType},
+    interface_descriptor::InterfaceDescriptor,
+    language::Language,
+    UsbContext,
+};
 
 /// A handle to an open USB device.
-pub struct DeviceHandle<'a> {
-    _context: PhantomData<&'a Context>,
-    handle: *mut libusb_device_handle,
+pub struct DeviceHandle<T: UsbContext> {
+    _context: T,
+    handle: NonNull<libusb_device_handle>,
     interfaces: BitSet,
 }
 
-impl<'a> Drop for DeviceHandle<'a> {
+impl<T: UsbContext> Drop for DeviceHandle<T> {
     /// Closes the device.
     fn drop(&mut self) {
         unsafe {
             for iface in self.interfaces.iter() {
-                libusb_release_interface(self.handle, iface as c_int);
+                libusb_release_interface(self.handle.as_ptr(), iface as c_int);
             }
 
-            libusb_close(self.handle);
+            libusb_close(self.handle.as_ptr());
         }
     }
 }
 
-unsafe impl<'a> Send for DeviceHandle<'a> {}
-unsafe impl<'a> Sync for DeviceHandle<'a> {}
+unsafe impl<T: UsbContext> Send for DeviceHandle<T> {}
+unsafe impl<T: UsbContext> Sync for DeviceHandle<T> {}
 
-impl<'a> DeviceHandle<'a> {
+impl<T: UsbContext> DeviceHandle<T> {
     /// Get the raw libusb_device_handle pointer, for advanced use in unsafe code.
     ///
     /// This structure tracks claimed interfaces, and will get out if sync if interfaces are
     /// manipulated externally. Use only libusb endpoint IO functions.
     pub fn as_raw(&self) -> *mut libusb_device_handle {
-        self.handle
+        self.handle.as_ptr()
     }
 
     /// Returns the active configuration number.
     pub fn active_configuration(&self) -> crate::Result<u8> {
         let mut config = mem::MaybeUninit::<c_int>::uninit();
 
-        try_unsafe!(libusb_get_configuration(self.handle, config.as_mut_ptr()));
+        try_unsafe!(libusb_get_configuration(
+            self.handle.as_ptr(),
+            config.as_mut_ptr()
+        ));
         Ok(unsafe { config.assume_init() } as u8)
     }
 
     /// Sets the device's active configuration.
     pub fn set_active_configuration(&mut self, config: u8) -> crate::Result<()> {
-        try_unsafe!(libusb_set_configuration(self.handle, c_int::from(config)));
+        try_unsafe!(libusb_set_configuration(
+            self.handle.as_ptr(),
+            c_int::from(config)
+        ));
         Ok(())
     }
 
     /// Puts the device in an unconfigured state.
     pub fn unconfigure(&mut self) -> crate::Result<()> {
-        try_unsafe!(libusb_set_configuration(self.handle, -1));
+        try_unsafe!(libusb_set_configuration(self.handle.as_ptr(), -1));
         Ok(())
     }
 
     /// Resets the device.
     pub fn reset(&mut self) -> crate::Result<()> {
-        try_unsafe!(libusb_reset_device(self.handle));
+        try_unsafe!(libusb_reset_device(self.handle.as_ptr()));
         Ok(())
     }
 
     /// Clear the halt/stall condition for an endpoint.
     pub fn clear_halt(&mut self, endpoint: u8) -> crate::Result<()> {
-        try_unsafe!(libusb_clear_halt(self.handle, endpoint));
+        try_unsafe!(libusb_clear_halt(self.handle.as_ptr(), endpoint));
         Ok(())
     }
 
@@ -83,7 +88,7 @@ impl<'a> DeviceHandle<'a> {
     ///
     /// This method is not supported on all platforms.
     pub fn kernel_driver_active(&self, iface: u8) -> crate::Result<bool> {
-        match unsafe { libusb_kernel_driver_active(self.handle, c_int::from(iface)) } {
+        match unsafe { libusb_kernel_driver_active(self.handle.as_ptr(), c_int::from(iface)) } {
             0 => Ok(false),
             1 => Ok(true),
             err => Err(error::from_libusb(err)),
@@ -94,7 +99,10 @@ impl<'a> DeviceHandle<'a> {
     ///
     /// This method is not supported on all platforms.
     pub fn detach_kernel_driver(&mut self, iface: u8) -> crate::Result<()> {
-        try_unsafe!(libusb_detach_kernel_driver(self.handle, c_int::from(iface)));
+        try_unsafe!(libusb_detach_kernel_driver(
+            self.handle.as_ptr(),
+            c_int::from(iface)
+        ));
         Ok(())
     }
 
@@ -102,7 +110,10 @@ impl<'a> DeviceHandle<'a> {
     ///
     /// This method is not supported on all platforms.
     pub fn attach_kernel_driver(&mut self, iface: u8) -> crate::Result<()> {
-        try_unsafe!(libusb_attach_kernel_driver(self.handle, c_int::from(iface)));
+        try_unsafe!(libusb_attach_kernel_driver(
+            self.handle.as_ptr(),
+            c_int::from(iface)
+        ));
         Ok(())
     }
 
@@ -111,14 +122,20 @@ impl<'a> DeviceHandle<'a> {
     /// An interface must be claimed before operating on it. All claimed interfaces are released
     /// when the device handle goes out of scope.
     pub fn claim_interface(&mut self, iface: u8) -> crate::Result<()> {
-        try_unsafe!(libusb_claim_interface(self.handle, c_int::from(iface)));
+        try_unsafe!(libusb_claim_interface(
+            self.handle.as_ptr(),
+            c_int::from(iface)
+        ));
         self.interfaces.insert(iface as usize);
         Ok(())
     }
 
     /// Releases a claimed interface.
     pub fn release_interface(&mut self, iface: u8) -> crate::Result<()> {
-        try_unsafe!(libusb_release_interface(self.handle, c_int::from(iface)));
+        try_unsafe!(libusb_release_interface(
+            self.handle.as_ptr(),
+            c_int::from(iface)
+        ));
         self.interfaces.remove(iface as usize);
         Ok(())
     }
@@ -126,7 +143,7 @@ impl<'a> DeviceHandle<'a> {
     /// Sets an interface's active setting.
     pub fn set_alternate_setting(&mut self, iface: u8, setting: u8) -> crate::Result<()> {
         try_unsafe!(libusb_set_interface_alt_setting(
-            self.handle,
+            self.handle.as_ptr(),
             c_int::from(iface),
             c_int::from(setting)
         ));
@@ -167,7 +184,7 @@ impl<'a> DeviceHandle<'a> {
         let mut transferred = mem::MaybeUninit::<c_int>::uninit();
         unsafe {
             match libusb_interrupt_transfer(
-                self.handle,
+                self.handle.as_ptr(),
                 endpoint,
                 buf.as_mut_ptr() as *mut c_uchar,
                 buf.len() as c_int,
@@ -220,7 +237,7 @@ impl<'a> DeviceHandle<'a> {
         let mut transferred = mem::MaybeUninit::<c_int>::uninit();
         unsafe {
             match libusb_interrupt_transfer(
-                self.handle,
+                self.handle.as_ptr(),
                 endpoint,
                 buf.as_ptr() as *mut c_uchar,
                 buf.len() as c_int,
@@ -273,10 +290,9 @@ impl<'a> DeviceHandle<'a> {
             return Err(Error::InvalidParam);
         }
         let mut transferred = mem::MaybeUninit::<c_int>::uninit();
-
         unsafe {
             match libusb_bulk_transfer(
-                self.handle,
+                self.handle.as_ptr(),
                 endpoint,
                 buf.as_mut_ptr() as *mut c_uchar,
                 buf.len() as c_int,
@@ -324,7 +340,7 @@ impl<'a> DeviceHandle<'a> {
         let mut transferred = mem::MaybeUninit::<c_int>::uninit();
         unsafe {
             match libusb_bulk_transfer(
-                self.handle,
+                self.handle.as_ptr(),
                 endpoint,
                 buf.as_ptr() as *mut c_uchar,
                 buf.len() as c_int,
@@ -386,7 +402,7 @@ impl<'a> DeviceHandle<'a> {
         }
         let res = unsafe {
             libusb_control_transfer(
-                self.handle,
+                self.handle.as_ptr(),
                 request_type,
                 request,
                 value,
@@ -444,7 +460,7 @@ impl<'a> DeviceHandle<'a> {
         }
         let res = unsafe {
             libusb_control_transfer(
-                self.handle,
+                self.handle.as_ptr(),
                 request_type,
                 request,
                 value,
@@ -597,13 +613,13 @@ impl<'a> DeviceHandle<'a> {
 }
 
 #[doc(hidden)]
-pub(crate) unsafe fn from_libusb(
-    context: PhantomData<&Context>,
+pub(crate) unsafe fn from_libusb<T: UsbContext>(
+    context: T,
     handle: *mut libusb_device_handle,
-) -> DeviceHandle {
+) -> DeviceHandle<T> {
     DeviceHandle {
         _context: context,
-        handle,
+        handle: NonNull::new_unchecked(handle),
         interfaces: BitSet::with_capacity(u8::max_value() as usize + 1),
     }
 }

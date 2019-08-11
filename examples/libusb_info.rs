@@ -1,3 +1,5 @@
+use rusb::UsbContext;
+
 fn main() {
     let version = rusb::version();
 
@@ -21,11 +23,11 @@ fn main() {
     context.set_log_level(rusb::LogLevel::Error);
     context.set_log_level(rusb::LogLevel::None);
 
-    println!("has capability? {}", context.has_capability());
-    println!("has hotplug? {}", context.has_hotplug());
-    println!("has HID access? {}", context.has_hid_access());
+    println!("has capability? {}", rusb::has_capability());
+    println!("has hotplug? {}", rusb::has_hotplug());
+    println!("has HID access? {}", rusb::has_hid_access());
     println!(
         "supports detach kernel driver? {}",
-        context.supports_detach_kernel_driver()
+        rusb::supports_detach_kernel_driver()
     )
 }

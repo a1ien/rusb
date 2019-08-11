@@ -2,25 +2,25 @@
 
 pub use libusb1_sys::constants;
 
-pub use crate::error::{Error, Result};
-pub use crate::version::{version, LibraryVersion};
-
-pub use crate::context::{Context, Hotplug, LogLevel, Registration};
-pub use crate::device::Device;
-pub use crate::device_handle::DeviceHandle;
-pub use crate::device_list::{DeviceList, Devices};
-
-pub use crate::config_descriptor::{ConfigDescriptor, Interfaces};
-pub use crate::device_descriptor::DeviceDescriptor;
-pub use crate::endpoint_descriptor::EndpointDescriptor;
-pub use crate::fields::{
-    request_type, Direction, Recipient, RequestType, Speed, SyncType, TransferType, UsageType,
-    Version,
+pub use crate::{
+    config_descriptor::{ConfigDescriptor, Interfaces},
+    context::{Context, GlobalContext, Hotplug, LogLevel, Registration, UsbContext},
+    device::Device,
+    device_descriptor::DeviceDescriptor,
+    device_handle::DeviceHandle,
+    device_list::{DeviceList, Devices},
+    endpoint_descriptor::EndpointDescriptor,
+    error::{Error, Result},
+    fields::{
+        request_type, Direction, Recipient, RequestType, Speed, SyncType, TransferType, UsageType,
+        Version,
+    },
+    interface_descriptor::{
+        EndpointDescriptors, Interface, InterfaceDescriptor, InterfaceDescriptors,
+    },
+    language::{Language, PrimaryLanguage, SubLanguage},
+    version::{version, LibraryVersion},
 };
-pub use crate::interface_descriptor::{
-    EndpointDescriptors, Interface, InterfaceDescriptor, InterfaceDescriptors,
-};
-pub use crate::language::{Language, PrimaryLanguage, SubLanguage};
 
 #[cfg(test)]
 #[macro_use]
@@ -41,3 +41,29 @@ mod endpoint_descriptor;
 mod fields;
 mod interface_descriptor;
 mod language;
+
+/// Tests whether the running `libusb` library supports capability API.
+pub fn has_capability() -> bool {
+    GlobalContext::default().as_raw();
+    unsafe { libusb1_sys::libusb_has_capability(constants::LIBUSB_CAP_HAS_CAPABILITY) != 0 }
+}
+
+/// Tests whether the running `libusb` library supports hotplug.
+pub fn has_hotplug() -> bool {
+    GlobalContext::default().as_raw();
+    unsafe { libusb1_sys::libusb_has_capability(constants::LIBUSB_CAP_HAS_HOTPLUG) != 0 }
+}
+
+/// Tests whether the running `libusb` library has HID access.
+pub fn has_hid_access() -> bool {
+    GlobalContext::default().as_raw();
+    unsafe { libusb1_sys::libusb_has_capability(constants::LIBUSB_CAP_HAS_HID_ACCESS) != 0 }
+}
+
+/// Tests whether the running `libusb` library supports detaching the kernel driver.
+pub fn supports_detach_kernel_driver() -> bool {
+    GlobalContext::default().as_raw();
+    unsafe {
+        libusb1_sys::libusb_has_capability(constants::LIBUSB_CAP_SUPPORTS_DETACH_KERNEL_DRIVER) != 0
+    }
+}
