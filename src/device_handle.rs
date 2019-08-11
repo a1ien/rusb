@@ -483,10 +483,9 @@ impl<T: UsbContext> DeviceHandle<T> {
     /// This function returns a list of languages that can be used to read the device's string
     /// descriptors.
     pub fn read_languages(&self, timeout: Duration) -> crate::Result<Vec<Language>> {
-        let mut buf = Vec::<u8>::with_capacity(256);
+        let mut buf = [0u8; 256];
 
-        let buf_slice =
-            unsafe { slice::from_raw_parts_mut((&mut buf[..]).as_mut_ptr(), buf.capacity()) };
+        let buf_slice = unsafe { slice::from_raw_parts_mut(buf.as_mut_ptr(), buf.len()) };
 
         let len = self.read_control(
             request_type(Direction::In, RequestType::Standard, Recipient::Device),
@@ -497,11 +496,7 @@ impl<T: UsbContext> DeviceHandle<T> {
             timeout,
         )?;
 
-        unsafe {
-            buf.set_len(len);
-        }
-
-        Ok(buf
+        Ok(buf_slice[0..len]
             .chunks(2)
             .skip(1)
             .map(|chunk| {
@@ -544,9 +539,9 @@ impl<T: UsbContext> DeviceHandle<T> {
         index: u8,
         timeout: Duration,
     ) -> crate::Result<String> {
-        let mut buf = Vec::<u8>::with_capacity(256);
+        let mut buf = [0u8; 256];
 
-        let buf_slice = unsafe { slice::from_raw_parts_mut(buf.as_mut_ptr(), buf.capacity()) };
+        let buf_slice = unsafe { slice::from_raw_parts_mut(buf.as_mut_ptr(), buf.len()) };
 
         let len = self.read_control(
             request_type(Direction::In, RequestType::Standard, Recipient::Device),
@@ -557,11 +552,7 @@ impl<T: UsbContext> DeviceHandle<T> {
             timeout,
         )?;
 
-        unsafe {
-            buf.set_len(len);
-        }
-
-        let utf16: Vec<u16> = buf
+        let utf16: Vec<u16> = buf_slice[..len]
             .chunks(2)
             .skip(1)
             .map(|chunk| u16::from(chunk[0]) | u16::from(chunk[1]) << 8)
