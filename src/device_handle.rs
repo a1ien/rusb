@@ -511,6 +511,30 @@ impl<T: UsbContext> DeviceHandle<T> {
             .collect())
     }
 
+    /// Reads a ascii string descriptor from the device.
+    ///
+    pub fn read_string_descriptor_ascii(&self, index: u8) -> crate::Result<String> {
+        let mut buf = Vec::<u8>::with_capacity(256);
+
+        let buf_slice = unsafe { slice::from_raw_parts_mut(buf.as_mut_ptr(), buf.capacity()) };
+
+        let ptr = buf_slice.as_mut_ptr() as *mut c_uchar;
+        let len = buf_slice.len() as i32;
+
+        let res =
+            unsafe { libusb_get_string_descriptor_ascii(self.handle.as_ptr(), index, ptr, len) };
+
+        if res < 0 {
+            return Err(error::from_libusb(res));
+        }
+
+        unsafe {
+            buf.set_len(res as usize);
+        }
+
+        String::from_utf8(buf).map_err(|_| Error::Other)
+    }
+
     /// Reads a string descriptor from the device.
     ///
     /// `language` should be one of the languages returned from [`read_languages`](#method.read_languages).
@@ -546,6 +570,17 @@ impl<T: UsbContext> DeviceHandle<T> {
         String::from_utf16(&utf16).map_err(|_| Error::Other)
     }
 
+    /// Reads the device's manufacturer string descriptor (ascii).
+    pub fn read_manufacturer_string_ascii(
+        &self,
+        device: &DeviceDescriptor,
+    ) -> crate::Result<String> {
+        match device.manufacturer_string_index() {
+            None => Err(Error::InvalidParam),
+            Some(n) => self.read_string_descriptor_ascii(n),
+        }
+    }
+
     /// Reads the device's manufacturer string descriptor.
     pub fn read_manufacturer_string(
         &self,
@@ -559,6 +594,14 @@ impl<T: UsbContext> DeviceHandle<T> {
         }
     }
 
+    /// Reads the device's product string descriptor (ascii).
+    pub fn read_product_string_ascii(&self, device: &DeviceDescriptor) -> crate::Result<String> {
+        match device.product_string_index() {
+            None => Err(Error::InvalidParam),
+            Some(n) => self.read_string_descriptor_ascii(n),
+        }
+    }
+
     /// Reads the device's product string descriptor.
     pub fn read_product_string(
         &self,
@@ -569,6 +612,17 @@ impl<T: UsbContext> DeviceHandle<T> {
         match device.product_string_index() {
             None => Err(Error::InvalidParam),
             Some(n) => self.read_string_descriptor(language, n, timeout),
+        }
+    }
+
+    /// Reads the device's serial number string descriptor (ascii).
+    pub fn read_serial_number_string_ascii(
+        &self,
+        device: &DeviceDescriptor,
+    ) -> crate::Result<String> {
+        match device.serial_number_string_index() {
+            None => Err(Error::InvalidParam),
+            Some(n) => self.read_string_descriptor_ascii(n),
         }
     }
 
