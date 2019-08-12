@@ -140,7 +140,7 @@ pub trait UsbContext: Clone + Sized {
                 Some(t) => {
                     let tv = timeval {
                         tv_sec: t.as_secs() as Seconds,
-                        tv_usec: MicroSeconds::from(t.subsec_nanos()) / 1000,
+                        tv_usec: t.subsec_nanos() as MicroSeconds / 1000,
                     };
                     libusb_handle_events_timeout_completed(self.as_raw(), &tv, ptr::null_mut())
                 }
