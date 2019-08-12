@@ -15,6 +15,7 @@ use crate::{
 };
 
 /// A reference to a USB device.
+#[derive(Eq, PartialEq)]
 pub struct Device<T: UsbContext> {
     context: T,
     device: NonNull<libusb_device>,

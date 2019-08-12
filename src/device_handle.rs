@@ -15,6 +15,7 @@ use crate::{
 };
 
 /// A handle to an open USB device.
+#[derive(Eq, PartialEq)]
 pub struct DeviceHandle<T: UsbContext> {
     _context: T,
     handle: NonNull<libusb_device_handle>,
