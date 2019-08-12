@@ -4,11 +4,11 @@ and Rust lifetimes to ensure safe usage of all `libusb` functionality. The RAII 
 all acquired resources are released when they're no longer needed, and Rust lifetimes ensure that
 resources are released in a proper order.
 
-* [Documentation](http://dcuddeback.github.io/libusb-rs/libusb/)
+* [Documentation](https://docs.rs/rusb)
 
 ## Dependencies
 In order to use the `rusb` crate, you must have the native `libusb` library installed where it can
-be found by `pkg-config`.
+be found by `pkg-config` or `vcpkg`.
 
 All systems supported by the native `libusb` library are also supported by the `libusb` crate. It's
 been tested on Linux, OS X, and Windows.
@@ -16,7 +16,7 @@ been tested on Linux, OS X, and Windows.
 ### Cross-Compiling
 The `rusb` crate can be used when cross-compiling to a foreign target. Details on how to
 cross-compile `rusb` are explained in the [`libusb-sys` crate's
-README](https://github.com/dcuddeback/libusb-sys#cross-compiling).
+README](https://github.com/a1ien/libusb1-sys#cross-compiling).
 
 ## Usage
 Add `rusb` as a dependency in `Cargo.toml`:

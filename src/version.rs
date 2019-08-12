@@ -1,6 +1,4 @@
-use std::ffi::CStr;
-use std::fmt;
-use std::str;
+use std::{ffi::CStr, fmt, str};
 
 use libusb1_sys::{libusb_get_version, libusb_version};
 

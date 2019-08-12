@@ -1,81 +1,87 @@
-use std::marker::PhantomData;
-use std::mem;
-use std::slice;
-use std::time::Duration;
+use std::{mem, ptr::NonNull, slice, time::Duration};
 
 use bit_set::BitSet;
 use libc::{c_int, c_uchar, c_uint};
 use libusb1_sys::{constants::*, *};
 
-use crate::config_descriptor::ConfigDescriptor;
-use crate::context::Context;
-use crate::device_descriptor::DeviceDescriptor;
-use crate::error::{self, Error};
-use crate::fields::{request_type, Direction, Recipient, RequestType};
-use crate::interface_descriptor::InterfaceDescriptor;
-use crate::language::Language;
+use crate::{
+    config_descriptor::ConfigDescriptor,
+    device_descriptor::DeviceDescriptor,
+    error::{self, Error},
+    fields::{request_type, Direction, Recipient, RequestType},
+    interface_descriptor::InterfaceDescriptor,
+    language::Language,
+    UsbContext,
+};
 
 /// A handle to an open USB device.
-pub struct DeviceHandle<'a> {
-    _context: PhantomData<&'a Context>,
-    handle: *mut libusb_device_handle,
+#[derive(Eq, PartialEq)]
+pub struct DeviceHandle<T: UsbContext> {
+    _context: T,
+    handle: NonNull<libusb_device_handle>,
     interfaces: BitSet,
 }
 
-impl<'a> Drop for DeviceHandle<'a> {
+impl<T: UsbContext> Drop for DeviceHandle<T> {
     /// Closes the device.
     fn drop(&mut self) {
         unsafe {
             for iface in self.interfaces.iter() {
-                libusb_release_interface(self.handle, iface as c_int);
+                libusb_release_interface(self.handle.as_ptr(), iface as c_int);
             }
 
-            libusb_close(self.handle);
+            libusb_close(self.handle.as_ptr());
         }
     }
 }
 
-unsafe impl<'a> Send for DeviceHandle<'a> {}
-unsafe impl<'a> Sync for DeviceHandle<'a> {}
+unsafe impl<T: UsbContext> Send for DeviceHandle<T> {}
+unsafe impl<T: UsbContext> Sync for DeviceHandle<T> {}
 
-impl<'a> DeviceHandle<'a> {
+impl<T: UsbContext> DeviceHandle<T> {
     /// Get the raw libusb_device_handle pointer, for advanced use in unsafe code.
     ///
     /// This structure tracks claimed interfaces, and will get out if sync if interfaces are
     /// manipulated externally. Use only libusb endpoint IO functions.
     pub fn as_raw(&self) -> *mut libusb_device_handle {
-        self.handle
+        self.handle.as_ptr()
     }
 
     /// Returns the active configuration number.
     pub fn active_configuration(&self) -> crate::Result<u8> {
         let mut config = mem::MaybeUninit::<c_int>::uninit();
 
-        try_unsafe!(libusb_get_configuration(self.handle, config.as_mut_ptr()));
+        try_unsafe!(libusb_get_configuration(
+            self.handle.as_ptr(),
+            config.as_mut_ptr()
+        ));
         Ok(unsafe { config.assume_init() } as u8)
     }
 
     /// Sets the device's active configuration.
     pub fn set_active_configuration(&mut self, config: u8) -> crate::Result<()> {
-        try_unsafe!(libusb_set_configuration(self.handle, c_int::from(config)));
+        try_unsafe!(libusb_set_configuration(
+            self.handle.as_ptr(),
+            c_int::from(config)
+        ));
         Ok(())
     }
 
     /// Puts the device in an unconfigured state.
     pub fn unconfigure(&mut self) -> crate::Result<()> {
-        try_unsafe!(libusb_set_configuration(self.handle, -1));
+        try_unsafe!(libusb_set_configuration(self.handle.as_ptr(), -1));
         Ok(())
     }
 
     /// Resets the device.
     pub fn reset(&mut self) -> crate::Result<()> {
-        try_unsafe!(libusb_reset_device(self.handle));
+        try_unsafe!(libusb_reset_device(self.handle.as_ptr()));
         Ok(())
     }
 
     /// Clear the halt/stall condition for an endpoint.
     pub fn clear_halt(&mut self, endpoint: u8) -> crate::Result<()> {
-        try_unsafe!(libusb_clear_halt(self.handle, endpoint));
+        try_unsafe!(libusb_clear_halt(self.handle.as_ptr(), endpoint));
         Ok(())
     }
 
@@ -83,7 +89,7 @@ impl<'a> DeviceHandle<'a> {
     ///
     /// This method is not supported on all platforms.
     pub fn kernel_driver_active(&self, iface: u8) -> crate::Result<bool> {
-        match unsafe { libusb_kernel_driver_active(self.handle, c_int::from(iface)) } {
+        match unsafe { libusb_kernel_driver_active(self.handle.as_ptr(), c_int::from(iface)) } {
             0 => Ok(false),
             1 => Ok(true),
             err => Err(error::from_libusb(err)),
@@ -94,7 +100,10 @@ impl<'a> DeviceHandle<'a> {
     ///
     /// This method is not supported on all platforms.
     pub fn detach_kernel_driver(&mut self, iface: u8) -> crate::Result<()> {
-        try_unsafe!(libusb_detach_kernel_driver(self.handle, c_int::from(iface)));
+        try_unsafe!(libusb_detach_kernel_driver(
+            self.handle.as_ptr(),
+            c_int::from(iface)
+        ));
         Ok(())
     }
 
@@ -102,7 +111,10 @@ impl<'a> DeviceHandle<'a> {
     ///
     /// This method is not supported on all platforms.
     pub fn attach_kernel_driver(&mut self, iface: u8) -> crate::Result<()> {
-        try_unsafe!(libusb_attach_kernel_driver(self.handle, c_int::from(iface)));
+        try_unsafe!(libusb_attach_kernel_driver(
+            self.handle.as_ptr(),
+            c_int::from(iface)
+        ));
         Ok(())
     }
 
@@ -111,14 +123,20 @@ impl<'a> DeviceHandle<'a> {
     /// An interface must be claimed before operating on it. All claimed interfaces are released
     /// when the device handle goes out of scope.
     pub fn claim_interface(&mut self, iface: u8) -> crate::Result<()> {
-        try_unsafe!(libusb_claim_interface(self.handle, c_int::from(iface)));
+        try_unsafe!(libusb_claim_interface(
+            self.handle.as_ptr(),
+            c_int::from(iface)
+        ));
         self.interfaces.insert(iface as usize);
         Ok(())
     }
 
     /// Releases a claimed interface.
     pub fn release_interface(&mut self, iface: u8) -> crate::Result<()> {
-        try_unsafe!(libusb_release_interface(self.handle, c_int::from(iface)));
+        try_unsafe!(libusb_release_interface(
+            self.handle.as_ptr(),
+            c_int::from(iface)
+        ));
         self.interfaces.remove(iface as usize);
         Ok(())
     }
@@ -126,7 +144,7 @@ impl<'a> DeviceHandle<'a> {
     /// Sets an interface's active setting.
     pub fn set_alternate_setting(&mut self, iface: u8, setting: u8) -> crate::Result<()> {
         try_unsafe!(libusb_set_interface_alt_setting(
-            self.handle,
+            self.handle.as_ptr(),
             c_int::from(iface),
             c_int::from(setting)
         ));
@@ -164,21 +182,15 @@ impl<'a> DeviceHandle<'a> {
         if endpoint & LIBUSB_ENDPOINT_DIR_MASK != LIBUSB_ENDPOINT_IN {
             return Err(Error::InvalidParam);
         }
-
-        let ptr = buf.as_mut_ptr() as *mut c_uchar;
-        let len = buf.len() as c_int;
-        let timeout_ms =
-            (timeout.as_secs() * 1000 + u64::from(timeout.subsec_nanos()) / 1_000_000) as c_uint;
-
         let mut transferred = mem::MaybeUninit::<c_int>::uninit();
         unsafe {
             match libusb_interrupt_transfer(
-                self.handle,
+                self.handle.as_ptr(),
                 endpoint,
-                ptr,
-                len,
+                buf.as_mut_ptr() as *mut c_uchar,
+                buf.len() as c_int,
                 transferred.as_mut_ptr(),
-                timeout_ms,
+                timeout.as_millis() as c_uint,
             ) {
                 0 => Ok(transferred.assume_init() as usize),
                 err if err == LIBUSB_ERROR_INTERRUPTED => {
@@ -223,22 +235,15 @@ impl<'a> DeviceHandle<'a> {
         if endpoint & LIBUSB_ENDPOINT_DIR_MASK != LIBUSB_ENDPOINT_OUT {
             return Err(Error::InvalidParam);
         }
-
-        let ptr = buf.as_ptr() as *mut c_uchar;
-        let len = buf.len() as c_int;
-        let timeout_ms =
-            (timeout.as_secs() * 1000 + u64::from(timeout.subsec_nanos()) / 1_000_000) as c_uint;
-
         let mut transferred = mem::MaybeUninit::<c_int>::uninit();
-
         unsafe {
             match libusb_interrupt_transfer(
-                self.handle,
+                self.handle.as_ptr(),
                 endpoint,
-                ptr,
-                len,
+                buf.as_ptr() as *mut c_uchar,
+                buf.len() as c_int,
                 transferred.as_mut_ptr(),
-                timeout_ms,
+                timeout.as_millis() as c_uint,
             ) {
                 0 => Ok(transferred.assume_init() as usize),
                 err if err == LIBUSB_ERROR_INTERRUPTED => {
@@ -285,22 +290,15 @@ impl<'a> DeviceHandle<'a> {
         if endpoint & LIBUSB_ENDPOINT_DIR_MASK != LIBUSB_ENDPOINT_IN {
             return Err(Error::InvalidParam);
         }
-
-        let ptr = buf.as_mut_ptr() as *mut c_uchar;
-        let len = buf.len() as c_int;
-        let timeout_ms =
-            (timeout.as_secs() * 1000 + u64::from(timeout.subsec_nanos()) / 1_000_000) as c_uint;
-
         let mut transferred = mem::MaybeUninit::<c_int>::uninit();
-
         unsafe {
             match libusb_bulk_transfer(
-                self.handle,
+                self.handle.as_ptr(),
                 endpoint,
-                ptr,
-                len,
+                buf.as_mut_ptr() as *mut c_uchar,
+                buf.len() as c_int,
                 transferred.as_mut_ptr(),
-                timeout_ms,
+                timeout.as_millis() as c_uint,
             ) {
                 0 => Ok(transferred.assume_init() as usize),
                 err if err == LIBUSB_ERROR_INTERRUPTED || err == LIBUSB_ERROR_TIMEOUT => {
@@ -340,21 +338,15 @@ impl<'a> DeviceHandle<'a> {
         if endpoint & LIBUSB_ENDPOINT_DIR_MASK != LIBUSB_ENDPOINT_OUT {
             return Err(Error::InvalidParam);
         }
-
-        let ptr = buf.as_ptr() as *mut c_uchar;
-        let len = buf.len() as c_int;
-        let timeout_ms =
-            (timeout.as_secs() * 1000 + u64::from(timeout.subsec_nanos()) / 1_000_000) as c_uint;
-
         let mut transferred = mem::MaybeUninit::<c_int>::uninit();
         unsafe {
             match libusb_bulk_transfer(
-                self.handle,
+                self.handle.as_ptr(),
                 endpoint,
-                ptr,
-                len,
+                buf.as_ptr() as *mut c_uchar,
+                buf.len() as c_int,
                 transferred.as_mut_ptr(),
-                timeout_ms,
+                timeout.as_millis() as c_uint,
             ) {
                 0 => Ok(transferred.assume_init() as usize),
                 err if err == LIBUSB_ERROR_INTERRUPTED || err == LIBUSB_ERROR_TIMEOUT => {
@@ -409,22 +401,16 @@ impl<'a> DeviceHandle<'a> {
         if request_type & LIBUSB_ENDPOINT_DIR_MASK != LIBUSB_ENDPOINT_IN {
             return Err(Error::InvalidParam);
         }
-
-        let ptr = buf.as_mut_ptr() as *mut c_uchar;
-        let len = buf.len() as u16;
-        let timeout_ms =
-            (timeout.as_secs() * 1000 + u64::from(timeout.subsec_nanos()) / 1_000_000) as c_uint;
-
         let res = unsafe {
             libusb_control_transfer(
-                self.handle,
+                self.handle.as_ptr(),
                 request_type,
                 request,
                 value,
                 index,
-                ptr,
-                len,
-                timeout_ms,
+                buf.as_mut_ptr() as *mut c_uchar,
+                buf.len() as u16,
+                timeout.as_millis() as c_uint,
             )
         };
 
@@ -473,22 +459,16 @@ impl<'a> DeviceHandle<'a> {
         if request_type & LIBUSB_ENDPOINT_DIR_MASK != LIBUSB_ENDPOINT_OUT {
             return Err(Error::InvalidParam);
         }
-
-        let ptr = buf.as_ptr() as *mut c_uchar;
-        let len = buf.len() as u16;
-        let timeout_ms =
-            (timeout.as_secs() * 1000 + u64::from(timeout.subsec_nanos()) / 1_000_000) as c_uint;
-
         let res = unsafe {
             libusb_control_transfer(
-                self.handle,
+                self.handle.as_ptr(),
                 request_type,
                 request,
                 value,
                 index,
-                ptr,
-                len,
-                timeout_ms,
+                buf.as_ptr() as *mut c_uchar,
+                buf.len() as u16,
+                timeout.as_millis() as c_uint,
             )
         };
 
@@ -504,10 +484,9 @@ impl<'a> DeviceHandle<'a> {
     /// This function returns a list of languages that can be used to read the device's string
     /// descriptors.
     pub fn read_languages(&self, timeout: Duration) -> crate::Result<Vec<Language>> {
-        let mut buf = Vec::<u8>::with_capacity(256);
+        let mut buf = [0u8; 256];
 
-        let buf_slice =
-            unsafe { slice::from_raw_parts_mut((&mut buf[..]).as_mut_ptr(), buf.capacity()) };
+        let buf_slice = unsafe { slice::from_raw_parts_mut(buf.as_mut_ptr(), buf.len()) };
 
         let len = self.read_control(
             request_type(Direction::In, RequestType::Standard, Recipient::Device),
@@ -518,11 +497,7 @@ impl<'a> DeviceHandle<'a> {
             timeout,
         )?;
 
-        unsafe {
-            buf.set_len(len);
-        }
-
-        Ok(buf
+        Ok(buf_slice[0..len]
             .chunks(2)
             .skip(1)
             .map(|chunk| {
@@ -530,6 +505,30 @@ impl<'a> DeviceHandle<'a> {
                 crate::language::from_lang_id(lang_id)
             })
             .collect())
+    }
+
+    /// Reads a ascii string descriptor from the device.
+    ///
+    pub fn read_string_descriptor_ascii(&self, index: u8) -> crate::Result<String> {
+        let mut buf = Vec::<u8>::with_capacity(256);
+
+        let buf_slice = unsafe { slice::from_raw_parts_mut(buf.as_mut_ptr(), buf.capacity()) };
+
+        let ptr = buf_slice.as_mut_ptr() as *mut c_uchar;
+        let len = buf_slice.len() as i32;
+
+        let res =
+            unsafe { libusb_get_string_descriptor_ascii(self.handle.as_ptr(), index, ptr, len) };
+
+        if res < 0 {
+            return Err(error::from_libusb(res));
+        }
+
+        unsafe {
+            buf.set_len(res as usize);
+        }
+
+        String::from_utf8(buf).map_err(|_| Error::Other)
     }
 
     /// Reads a string descriptor from the device.
@@ -541,10 +540,9 @@ impl<'a> DeviceHandle<'a> {
         index: u8,
         timeout: Duration,
     ) -> crate::Result<String> {
-        let mut buf = Vec::<u8>::with_capacity(256);
+        let mut buf = [0u8; 256];
 
-        let buf_slice =
-            unsafe { slice::from_raw_parts_mut((&mut buf[..]).as_mut_ptr(), buf.capacity()) };
+        let buf_slice = unsafe { slice::from_raw_parts_mut(buf.as_mut_ptr(), buf.len()) };
 
         let len = self.read_control(
             request_type(Direction::In, RequestType::Standard, Recipient::Device),
@@ -555,17 +553,24 @@ impl<'a> DeviceHandle<'a> {
             timeout,
         )?;
 
-        unsafe {
-            buf.set_len(len);
-        }
-
-        let utf16: Vec<u16> = buf
+        let utf16: Vec<u16> = buf_slice[..len]
             .chunks(2)
             .skip(1)
             .map(|chunk| u16::from(chunk[0]) | u16::from(chunk[1]) << 8)
             .collect();
 
-        String::from_utf16(&utf16[..]).map_err(|_| Error::Other)
+        String::from_utf16(&utf16).map_err(|_| Error::Other)
+    }
+
+    /// Reads the device's manufacturer string descriptor (ascii).
+    pub fn read_manufacturer_string_ascii(
+        &self,
+        device: &DeviceDescriptor,
+    ) -> crate::Result<String> {
+        match device.manufacturer_string_index() {
+            None => Err(Error::InvalidParam),
+            Some(n) => self.read_string_descriptor_ascii(n),
+        }
     }
 
     /// Reads the device's manufacturer string descriptor.
@@ -581,6 +586,14 @@ impl<'a> DeviceHandle<'a> {
         }
     }
 
+    /// Reads the device's product string descriptor (ascii).
+    pub fn read_product_string_ascii(&self, device: &DeviceDescriptor) -> crate::Result<String> {
+        match device.product_string_index() {
+            None => Err(Error::InvalidParam),
+            Some(n) => self.read_string_descriptor_ascii(n),
+        }
+    }
+
     /// Reads the device's product string descriptor.
     pub fn read_product_string(
         &self,
@@ -591,6 +604,17 @@ impl<'a> DeviceHandle<'a> {
         match device.product_string_index() {
             None => Err(Error::InvalidParam),
             Some(n) => self.read_string_descriptor(language, n, timeout),
+        }
+    }
+
+    /// Reads the device's serial number string descriptor (ascii).
+    pub fn read_serial_number_string_ascii(
+        &self,
+        device: &DeviceDescriptor,
+    ) -> crate::Result<String> {
+        match device.serial_number_string_index() {
+            None => Err(Error::InvalidParam),
+            Some(n) => self.read_string_descriptor_ascii(n),
         }
     }
 
@@ -635,13 +659,13 @@ impl<'a> DeviceHandle<'a> {
 }
 
 #[doc(hidden)]
-pub unsafe fn from_libusb(
-    context: PhantomData<&Context>,
+pub(crate) unsafe fn from_libusb<T: UsbContext>(
+    context: T,
     handle: *mut libusb_device_handle,
-) -> DeviceHandle {
+) -> DeviceHandle<T> {
     DeviceHandle {
         _context: context,
-        handle,
+        handle: NonNull::new_unchecked(handle),
         interfaces: BitSet::with_capacity(u8::max_value() as usize + 1),
     }
 }

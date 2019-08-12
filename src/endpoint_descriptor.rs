@@ -1,5 +1,4 @@
-use std::fmt;
-use std::slice;
+use std::{fmt, slice};
 
 use libusb1_sys::{constants::*, libusb_endpoint_descriptor};
 
@@ -103,7 +102,7 @@ impl<'a> fmt::Debug for EndpointDescriptor<'a> {
 }
 
 #[doc(hidden)]
-pub fn from_libusb(endpoint: &libusb_endpoint_descriptor) -> EndpointDescriptor {
+pub(crate) fn from_libusb(endpoint: &libusb_endpoint_descriptor) -> EndpointDescriptor {
     EndpointDescriptor {
         descriptor: endpoint,
     }

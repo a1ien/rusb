@@ -2,26 +2,25 @@
 
 pub use libusb1_sys::constants;
 
-pub use crate::async_io::{AsyncGroup, Transfer, TransferStatus};
-pub use crate::error::{Error, Result};
-pub use crate::version::{version, LibraryVersion};
-
-pub use crate::context::{Context, Hotplug, LogLevel, Registration};
-pub use crate::device::Device;
-pub use crate::device_handle::DeviceHandle;
-pub use crate::device_list::{DeviceList, Devices};
-
-pub use crate::config_descriptor::{ConfigDescriptor, Interfaces};
-pub use crate::device_descriptor::DeviceDescriptor;
-pub use crate::endpoint_descriptor::EndpointDescriptor;
-pub use crate::fields::{
-    request_type, Direction, Recipient, RequestType, Speed, SyncType, TransferType, UsageType,
-    Version,
+pub use crate::{
+    config_descriptor::{ConfigDescriptor, Interfaces},
+    context::{Context, GlobalContext, Hotplug, LogLevel, Registration, UsbContext},
+    device::Device,
+    device_descriptor::DeviceDescriptor,
+    device_handle::DeviceHandle,
+    device_list::{DeviceList, Devices},
+    endpoint_descriptor::EndpointDescriptor,
+    error::{Error, Result},
+    fields::{
+        request_type, Direction, Recipient, RequestType, Speed, SyncType, TransferType, UsageType,
+        Version,
+    },
+    interface_descriptor::{
+        EndpointDescriptors, Interface, InterfaceDescriptor, InterfaceDescriptors,
+    },
+    language::{Language, PrimaryLanguage, SubLanguage},
+    version::{version, LibraryVersion},
 };
-pub use crate::interface_descriptor::{
-    EndpointDescriptors, Interface, InterfaceDescriptor, InterfaceDescriptors,
-};
-pub use crate::language::{Language, PrimaryLanguage, SubLanguage};
 
 #[cfg(test)]
 #[macro_use]
@@ -31,7 +30,6 @@ mod test_helpers;
 mod error;
 mod version;
 
-mod async_io;
 mod context;
 mod device;
 mod device_handle;
@@ -43,3 +41,69 @@ mod endpoint_descriptor;
 mod fields;
 mod interface_descriptor;
 mod language;
+
+/// Tests whether the running `libusb` library supports capability API.
+pub fn has_capability() -> bool {
+    GlobalContext::default().as_raw();
+    unsafe { libusb1_sys::libusb_has_capability(constants::LIBUSB_CAP_HAS_CAPABILITY) != 0 }
+}
+
+/// Tests whether the running `libusb` library supports hotplug.
+pub fn has_hotplug() -> bool {
+    GlobalContext::default().as_raw();
+    unsafe { libusb1_sys::libusb_has_capability(constants::LIBUSB_CAP_HAS_HOTPLUG) != 0 }
+}
+
+/// Tests whether the running `libusb` library has HID access.
+pub fn has_hid_access() -> bool {
+    GlobalContext::default().as_raw();
+    unsafe { libusb1_sys::libusb_has_capability(constants::LIBUSB_CAP_HAS_HID_ACCESS) != 0 }
+}
+
+/// Tests whether the running `libusb` library supports detaching the kernel driver.
+pub fn supports_detach_kernel_driver() -> bool {
+    GlobalContext::default().as_raw();
+    unsafe {
+        libusb1_sys::libusb_has_capability(constants::LIBUSB_CAP_SUPPORTS_DETACH_KERNEL_DRIVER) != 0
+    }
+}
+
+/// Returns a list of the current USB devices. Using global context
+pub fn devices() -> crate::Result<DeviceList<GlobalContext>> {
+    GlobalContext::default().devices()
+}
+
+/// Sets the log level of a `libusb` global context.
+pub fn set_log_level(level: LogLevel) {
+    unsafe {
+        libusb1_sys::libusb_set_debug(GlobalContext::default().as_raw(), level.as_c_int());
+    }
+}
+
+/// Convenience function to open a device by its vendor ID and product ID.
+/// Using global context
+///
+/// This function is provided as a convenience for building prototypes without having to
+/// iterate a [`DeviceList`](struct.DeviceList.html). It is not meant for production
+/// applications.
+///
+/// Returns a device handle for the first device found matching `vendor_id` and `product_id`.
+/// On error, or if the device could not be found, it returns `None`.
+pub fn open_device_with_vid_pid(
+    vendor_id: u16,
+    product_id: u16,
+) -> Option<DeviceHandle<GlobalContext>> {
+    let handle = unsafe {
+        libusb1_sys::libusb_open_device_with_vid_pid(
+            GlobalContext::default().as_raw(),
+            vendor_id,
+            product_id,
+        )
+    };
+
+    if handle.is_null() {
+        None
+    } else {
+        Some(unsafe { device_handle::from_libusb(GlobalContext::default(), handle) })
+    }
+}

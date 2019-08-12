@@ -1,8 +1,8 @@
-use std::slice;
-use std::str::FromStr;
-use std::time::Duration;
+use std::{slice, str::FromStr, time::Duration};
 
-use rusb::{Context, Device, DeviceDescriptor, DeviceHandle, Direction, Result, TransferType};
+use rusb::{
+    Context, Device, DeviceDescriptor, DeviceHandle, Direction, Result, TransferType, UsbContext,
+};
 
 #[derive(Debug)]
 struct Endpoint {
@@ -34,11 +34,11 @@ fn main() {
     }
 }
 
-fn open_device(
-    context: &mut Context,
+fn open_device<T: UsbContext>(
+    context: &mut T,
     vid: u16,
     pid: u16,
-) -> Option<(Device, DeviceDescriptor, DeviceHandle)> {
+) -> Option<(Device<T>, DeviceDescriptor, DeviceHandle<T>)> {
     let devices = match context.devices() {
         Ok(d) => d,
         Err(_) => return None,
@@ -61,10 +61,10 @@ fn open_device(
     None
 }
 
-fn read_device(
-    device: &mut Device,
+fn read_device<T: UsbContext>(
+    device: &mut Device<T>,
     device_desc: &DeviceDescriptor,
-    handle: &mut DeviceHandle,
+    handle: &mut DeviceHandle<T>,
 ) -> Result<()> {
     handle.reset()?;
 
@@ -110,8 +110,8 @@ fn read_device(
     Ok(())
 }
 
-fn find_readable_endpoint(
-    device: &mut Device,
+fn find_readable_endpoint<T: UsbContext>(
+    device: &mut Device<T>,
     device_desc: &DeviceDescriptor,
     transfer_type: TransferType,
 ) -> Option<Endpoint> {
@@ -142,7 +142,11 @@ fn find_readable_endpoint(
     None
 }
 
-fn read_endpoint(handle: &mut DeviceHandle, endpoint: Endpoint, transfer_type: TransferType) {
+fn read_endpoint<T: UsbContext>(
+    handle: &mut DeviceHandle<T>,
+    endpoint: Endpoint,
+    transfer_type: TransferType,
+) {
     println!("Reading from endpoint: {:?}", endpoint);
 
     let has_kernel_driver = match handle.kernel_driver_active(endpoint.iface) {
@@ -191,7 +195,10 @@ fn read_endpoint(handle: &mut DeviceHandle, endpoint: Endpoint, transfer_type: T
     }
 }
 
-fn configure_endpoint<'a>(handle: &'a mut DeviceHandle, endpoint: &Endpoint) -> Result<()> {
+fn configure_endpoint<T: UsbContext>(
+    handle: &mut DeviceHandle<T>,
+    endpoint: &Endpoint,
+) -> Result<()> {
     handle.set_active_configuration(endpoint.config)?;
     handle.claim_interface(endpoint.iface)?;
     handle.set_alternate_setting(endpoint.iface, endpoint.setting)?;

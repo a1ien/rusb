@@ -1,11 +1,11 @@
 use rusb::{
-    ConfigDescriptor, Context, DeviceDescriptor, DeviceHandle, EndpointDescriptor,
-    InterfaceDescriptor, Language, Result, Speed,
+    ConfigDescriptor, DeviceDescriptor, DeviceHandle, DeviceList, EndpointDescriptor,
+    InterfaceDescriptor, Language, Result, Speed, UsbContext,
 };
 use std::time::Duration;
 
-struct UsbDevice<'a> {
-    handle: DeviceHandle<'a>,
+struct UsbDevice<T: UsbContext> {
+    handle: DeviceHandle<T>,
     language: Language,
     timeout: Duration,
 }
@@ -17,9 +17,7 @@ fn main() {
 fn list_devices() -> Result<()> {
     let timeout = Duration::from_secs(1);
 
-    let context = Context::new()?;
-
-    for device in context.devices()?.iter() {
+    for device in DeviceList::new()?.iter() {
         let device_desc = match device.device_descriptor() {
             Ok(d) => d,
             Err(_) => continue,
@@ -78,7 +76,7 @@ fn list_devices() -> Result<()> {
     Ok(())
 }
 
-fn print_device(device_desc: &DeviceDescriptor, handle: &mut Option<UsbDevice>) {
+fn print_device<T: UsbContext>(device_desc: &DeviceDescriptor, handle: &mut Option<UsbDevice<T>>) {
     println!("Device Descriptor:");
     println!(
         "  bcdUSB             {:2}.{}{}",
@@ -131,7 +129,7 @@ fn print_device(device_desc: &DeviceDescriptor, handle: &mut Option<UsbDevice>) 
     );
 }
 
-fn print_config(config_desc: &ConfigDescriptor, handle: &mut Option<UsbDevice>) {
+fn print_config<T: UsbContext>(config_desc: &ConfigDescriptor, handle: &mut Option<UsbDevice<T>>) {
     println!("  Config Descriptor:");
     println!(
         "    bNumInterfaces       {:3}",
@@ -158,7 +156,10 @@ fn print_config(config_desc: &ConfigDescriptor, handle: &mut Option<UsbDevice>) 
     }
 }
 
-fn print_interface(interface_desc: &InterfaceDescriptor, handle: &mut Option<UsbDevice>) {
+fn print_interface<T: UsbContext>(
+    interface_desc: &InterfaceDescriptor,
+    handle: &mut Option<UsbDevice<T>>,
+) {
     println!("    Interface Descriptor:");
     println!(
         "      bInterfaceNumber     {:3}",

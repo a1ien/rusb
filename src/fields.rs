@@ -21,7 +21,7 @@ pub enum Speed {
 }
 
 #[doc(hidden)]
-pub fn speed_from_libusb(n: c_int) -> Speed {
+pub(crate) fn speed_from_libusb(n: c_int) -> Speed {
     match n {
         LIBUSB_SPEED_SUPER => Speed::Super,
         LIBUSB_SPEED_HIGH => Speed::High,

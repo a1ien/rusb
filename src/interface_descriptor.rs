@@ -1,5 +1,4 @@
-use std::fmt;
-use std::slice;
+use std::{fmt, slice};
 
 use libusb1_sys::{libusb_endpoint_descriptor, libusb_interface, libusb_interface_descriptor};
 
@@ -105,7 +104,7 @@ impl<'a> InterfaceDescriptor<'a> {
     }
 
     /// Returns the unknown 'extra' bytes that libusb does not understand.
-    pub fn extra(&'a self) -> Option<&'a [u8]> {
+    pub fn extra(&self) -> Option<&[u8]> {
         unsafe {
             match (*self.descriptor).extra_length {
                 len if len > 0 => Some(slice::from_raw_parts(
@@ -156,7 +155,7 @@ impl<'a> Iterator for EndpointDescriptors<'a> {
 }
 
 #[doc(hidden)]
-pub unsafe fn from_libusb(interface: &libusb_interface) -> Interface {
+pub(crate) unsafe fn from_libusb(interface: &libusb_interface) -> Interface {
     let descriptors =
         slice::from_raw_parts(interface.altsetting, interface.num_altsetting as usize);
     debug_assert!(!descriptors.is_empty());

@@ -1,19 +1,22 @@
-use std::marker::PhantomData;
-use std::slice;
+use libc::c_int;
 
+use std::{mem, slice};
+
+use crate::{
+    context::{GlobalContext, UsbContext},
+    device::{self, Device},
+    error,
+};
 use libusb1_sys::*;
 
-use crate::context::Context;
-use crate::device::{self, Device};
-
 /// A list of detected USB devices.
-pub struct DeviceList<'a> {
-    context: PhantomData<&'a Context>,
+pub struct DeviceList<T: UsbContext> {
+    context: T,
     list: *const *mut libusb_device,
     len: usize,
 }
 
-impl<'a> Drop for DeviceList<'a> {
+impl<T: UsbContext> Drop for DeviceList<T> {
     /// Frees the device list.
     fn drop(&mut self) {
         unsafe {
@@ -22,7 +25,46 @@ impl<'a> Drop for DeviceList<'a> {
     }
 }
 
-impl<'a> DeviceList<'a> {
+impl DeviceList<GlobalContext> {
+    pub fn new() -> crate::Result<DeviceList<GlobalContext>> {
+        let mut list = mem::MaybeUninit::<*const *mut libusb_device>::uninit();
+
+        let n =
+            unsafe { libusb_get_device_list(GlobalContext::default().as_raw(), list.as_mut_ptr()) };
+
+        if n < 0 {
+            Err(error::from_libusb(n as c_int))
+        } else {
+            Ok(unsafe {
+                DeviceList {
+                    context: Default::default(),
+                    list: list.assume_init(),
+                    len: n as usize,
+                }
+            })
+        }
+    }
+}
+
+impl<T: UsbContext> DeviceList<T> {
+    pub fn new_with_context(context: T) -> crate::Result<DeviceList<T>> {
+        let mut list = mem::MaybeUninit::<*const *mut libusb_device>::uninit();
+
+        let len = unsafe { libusb_get_device_list(context.as_raw(), list.as_mut_ptr()) };
+
+        if len < 0 {
+            Err(error::from_libusb(len as c_int))
+        } else {
+            Ok(unsafe {
+                DeviceList {
+                    context,
+                    list: list.assume_init(),
+                    len: len as usize,
+                }
+            })
+        }
+    }
+
     /// Returns the number of devices in the list.
     pub fn len(&self) -> usize {
         self.len
@@ -36,9 +78,9 @@ impl<'a> DeviceList<'a> {
     /// Returns an iterator over the devices in the list.
     ///
     /// The iterator yields a sequence of `Device` objects.
-    pub fn iter<'b>(&'b self) -> Devices<'a, 'b> {
+    pub fn iter(&self) -> Devices<T> {
         Devices {
-            context: self.context,
+            context: self.context.clone(),
             devices: unsafe { slice::from_raw_parts(self.list, self.len) },
             index: 0,
         }
@@ -46,21 +88,21 @@ impl<'a> DeviceList<'a> {
 }
 
 /// Iterator over detected USB devices.
-pub struct Devices<'a, 'b> {
-    context: PhantomData<&'a Context>,
-    devices: &'b [*mut libusb_device],
+pub struct Devices<'a, T> {
+    context: T,
+    devices: &'a [*mut libusb_device],
     index: usize,
 }
 
-impl<'a, 'b> Iterator for Devices<'a, 'b> {
-    type Item = Device<'a>;
+impl<'a, T: UsbContext> Iterator for Devices<'a, T> {
+    type Item = Device<T>;
 
-    fn next(&mut self) -> Option<Device<'a>> {
+    fn next(&mut self) -> Option<Device<T>> {
         if self.index < self.devices.len() {
             let device = self.devices[self.index];
 
             self.index += 1;
-            Some(unsafe { device::from_libusb(self.context, device) })
+            Some(unsafe { device::from_libusb(self.context.clone(), device) })
         } else {
             None
         }
@@ -69,18 +111,5 @@ impl<'a, 'b> Iterator for Devices<'a, 'b> {
     fn size_hint(&self) -> (usize, Option<usize>) {
         let remaining = self.devices.len() - self.index;
         (remaining, Some(remaining))
-    }
-}
-
-#[doc(hidden)]
-pub unsafe fn from_libusb(
-    _context: &Context,
-    list: *const *mut libusb_device,
-    len: usize,
-) -> DeviceList {
-    DeviceList {
-        context: PhantomData,
-        list,
-        len,
     }
 }

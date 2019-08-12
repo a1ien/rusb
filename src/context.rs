@@ -1,15 +1,14 @@
-use std::marker::PhantomData;
-use std::mem;
-use std::ptr;
-use std::time::Duration;
-
 use libc::{c_int, c_void, timeval};
-use libusb1_sys::{constants::*, *};
 
-use crate::device::{self, Device};
-use crate::device_handle::{self, DeviceHandle};
-use crate::device_list::{self, DeviceList};
-use crate::error;
+use std::{mem, ptr, sync::Arc, sync::Once, time::Duration};
+
+use crate::{
+    device::{self, Device},
+    device_handle::{self, DeviceHandle},
+    device_list::DeviceList,
+    error,
+};
+use libusb1_sys::{constants::*, *};
 
 #[cfg(windows)]
 type Seconds = ::libc::c_long;
@@ -21,16 +20,25 @@ type Seconds = ::libc::time_t;
 #[cfg(not(windows))]
 type MicroSeconds = ::libc::suseconds_t;
 
+#[derive(Copy, Clone, Eq, PartialEq, Default)]
+pub struct GlobalContext {}
+
 /// A `libusb` context.
+#[derive(Clone, Eq, PartialEq)]
 pub struct Context {
-    context: *mut libusb_context,
+    context: Arc<ContextInner>,
 }
 
-impl Drop for Context {
+#[derive(Eq, PartialEq)]
+struct ContextInner {
+    inner: ptr::NonNull<libusb_context>,
+}
+
+impl Drop for ContextInner {
     /// Closes the `libusb` context.
     fn drop(&mut self) {
         unsafe {
-            libusb_exit(self.context);
+            libusb_exit(self.inner.as_ptr());
         }
     }
 }
@@ -38,67 +46,20 @@ impl Drop for Context {
 unsafe impl Sync for Context {}
 unsafe impl Send for Context {}
 
-pub trait Hotplug {
-    fn device_arrived(&mut self, device: Device);
-    fn device_left(&mut self, device: Device);
+pub trait Hotplug<T: UsbContext> {
+    fn device_arrived(&mut self, device: Device<T>);
+    fn device_left(&mut self, device: Device<T>);
 }
 
 pub type Registration = c_int;
 
-impl Context {
-    /// Opens a new `libusb` context.
-    pub fn new() -> crate::Result<Self> {
-        let mut context = mem::MaybeUninit::<*mut libusb_context>::uninit();
-
-        try_unsafe!(libusb_init(context.as_mut_ptr()));
-
-        Ok(Context {
-            context: unsafe { context.assume_init() },
-        })
-    }
-
+pub trait UsbContext: Clone + Sized {
     /// Get the raw libusb_context pointer, for advanced use in unsafe code.
-    pub fn as_raw(&self) -> *mut libusb_context {
-        self.context
-    }
+    fn as_raw(&self) -> *mut libusb_context;
 
-    /// Sets the log level of a `libusb` context.
-    pub fn set_log_level(&mut self, level: LogLevel) {
-        unsafe {
-            libusb_set_debug(self.context, level.as_c_int());
-        }
-    }
-
-    pub fn has_capability(&self) -> bool {
-        unsafe { libusb_has_capability(LIBUSB_CAP_HAS_CAPABILITY) != 0 }
-    }
-
-    /// Tests whether the running `libusb` library supports hotplug.
-    pub fn has_hotplug(&self) -> bool {
-        unsafe { libusb_has_capability(LIBUSB_CAP_HAS_HOTPLUG) != 0 }
-    }
-
-    /// Tests whether the running `libusb` library has HID access.
-    pub fn has_hid_access(&self) -> bool {
-        unsafe { libusb_has_capability(LIBUSB_CAP_HAS_HID_ACCESS) != 0 }
-    }
-
-    /// Tests whether the running `libusb` library supports detaching the kernel driver.
-    pub fn supports_detach_kernel_driver(&self) -> bool {
-        unsafe { libusb_has_capability(LIBUSB_CAP_SUPPORTS_DETACH_KERNEL_DRIVER) != 0 }
-    }
-
-    /// Returns a list of the current USB devices. The context must outlive the device list.
-    pub fn devices(&self) -> crate::Result<DeviceList> {
-        let mut list = mem::MaybeUninit::<*const *mut libusb_device>::uninit();
-
-        let n = unsafe { libusb_get_device_list(self.context, list.as_mut_ptr()) };
-
-        if n < 0 {
-            Err(error::from_libusb(n as c_int))
-        } else {
-            Ok(unsafe { device_list::from_libusb(self, list.assume_init(), n as usize) })
-        }
+    /// Returns a list of the current USB devices.
+    fn devices(&self) -> crate::Result<DeviceList<Self>> {
+        DeviceList::new_with_context(self.clone())
     }
 
     /// Convenience function to open a device by its vendor ID and product ID.
@@ -109,33 +70,44 @@ impl Context {
     ///
     /// Returns a device handle for the first device found matching `vendor_id` and `product_id`.
     /// On error, or if the device could not be found, it returns `None`.
-    pub fn open_device_with_vid_pid(
+    fn open_device_with_vid_pid(
         &self,
         vendor_id: u16,
         product_id: u16,
-    ) -> Option<DeviceHandle> {
+    ) -> Option<DeviceHandle<Self>> {
         let handle =
-            unsafe { libusb_open_device_with_vid_pid(self.context, vendor_id, product_id) };
+            unsafe { libusb_open_device_with_vid_pid(self.as_raw(), vendor_id, product_id) };
 
         if handle.is_null() {
             None
         } else {
-            Some(unsafe { device_handle::from_libusb(PhantomData, handle) })
+            Some(unsafe { device_handle::from_libusb(self.clone(), handle) })
         }
     }
 
-    pub fn register_callback(
+    /// Sets the log level of a `libusb` for context.
+    fn set_log_level(&mut self, level: LogLevel) {
+        unsafe {
+            libusb_set_debug(self.as_raw(), level.as_c_int());
+        }
+    }
+
+    fn register_callback(
         &self,
         vendor_id: Option<u16>,
         product_id: Option<u16>,
         class: Option<u8>,
-        callback: Box<dyn Hotplug>,
+        callback: Box<dyn Hotplug<Self>>,
     ) -> crate::Result<Registration> {
         let mut handle: libusb_hotplug_callback_handle = 0;
+        let callback = CallbackData {
+            context: self.clone(),
+            hotplug: callback,
+        };
         let to = Box::new(callback);
         let n = unsafe {
             libusb_hotplug_register_callback(
-                self.context,
+                self.as_raw(),
                 LIBUSB_HOTPLUG_EVENT_DEVICE_ARRIVED | LIBUSB_HOTPLUG_EVENT_DEVICE_LEFT,
                 LIBUSB_HOTPLUG_NO_FLAGS,
                 vendor_id
@@ -145,7 +117,7 @@ impl Context {
                     .map(c_int::from)
                     .unwrap_or(LIBUSB_HOTPLUG_MATCH_ANY),
                 class.map(c_int::from).unwrap_or(LIBUSB_HOTPLUG_MATCH_ANY),
-                hotplug_callback,
+                hotplug_callback::<Self>,
                 Box::into_raw(to) as *mut c_void,
                 &mut handle,
             )
@@ -157,22 +129,22 @@ impl Context {
         }
     }
 
-    pub fn unregister_callback(&self, reg: Registration) {
+    fn unregister_callback(&self, reg: Registration) {
         // TODO: fix handler leak
-        unsafe { libusb_hotplug_deregister_callback(self.context, reg) }
+        unsafe { libusb_hotplug_deregister_callback(self.as_raw(), reg) }
     }
 
-    pub fn handle_events(&self, timeout: Option<Duration>) -> crate::Result<()> {
+    fn handle_events(&self, timeout: Option<Duration>) -> crate::Result<()> {
         let n = unsafe {
             match timeout {
                 Some(t) => {
                     let tv = timeval {
                         tv_sec: t.as_secs() as Seconds,
-                        tv_usec: t.subsec_nanos() as MicroSeconds / 1000,
+                        tv_usec: MicroSeconds::from(t.subsec_nanos()) / 1000,
                     };
-                    libusb_handle_events_timeout_completed(self.context, &tv, ptr::null_mut())
+                    libusb_handle_events_timeout_completed(self.as_raw(), &tv, ptr::null_mut())
                 }
-                None => libusb_handle_events_completed(self.context, ptr::null_mut()),
+                None => libusb_handle_events_completed(self.as_raw(), ptr::null_mut()),
             }
         };
         if n < 0 {
@@ -183,21 +155,71 @@ impl Context {
     }
 }
 
-extern "C" fn hotplug_callback(
+impl UsbContext for Context {
+    fn as_raw(&self) -> *mut libusb_context {
+        self.context.inner.as_ptr()
+    }
+}
+
+impl UsbContext for GlobalContext {
+    fn as_raw(&self) -> *mut libusb_context {
+        static mut USB_CONTEXT: *mut libusb_context = ptr::null_mut();
+        static ONCE: Once = Once::new();
+
+        ONCE.call_once(|| {
+            let mut context = mem::MaybeUninit::<*mut libusb_context>::uninit();
+            unsafe {
+                USB_CONTEXT = match libusb_init(context.as_mut_ptr()) {
+                    0 => context.assume_init(),
+                    err => panic!(
+                        "Can't init Global usb context, error {:?}",
+                        error::from_libusb(err)
+                    ),
+                }
+            };
+        });
+        // Clone data that is safe to use concurrently.
+        unsafe { USB_CONTEXT }
+    }
+}
+
+struct CallbackData<T: UsbContext> {
+    context: T,
+    hotplug: Box<dyn Hotplug<T>>,
+}
+
+impl Context {
+    /// Opens a new `libusb` context.
+    pub fn new() -> crate::Result<Self> {
+        let mut context = mem::MaybeUninit::<*mut libusb_context>::uninit();
+
+        try_unsafe!(libusb_init(context.as_mut_ptr()));
+
+        Ok(Context {
+            context: unsafe {
+                Arc::new(ContextInner {
+                    inner: ptr::NonNull::new_unchecked(context.assume_init()),
+                })
+            },
+        })
+    }
+}
+
+extern "C" fn hotplug_callback<T: UsbContext>(
     _ctx: *mut libusb_context,
     device: *mut libusb_device,
     event: libusb_hotplug_event,
     reg: *mut c_void,
 ) -> c_int {
-    let ctx = PhantomData::default();
     unsafe {
-        let device = device::from_libusb(ctx, device);
-        let reg = reg as *mut Box<dyn Hotplug>;
+        let mut reg = Box::<CallbackData<T>>::from_raw(reg as _);
+        let device = device::from_libusb(reg.context.clone(), device);
         match event {
-            LIBUSB_HOTPLUG_EVENT_DEVICE_ARRIVED => (*reg).device_arrived(device),
-            LIBUSB_HOTPLUG_EVENT_DEVICE_LEFT => (*reg).device_left(device),
+            LIBUSB_HOTPLUG_EVENT_DEVICE_ARRIVED => reg.hotplug.device_arrived(device),
+            LIBUSB_HOTPLUG_EVENT_DEVICE_LEFT => reg.hotplug.device_left(device),
             _ => (),
         }
+        mem::forget(reg);
     }
     0
 }
@@ -224,7 +246,7 @@ pub enum LogLevel {
 }
 
 impl LogLevel {
-    fn as_c_int(self) -> c_int {
+    pub(crate) fn as_c_int(self) -> c_int {
         match self {
             LogLevel::None => LIBUSB_LOG_LEVEL_NONE,
             LogLevel::Error => LIBUSB_LOG_LEVEL_ERROR,
