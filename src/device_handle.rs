@@ -484,7 +484,7 @@ impl<T: UsbContext> DeviceHandle<T> {
     /// This function returns a list of languages that can be used to read the device's string
     /// descriptors.
     pub fn read_languages(&self, timeout: Duration) -> crate::Result<Vec<Language>> {
-        let mut buf = [0u8; 256];
+        let mut buf = [0u8; 255];
 
         let buf_slice = unsafe { slice::from_raw_parts_mut(buf.as_mut_ptr(), buf.len()) };
 
@@ -510,7 +510,7 @@ impl<T: UsbContext> DeviceHandle<T> {
     /// Reads a ascii string descriptor from the device.
     ///
     pub fn read_string_descriptor_ascii(&self, index: u8) -> crate::Result<String> {
-        let mut buf = Vec::<u8>::with_capacity(256);
+        let mut buf = Vec::<u8>::with_capacity(255);
 
         let buf_slice = unsafe { slice::from_raw_parts_mut(buf.as_mut_ptr(), buf.capacity()) };
 
@@ -540,7 +540,7 @@ impl<T: UsbContext> DeviceHandle<T> {
         index: u8,
         timeout: Duration,
     ) -> crate::Result<String> {
-        let mut buf = [0u8; 256];
+        let mut buf = [0u8; 255];
 
         let buf_slice = unsafe { slice::from_raw_parts_mut(buf.as_mut_ptr(), buf.len()) };
 
