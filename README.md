@@ -7,7 +7,9 @@ resources are released in a proper order.
 * [Documentation](https://docs.rs/rusb)
 
 ## Dependencies
-In order to use the `rusb` crate, you must have the native `libusb` library installed where it can
+To use rusb no extra setup is required as rusb will automatically download the source for libusb and build it.
+
+However if building libusb fails you can also try setting up the native `libusb` library where it can
 be found by `pkg-config` or `vcpkg`.
 
 All systems supported by the native `libusb` library are also supported by the `libusb` crate. It's
