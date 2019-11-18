@@ -95,6 +95,7 @@ fn make_source() {
     let mut base_config = cc::Build::new();
     base_config.include(&libusb_source);
     base_config.include(libusb_source.join("libusb"));
+    base_config.define("ENABLE_LOGGING", Some("1"));
 
     if cfg!(target_os = "macos") {
         base_config.define("OS_DARWIN", Some("1"));
