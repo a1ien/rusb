@@ -203,6 +203,17 @@ impl Context {
             },
         })
     }
+
+    /// Creates a new `libusb` context and sets runtime options.
+    pub fn with_options(opts: &[crate::UsbOption]) -> crate::Result<Self> {
+        let mut this = Self::new()?;
+
+        for opt in opts {
+            opt.apply(&mut this)?;
+        }
+
+        Ok(this)
+    }
 }
 
 extern "C" fn hotplug_callback<T: UsbContext>(
