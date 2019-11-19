@@ -96,6 +96,13 @@ fn make_source() {
     base_config.include(&libusb_source);
     base_config.include(libusb_source.join("libusb"));
 
+    // When building libusb from source, allow use of its logging facilities to aid debugging.
+    // FIXME: This does not link correctly under MinGW due to a rustc bug, so only do it on MSVC
+    // Ref: https://github.com/rust-lang/rust/issues/47048
+    if cfg!(target_env = "msvc") {
+        base_config.define("ENABLE_LOGGING", Some("1"));
+    }
+
     if cfg!(target_os = "macos") {
         base_config.define("OS_DARWIN", Some("1"));
         base_config.file(libusb_source.join("libusb/os/darwin_usb.c"));
