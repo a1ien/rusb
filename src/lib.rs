@@ -19,6 +19,7 @@ pub use crate::{
         EndpointDescriptors, Interface, InterfaceDescriptor, InterfaceDescriptors,
     },
     language::{Language, PrimaryLanguage, SubLanguage},
+    options::UsbOption,
     version::{version, LibraryVersion},
 };
 
@@ -41,6 +42,7 @@ mod endpoint_descriptor;
 mod fields;
 mod interface_descriptor;
 mod language;
+mod options;
 
 /// Tests whether the running `libusb` library supports capability API.
 pub fn has_capability() -> bool {
