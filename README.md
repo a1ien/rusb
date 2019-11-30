@@ -25,7 +25,7 @@ Add `rusb` as a dependency in `Cargo.toml`:
 
 ```toml
 [dependencies]
-rusb = "0.4"
+rusb = "0.5"
 ```
 
 Import the `rusb` crate. The starting point for nearly all `rusb` functionality is to create a
@@ -34,9 +34,7 @@ communicate with their endpoints:
 
 ```rust
 fn main() {
-    let mut context = rusb::Context::new().unwrap();
-
-    for mut device in context.devices().unwrap().iter() {
+    for device in rusb::devices().unwrap().iter() {
         let device_desc = device.device_descriptor().unwrap();
 
         println!("Bus {:03} Device {:03} ID {:04x}:{:04x}",
