@@ -19,4 +19,4 @@ libusb1-sys = "0.3.2"
 libc = "0.2"
 
 [dev-dependencies]
-regex = "0.1"
+regex = "1"

@@ -118,6 +118,23 @@ impl<T: UsbContext> DeviceHandle<T> {
         Ok(())
     }
 
+    /// Enable/disable automatic kernel driver detachment.
+    ///
+    /// When this is enabled rusb will automatically detach the
+    /// kernel driver on an interface when claiming the interface, and
+    /// attach it when releasing the interface.
+    ///
+    /// On platforms which do not have support, this function will
+    /// return `Error::NotSupported`, and rusb will continue as if
+    /// this function was never called.
+    pub fn set_auto_detach_kernel_driver(&mut self, auto_detach: bool) -> crate::Result<()> {
+        try_unsafe!(libusb_set_auto_detach_kernel_driver(
+            self.handle.as_ptr(),
+            auto_detach.into()
+        ));
+        Ok(())
+    }
+
     /// Claims one of the device's interfaces.
     ///
     /// An interface must be claimed before operating on it. All claimed interfaces are released
