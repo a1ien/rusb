@@ -17,7 +17,7 @@ been tested on Linux, OS X, and Windows.
 
 ### Cross-Compiling
 The `rusb` crate can be used when cross-compiling to a foreign target. Details on how to
-cross-compile `rusb` are explained in the [`libusb-sys` crate's
+cross-compile `rusb` are explained in the [`libusb1-sys` crate's
 README](https://github.com/a1ien/libusb1-sys#cross-compiling).
 
 ## Usage
