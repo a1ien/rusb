@@ -95,7 +95,7 @@ fn display_device(dev: &*mut ffi::libusb_device) {
         print_device_descriptor(handle, descriptor);
 
         for i in 0..descriptor.bNumConfigurations {
-            let mut descriptor = mem::MaybeUninit::<*const ffi::libusb_config_descriptor>::uninit();;
+            let mut descriptor = mem::MaybeUninit::<*const ffi::libusb_config_descriptor>::uninit();
 
             match unsafe { ffi::libusb_get_config_descriptor(*dev, i, descriptor.as_mut_ptr()) } {
                 0 => {
