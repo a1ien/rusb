@@ -284,7 +284,7 @@ fn read_endpoint(
                             let mut vec = Vec::<u8>::with_capacity(256);
                             let timeout: c_uint = 1000;
 
-                            let mut transferred = mem::MaybeUninit::<c_int>::uninit();;
+                            let mut transferred = mem::MaybeUninit::<c_int>::uninit();
 
                             match transfer_type {
                                 ffi::constants::LIBUSB_TRANSFER_TYPE_INTERRUPT => {
