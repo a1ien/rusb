@@ -145,6 +145,20 @@ fn make_source() {
             Some("__attribute__((visibility(\"default\")))"),
         );
 
+        match pkg_config::probe_library("libudev") {
+            Ok(lib) => {
+                for include_dir in &lib.include_paths {
+                    println!("cargo:include={}", include_dir.to_str().unwrap());
+                }
+
+                base_config.define("USE_UDEV", Some("1"));
+                base_config.define("HAVE_LIBUDEV", Some("1"));
+                base_config.define("HAVE_LIBUDEV_H", Some("1"));
+                base_config.file(libusb_source.join("libusb/os/linux_udev.c"));
+            }
+            _ => {}
+        };
+
         base_config.file(libusb_source.join("libusb/os/poll_posix.c"));
         base_config.file(libusb_source.join("libusb/os/threads_posix.c"));
     }
