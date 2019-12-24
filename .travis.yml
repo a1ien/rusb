@@ -14,6 +14,18 @@ matrix:
         - pkg-config --modversion libusb-1.0
       script:
         - cargo test --verbose --all
+    - name: linux-no-pkgconfig
+      os: linux
+      rust: stable
+      addons:
+        apt:
+          packages:
+            - libudev-dev
+      before_script:
+        - pkg-config --libs libudev
+        - pkg-config --modversion libudev
+      script:
+        - cargo test --verbose --all
     - name: osx
       os: osx
       rust: stable
