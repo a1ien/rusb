@@ -1,7 +1,7 @@
 [package]
 
 name = "libusb1-sys"
-version = "0.3.1"
+version = "0.3.3"
 authors = ["David Cuddeback <david.cuddeback@gmail.com>",
             "Ilya Averyanov <a1ien.n3t@gmail.com>"]
 description = "FFI bindings for libusb."
