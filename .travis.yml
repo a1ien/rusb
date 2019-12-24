@@ -31,3 +31,15 @@ matrix:
       rust: stable
       script:
         - cargo test --verbose --all
+    - name: windows
+      os: windows
+      rust: stable
+      env:
+        - VCPKG_ROOT: $TRAVIS_BUILD_DIR/vcp
+        - VCPKG_PLATFORM: x64-windows-static
+      before_script:
+        - git clone https://github.com/Microsoft/vcpkg.git vcp
+        - if [ $TRAVIS_OS_NAME == "windows" ] ; then  vcp/bootstrap-vcpkg.bat; else vcp/bootstrap-vcpkg.sh; fi
+        - vcp/vcpkg.exe install libusb:$VCPKG_PLATFORM
+      script:
+        - cargo test --verbose --all
