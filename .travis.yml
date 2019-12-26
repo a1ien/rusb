@@ -1,45 +1,48 @@
 language: rust
+rust: stable
 
 matrix:
   include:
-    - name: linux-pkgconfig
+    - name: Linux with packaged libusb-1.0 library
       os: linux
-      rust: stable
       addons:
         apt:
           packages:
             - libusb-1.0-0-dev
-      before_script:
-        - pkg-config --libs libusb-1.0
-        - pkg-config --modversion libusb-1.0
-      script:
-        - cargo test --verbose --all
-    - name: linux-no-pkgconfig
+      env:
+        - PKGCONFIG: libusb-1.0 libudev
+    - name: Linux building libusb-1.0 from source
       os: linux
-      rust: stable
       addons:
         apt:
           packages:
             - libudev-dev
-      before_script:
-        - pkg-config --libs libudev
-        - pkg-config --modversion libudev
-      script:
-        - cargo test --verbose --all
-    - name: osx
+      env:
+        - PKGCONFIG: libudev
+    - name: OS X building libusb-1.0 from source
       os: osx
-      rust: stable
-      script:
-        - cargo test --verbose --all
-    - name: windows
+    - name: Windows 64-bit using vcpkg
       os: windows
-      rust: stable
       env:
         - VCPKG_ROOT: $TRAVIS_BUILD_DIR/vcp
         - VCPKG_PLATFORM: x64-windows-static
-      before_script:
-        - git clone https://github.com/Microsoft/vcpkg.git vcp
-        - if [ $TRAVIS_OS_NAME == "windows" ] ; then  vcp/bootstrap-vcpkg.bat; else vcp/bootstrap-vcpkg.sh; fi
-        - vcp/vcpkg.exe install libusb:$VCPKG_PLATFORM
-      script:
-        - cargo test --verbose --all
+before_script:
+  - |
+    if [ "$TARGET" != "" ]; then
+        echo "Rust extra toolchain"
+        rustup toolchain install ${TARGET}
+        rustup default ${TARGET}
+    fi
+
+    for pkg in $PKGCONFIG; do
+        echo "pkgconfig information:"
+        echo " $pkg version: $(pkg-config --modversion $pkg) libs: $(pkg-config --libs $pkg)"
+    done
+
+    if [ "$VCPKG_PLATFORM" != "" ]; then
+        echo "Handle vcpkg support"
+        git clone https://github.com/Microsoft/vcpkg.git vcp
+        [ $TRAVIS_OS_NAME == "windows" ] && vcp/bootstrap-vcpkg.bat || vcp/bootstrap-vcpkg.sh
+        ./vcp/vcpkg install libusb:$VCPKG_PLATFORM
+    fi
+script: cargo test --verbose --all
