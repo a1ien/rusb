@@ -1,19 +1,61 @@
 language: rust
-rust:
-  - stable
-sudo: false
+rust: stable
 
 cache: cargo
 
-addons:
-  apt:
-    packages:
-      - libusb-1.0-0-dev
-
+matrix:
+  include:
+    - name: Linux with packaged libusb-1.0 library
+      os: linux
+      addons:
+        apt:
+          packages:
+            - libusb-1.0-0-dev
+      env:
+        - PKGCONFIG: libusb-1.0
+    - name: Linux building libusb-1.0 from source
+      os: linux
+      addons:
+        apt:
+          packages:
+            - libudev-dev
+      env:
+        - PKGCONFIG: libudev
+    - name: OS X building libusb-1.0 from source
+      os: osx
+    - name: Windows 64-bit using vcpkg
+      os: windows
+      env:
+        - VCPKG_ROOT: $TRAVIS_BUILD_DIR/vcp
+        - VCPKG_PLATFORM: x64-windows-static
+        - TARGET: stable-x86_64-pc-windows-msvc
+    - name: Windows 32-bit using vcpkg
+      os: windows
+      env:
+        - VCPKG_ROOT: $TRAVIS_BUILD_DIR/vcp
+        - VCPKG_PLATFORM: x86-windows-static
+        - TARGET: stable-i686-pc-windows-msvc
+      os: windows
 before_script:
-  - pkg-config --libs libusb-1.0
-  - pkg-config --modversion libusb-1.0
+  - |
+    if [ "$TARGET" != "" ]; then
+        echo "Rust extra toolchain"
+        rustup toolchain install ${TARGET}
+        rustup default ${TARGET}
+    fi
 
+    for pkg in $PKGCONFIG; do
+        echo "pkgconfig information:"
+        echo " $pkg version: $(pkg-config --modversion $pkg) libs: $(pkg-config --libs $pkg)"
+    done
+
+    if [ "$VCPKG_PLATFORM" != "" ]; then
+        echo "Handle vcpkg support"
+        git clone https://github.com/Microsoft/vcpkg.git vcp
+        [ $TRAVIS_OS_NAME == "windows" ] && vcp/bootstrap-vcpkg.bat || vcp/bootstrap-vcpkg.sh
+        ./vcp/vcpkg install libusb:$VCPKG_PLATFORM
+    fi
 script:
-  - cargo build --verbose
-  - cargo test --verbose
+  - cargo test --verbose --all
+  - cargo build --verbose --examples
+
