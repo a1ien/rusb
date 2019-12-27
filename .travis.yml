@@ -10,7 +10,7 @@ matrix:
           packages:
             - libusb-1.0-0-dev
       env:
-        - PKGCONFIG: libusb-1.0 libudev
+        - PKGCONFIG: libusb-1.0
     - name: Linux building libusb-1.0 from source
       os: linux
       addons:
