@@ -442,14 +442,8 @@ extern "system" {
     );
 }
 
-// As libusb_set_option is a variatic function, it must use "C" or
-// "cdecl" calling conventions as it is almost impossible to get it
-// right with "stdcall"
-#[cfg(all(target_os = "win32", target_arch = "x86"))]
-extern "cdecl" {
-    pub fn libusb_set_option(ctx: *mut libusb_context, option: u32, ...) -> c_int;
-}
-#[cfg(not(all(target_os = "win32", target_arch = "x86")))]
+// As libusb_set_option is a variatic function, it must use "C"
+// calling conventions
 extern "C" {
     pub fn libusb_set_option(ctx: *mut libusb_context, option: u32, ...) -> c_int;
 }
