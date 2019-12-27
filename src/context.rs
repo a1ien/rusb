@@ -216,7 +216,7 @@ impl Context {
     }
 }
 
-extern "C" fn hotplug_callback<T: UsbContext>(
+extern "system" fn hotplug_callback<T: UsbContext>(
     _ctx: *mut libusb_context,
     device: *mut libusb_device,
     event: libusb_hotplug_event,
