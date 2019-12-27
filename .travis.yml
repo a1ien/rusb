@@ -26,6 +26,14 @@ matrix:
       env:
         - VCPKG_ROOT: $TRAVIS_BUILD_DIR/vcp
         - VCPKG_PLATFORM: x64-windows-static
+        - TARGET: stable-x86_64-pc-windows-msvc
+    - name: Windows 32-bit using vcpkg
+      os: windows
+      env:
+        - VCPKG_ROOT: $TRAVIS_BUILD_DIR/vcp
+        - VCPKG_PLATFORM: x86-windows-static
+        - TARGET: stable-i686-pc-windows-msvc
+      os: windows
 before_script:
   - |
     if [ "$TARGET" != "" ]; then
