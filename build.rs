@@ -23,17 +23,9 @@ pub fn link_framework(name: &str) {
 }
 
 #[cfg(target_env = "msvc")]
-fn find_libusb_pkg() -> bool {
-    match vcpkg::probe_package("libusb-1.0") {
-        Ok(lib) => {
-            for lib_dir in &lib.link_paths {
-                println!("cargo:lib={}", lib_dir.to_str().unwrap());
-            }
-            for include_dir in &lib.include_paths {
-                println!("cargo:include={}", include_dir.to_str().unwrap());
-            }
-            true
-        }
+fn find_libusb_pkg(_statik: bool) -> bool {
+    match vcpkg::Config::new().find_package("libusb") {
+        Ok(_) => true,
         Err(e) => {
             println!("Can't find libusb pkg: {:?}", e);
             false
@@ -42,14 +34,13 @@ fn find_libusb_pkg() -> bool {
 }
 
 #[cfg(not(target_env = "msvc"))]
-fn find_libusb_pkg() -> bool {
-    match pkg_config::probe_library("libusb-1.0") {
-        Ok(lib) => {
-            for lib_dir in &lib.link_paths {
-                println!("cargo:lib={}", lib_dir.to_str().unwrap());
-            }
-            for include_dir in &lib.include_paths {
-                println!("cargo:include={}", include_dir.to_str().unwrap());
+fn find_libusb_pkg(statik: bool) -> bool {
+    match pkg_config::Config::new().statik(statik).probe("libusb-1.0") {
+        Ok(l) => {
+            for lib in l.libs {
+                if statik {
+                    println!("cargo:rustc-link-lib=static={}", lib);
+                }
             }
             true
         }
@@ -193,7 +184,11 @@ fn make_source() {
 }
 
 fn main() {
-    if !find_libusb_pkg() {
+    let statik = std::env::var("CARGO_CFG_TARGET_FEATURE")
+        .map(|s| s.contains("crt-static"))
+        .unwrap_or_default();
+
+    if !find_libusb_pkg(statik) {
         extract_source();
         make_source();
     }

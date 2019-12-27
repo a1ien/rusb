@@ -196,17 +196,17 @@ pub type libusb_hotplug_callback_handle = c_int;
 pub type libusb_hotplug_flag = c_int;
 pub type libusb_hotplug_event = c_int;
 
-pub type libusb_transfer_cb_fn = extern "C" fn(*mut libusb_transfer);
-pub type libusb_pollfd_added_cb = extern "C" fn(c_int, c_short, *mut c_void);
-pub type libusb_pollfd_removed_cb = extern "C" fn(c_int, *mut c_void);
-pub type libusb_hotplug_callback_fn = extern "C" fn(
+pub type libusb_transfer_cb_fn = extern "system" fn(*mut libusb_transfer);
+pub type libusb_pollfd_added_cb = extern "system" fn(c_int, c_short, *mut c_void);
+pub type libusb_pollfd_removed_cb = extern "system" fn(c_int, *mut c_void);
+pub type libusb_hotplug_callback_fn = extern "system" fn(
     ctx: *mut libusb_context,
     device: *mut libusb_device,
     event: libusb_hotplug_event,
     user_data: *mut c_void,
 ) -> c_int;
 
-extern "C" {
+extern "system" {
     pub fn libusb_get_version() -> *const libusb_version;
     pub fn libusb_has_capability(capability: u32) -> c_int;
     pub fn libusb_error_name(errcode: c_int) -> *const c_char;
@@ -440,8 +440,18 @@ extern "C" {
         ctx: *mut libusb_context,
         callback_handle: libusb_hotplug_callback_handle,
     );
-    pub fn libusb_set_option(ctx: *mut libusb_context, option: u32, ...) -> c_int;
+}
 
+// As libusb_set_option is a variatic function, it must use "C" or
+// "cdecl" calling conventions as it is almost impossible to get it
+// right with "stdcall"
+#[cfg(all(target_os = "win32", target_arch = "x86"))]
+extern "cdecl" {
+    pub fn libusb_set_option(ctx: *mut libusb_context, option: u32, ...) -> c_int;
+}
+#[cfg(not(all(target_os = "win32", target_arch = "x86")))]
+extern "C" {
+    pub fn libusb_set_option(ctx: *mut libusb_context, option: u32, ...) -> c_int;
 }
 
 // defined as static inline in libusb.h

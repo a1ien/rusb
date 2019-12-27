@@ -20,6 +20,14 @@ environment:
       VCPKGRS_DYNAMIC: 1
       RUST_BACKTRACE: 1
 
+      # stable i686 with dynamic libusb from vcpkg
+    - TARGET: i686-pc-windows-msvc
+      RUST_CHANNEL: stable
+      VCPKG_TARGET: x86-windows
+      LIBUSB_USE_PKG_CONFIG: 1
+      VCPKGRS_DYNAMIC: 1
+      RUST_BACKTRACE: 1
+
 install:
   - ps: |
       # Install Rust
