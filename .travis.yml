@@ -45,4 +45,7 @@ before_script:
         [ $TRAVIS_OS_NAME == "windows" ] && vcp/bootstrap-vcpkg.bat || vcp/bootstrap-vcpkg.sh
         ./vcp/vcpkg install libusb:$VCPKG_PLATFORM
     fi
-script: cargo test --verbose --all
+script:
+  - cargo test --verbose --all
+  - cargo build --examples
+
