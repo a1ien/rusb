@@ -188,7 +188,7 @@ fn main() {
         .map(|s| s.contains("crt-static"))
         .unwrap_or_default();
 
-    if !find_libusb_pkg(statik) {
+    if cfg!(feature = "vendored") || !find_libusb_pkg(statik) {
         extract_source();
         make_source();
     }
