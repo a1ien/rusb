@@ -6,6 +6,7 @@ use libusb1_sys::{constants::*, *};
 
 use crate::{
     config_descriptor::ConfigDescriptor,
+    device::{self, Device},
     device_descriptor::DeviceDescriptor,
     error::{self, Error},
     fields::{request_type, Direction, Recipient, RequestType},
@@ -17,7 +18,7 @@ use crate::{
 /// A handle to an open USB device.
 #[derive(Eq, PartialEq)]
 pub struct DeviceHandle<T: UsbContext> {
-    _context: T,
+    context: T,
     handle: NonNull<libusb_device_handle>,
     interfaces: BitSet,
 }
@@ -45,6 +46,16 @@ impl<T: UsbContext> DeviceHandle<T> {
     /// manipulated externally. Use only libusb endpoint IO functions.
     pub fn as_raw(&self) -> *mut libusb_device_handle {
         self.handle.as_ptr()
+    }
+
+    /// Get the device associated to this handle
+    pub fn device(&self) -> Device<T> {
+        unsafe {
+            device::from_libusb(
+                self.context.clone(),
+                libusb_get_device(self.handle.as_ptr()),
+            )
+        }
     }
 
     /// Returns the active configuration number.
@@ -681,7 +692,7 @@ pub(crate) unsafe fn from_libusb<T: UsbContext>(
     handle: *mut libusb_device_handle,
 ) -> DeviceHandle<T> {
     DeviceHandle {
-        _context: context,
+        context: context,
         handle: NonNull::new_unchecked(handle),
         interfaces: BitSet::with_capacity(u8::max_value() as usize + 1),
     }
