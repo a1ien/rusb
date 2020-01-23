@@ -1,6 +1,6 @@
 [package]
 name = "rusb"
-version = "0.5.4"
+version = "0.5.5"
 authors = ["David Cuddeback <david.cuddeback@gmail.com>", "Ilya Averyanov <a1ien.n3t@gmail.com>"]
 description = "Rust library for accessing USB devices."
 license = "MIT"
