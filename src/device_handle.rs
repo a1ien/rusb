@@ -570,18 +570,24 @@ impl<T: UsbContext> DeviceHandle<T> {
     ) -> crate::Result<String> {
         let mut buf = [0u8; 255];
 
-        let buf_slice = unsafe { slice::from_raw_parts_mut(buf.as_mut_ptr(), buf.len()) };
-
         let len = self.read_control(
             request_type(Direction::In, RequestType::Standard, Recipient::Device),
             LIBUSB_REQUEST_GET_DESCRIPTOR,
             u16::from(LIBUSB_DT_STRING) << 8 | u16::from(index),
             language.lang_id(),
-            buf_slice,
+            &mut buf,
             timeout,
         )?;
 
-        let utf16: Vec<u16> = buf_slice[..len]
+        if len < 2 || buf[0] != len as u8 || len & 0x01 != 0 {
+            return Err(Error::BadDescriptor);
+        }
+
+        if len == 2 {
+            return Ok(String::new());
+        }
+
+        let utf16: Vec<u16> = buf[..len]
             .chunks(2)
             .skip(1)
             .map(|chunk| u16::from(chunk[0]) | u16::from(chunk[1]) << 8)
