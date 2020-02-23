@@ -580,7 +580,8 @@ impl<T: UsbContext> DeviceHandle<T> {
         )?;
 
         if len < 2 || buf[0] != len as u8 || len & 0x01 != 0 {
-            return Err(Error::BadDescriptor);
+            // Consider making this `Error::BadDescriptor` on next breaking change.
+            return Err(Error::Other);
         }
 
         if len == 2 {
