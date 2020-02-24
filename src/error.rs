@@ -47,6 +47,11 @@ pub enum Error {
     /// Operation not supported or unimplemented on this platform.
     NotSupported,
 
+    /* Consider adding this on next breaking change (v0.6?)
+    /// The device returned a malformed descriptor
+    BadDescriptor,
+    */
+
     /// Other error.
     Other,
 }
@@ -68,6 +73,7 @@ impl Error {
             Error::Interrupted => "System call interrupted (perhaps due to signal)",
             Error::NoMem => "Insufficient memory",
             Error::NotSupported => "Operation not supported or unimplemented on this platform",
+            //Error::BadDescriptor => "Malformed descriptor",
             Error::Other => "Other error",
         }
     }
