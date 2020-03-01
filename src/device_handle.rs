@@ -552,7 +552,10 @@ impl<T: UsbContext> DeviceHandle<T> {
             return Err(Error::Other);
         }
 
-        buf.resize(res as usize, 0u8);
+        unsafe {
+            buf.set_len(res as usize);
+        }
+
         String::from_utf8(buf).map_err(|_| Error::Other)
     }
 
