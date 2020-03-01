@@ -514,18 +514,25 @@ impl<T: UsbContext> DeviceHandle<T> {
     pub fn read_languages(&self, timeout: Duration) -> crate::Result<Vec<Language>> {
         let mut buf = [0u8; 255];
 
-        let buf_slice = unsafe { slice::from_raw_parts_mut(buf.as_mut_ptr(), buf.len()) };
-
         let len = self.read_control(
             request_type(Direction::In, RequestType::Standard, Recipient::Device),
             LIBUSB_REQUEST_GET_DESCRIPTOR,
             u16::from(LIBUSB_DT_STRING) << 8,
             0,
-            buf_slice,
+            &mut buf,
             timeout,
         )?;
 
-        Ok(buf_slice[0..len]
+        if len < 2 || buf[0] != len as u8 || len & 0x01 != 0 {
+            // Consider making this `Error::BadDescriptor` on next breaking change.
+            return Err(Error::Other);
+        }
+
+        if len == 2 {
+            return Ok(Vec::new());
+        }
+
+        Ok(buf[0..len]
             .chunks(2)
             .skip(1)
             .map(|chunk| {
