@@ -548,8 +548,6 @@ impl<T: UsbContext> DeviceHandle<T> {
 
         if res < 0 {
             return Err(error::from_libusb(res));
-        } else if res > len {
-            return Err(Error::Other);
         }
 
         unsafe {
