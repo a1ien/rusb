@@ -547,10 +547,8 @@ impl<T: UsbContext> DeviceHandle<T> {
     pub fn read_string_descriptor_ascii(&self, index: u8) -> crate::Result<String> {
         let mut buf = Vec::<u8>::with_capacity(255);
 
-        let buf_slice = unsafe { slice::from_raw_parts_mut(buf.as_mut_ptr(), buf.capacity()) };
-
-        let ptr = buf_slice.as_mut_ptr() as *mut c_uchar;
-        let len = buf_slice.len() as i32;
+        let ptr = buf.as_mut_ptr() as *mut c_uchar;
+        let len = buf.len() as i32;
 
         let res =
             unsafe { libusb_get_string_descriptor_ascii(self.handle.as_ptr(), index, ptr, len) };
