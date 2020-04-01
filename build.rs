@@ -157,6 +157,8 @@ fn make_source() {
     if cfg!(windows) {
         #[cfg(target_env = "msvc")]
         base_config.define("_TIMESPEC_DEFINED", Some("1"));
+        #[cfg(target_env = "msvc")]
+        base_config.flag("/source-charset:utf-8");
 
         base_config.warnings(false);
         base_config.define("OS_WINDOWS", Some("1"));
