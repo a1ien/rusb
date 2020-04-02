@@ -75,3 +75,6 @@ help is the information already available for `libusb`:
 Copyright © 2015 David Cuddeback
 
 Distributed under the [MIT License](LICENSE).
+
+### License note.
+If you link native `libusb` library statically then you must follow [GNU LGPL](https://github.com/libusb/libusb/blob/master/COPYING) from libusb.
