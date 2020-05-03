@@ -42,6 +42,14 @@ fn find_libusb_pkg(statik: bool) -> bool {
                     println!("cargo:rustc-link-lib=static={}", lib);
                 }
             }
+            // Provide metadata and include directory for dependencies
+            if statik {
+                println!("cargo:static=1");
+            }
+            assert!(l.include_paths.len() <= 1); // Cannot have multiple env vars with same name
+            for path in l.include_paths {
+                println!("cargo:include={}", path.to_str().unwrap());
+            }
             true
         }
         Err(e) => {
@@ -81,6 +89,18 @@ fn extract_source() -> PathBuf {
 
 fn make_source() {
     let libusb_source = extract_source();
+
+    // Provide metadata and include directory for dependencies
+    println!("cargo:vendored=1");
+    println!("cargo:static=1");
+    let include_dir = PathBuf::from(env::var("OUT_DIR").unwrap()).join("include");
+    let _ = std::fs::create_dir(&include_dir);
+    std::fs::copy(
+        libusb_source.join("libusb/libusb.h"),
+        include_dir.join("libusb.h"),
+    )
+    .unwrap();
+    println!("cargo:include={}", include_dir.to_str().unwrap());
 
     std::fs::File::create(format!("{}/{}", libusb_source.display(), "config.h")).unwrap();
     let mut base_config = cc::Build::new();
@@ -137,11 +157,7 @@ fn make_source() {
         );
 
         match pkg_config::probe_library("libudev") {
-            Ok(lib) => {
-                for include_dir in &lib.include_paths {
-                    println!("cargo:include={}", include_dir.to_str().unwrap());
-                }
-
+            Ok(_lib) => {
                 base_config.define("USE_UDEV", Some("1"));
                 base_config.define("HAVE_LIBUDEV", Some("1"));
                 base_config.define("HAVE_LIBUDEV_H", Some("1"));

@@ -62,6 +62,20 @@ fn main() {
 }
 ```
 
+### Native dependencies
+
+`libusb1-sys` exports [metadata] so that dependent crates can find the correct `libusb.h` header
+and compile native code that depends on `libusb`. If a crate has a direct dependency on `libusb1-sys`,
+its build script has access to the following environment variables:
+
+* `DEP_USB_1.0_INCLUDE` contains the include path with the correct `libusb.h`
+* `DEP_USB_1.0_VENDORED` is set with a value of `1` if `libusb1-sys` compiled and linked to
+its vendored copy of `libusb`
+* `DEP_USB_1.0_STATIC`  is set with a value of `1` if static linkage has been used instead of
+dynamic.
+
+[metadata]: https://doc.rust-lang.org/cargo/reference/build-scripts.html#the-links-manifest-key
+
 ### Finding Help
 Since `libusb1-sys` is no more than a wrapper around the native `libusb` library, the best source for
 help is the information already available for `libusb`:
