@@ -11,6 +11,7 @@ repository = "https://github.com/a1ien/libusb1-sys.git"
 readme = "README.md"
 keywords = ["usb", "libusb", "hardware", "bindings"]
 edition = "2018"
+links = "usb-1.0" # Required for metadata passing to work
 exclude = [
     ".travis.yml",
     ".appveyor.yml"
