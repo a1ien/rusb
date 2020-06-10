@@ -8,9 +8,6 @@ pub type Result<T> = StdResult<T, Error>;
 /// Errors returned by the `libusb` library.
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub enum Error {
-    /// Success (no error).
-    Success,
-
     /// Input/output error.
     Io,
 
@@ -58,7 +55,6 @@ impl Error {
     /// Returns a description of an error suitable for display to an end user.
     fn strerror(&self) -> &'static str {
         match self {
-            Error::Success => "Success",
             Error::Io => "Input/Output Error",
             Error::InvalidParam => "Invalid parameter",
             Error::Access => "Access denied (insufficient permissions)",
@@ -92,7 +88,6 @@ impl StdError for Error {
 #[doc(hidden)]
 pub(crate) fn from_libusb(err: i32) -> Error {
     match err {
-        LIBUSB_SUCCESS => Error::Success,
         LIBUSB_ERROR_IO => Error::Io,
         LIBUSB_ERROR_INVALID_PARAM => Error::InvalidParam,
         LIBUSB_ERROR_ACCESS => Error::Access,
