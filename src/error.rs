@@ -56,7 +56,7 @@ pub enum Error {
 
 impl Error {
     /// Returns a description of an error suitable for display to an end user.
-    pub fn strerror(&self) -> &'static str {
+    fn strerror(&self) -> &'static str {
         match self {
             Error::Success => "Success",
             Error::Io => "Input/Output Error",
