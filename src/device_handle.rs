@@ -1,4 +1,4 @@
-use std::{mem, ptr::NonNull, slice, time::Duration};
+use std::{mem, ptr::NonNull, time::Duration};
 
 use bit_set::BitSet;
 use libc::{c_int, c_uchar, c_uint};
