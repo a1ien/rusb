@@ -1,9 +1,9 @@
-use std::{error::Error as StdError, fmt, result::Result as StdResult};
+use std::{fmt, result};
 
 use libusb1_sys::constants::*;
 
 /// A result of a function that may return a `Error`.
-pub type Result<T> = StdResult<T, Error>;
+pub type Result<T> = result::Result<T, Error>;
 
 /// Errors returned by the `libusb` library.
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
@@ -51,10 +51,9 @@ pub enum Error {
     Other,
 }
 
-impl Error {
-    /// Returns a description of an error suitable for display to an end user.
-    fn strerror(&self) -> &'static str {
-        match self {
+impl fmt::Display for Error {
+    fn fmt(&self, fmt: &mut fmt::Formatter) -> result::Result<(), fmt::Error> {
+        fmt.write_str(match self {
             Error::Io => "Input/Output Error",
             Error::InvalidParam => "Invalid parameter",
             Error::Access => "Access denied (insufficient permissions)",
@@ -69,21 +68,11 @@ impl Error {
             Error::NotSupported => "Operation not supported or unimplemented on this platform",
             Error::BadDescriptor => "Malformed descriptor",
             Error::Other => "Other error",
-        }
+        })
     }
 }
 
-impl fmt::Display for Error {
-    fn fmt(&self, fmt: &mut fmt::Formatter) -> StdResult<(), fmt::Error> {
-        fmt.write_str(self.strerror())
-    }
-}
-
-impl StdError for Error {
-    fn description(&self) -> &'static str {
-        self.strerror()
-    }
-}
+impl std::error::Error for Error {}
 
 #[doc(hidden)]
 pub(crate) fn from_libusb(err: i32) -> Error {
