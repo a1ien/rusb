@@ -1,4 +1,4 @@
-use std::{mem, ptr::NonNull, slice, time::Duration};
+use std::{mem, ptr::NonNull, time::Duration};
 
 use bit_set::BitSet;
 use libc::{c_int, c_uchar, c_uint};
@@ -524,8 +524,7 @@ impl<T: UsbContext> DeviceHandle<T> {
         )?;
 
         if len < 2 || buf[0] != len as u8 || len & 0x01 != 0 {
-            // Consider making this `Error::BadDescriptor` on next breaking change.
-            return Err(Error::Other);
+            return Err(Error::BadDescriptor);
         }
 
         if len == 2 {
@@ -585,8 +584,7 @@ impl<T: UsbContext> DeviceHandle<T> {
         )?;
 
         if len < 2 || buf[0] != len as u8 || len & 0x01 != 0 {
-            // Consider making this `Error::BadDescriptor` on next breaking change.
-            return Err(Error::Other);
+            return Err(Error::BadDescriptor);
         }
 
         if len == 2 {
