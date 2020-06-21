@@ -161,26 +161,23 @@ fn read_endpoint<T: UsbContext>(
 
     match configure_endpoint(handle, &endpoint) {
         Ok(_) => {
-            let mut vec = Vec::<u8>::with_capacity(256);
-            let buf =
-                unsafe { slice::from_raw_parts_mut((&mut vec[..]).as_mut_ptr(), vec.capacity()) };
-
+            let mut buf = vec![0; 256];
             let timeout = Duration::from_secs(1);
 
             match transfer_type {
                 TransferType::Interrupt => {
-                    match handle.read_interrupt(endpoint.address, buf, timeout) {
+                    match handle.read_interrupt(endpoint.address, &mut buf, timeout) {
                         Ok(len) => {
-                            unsafe { vec.set_len(len) };
-                            println!(" - read: {:?}", vec);
+                            buf.truncate(len);
+                            println!(" - read: {:?}", buf);
                         }
                         Err(err) => println!("could not read from endpoint: {}", err),
                     }
                 }
-                TransferType::Bulk => match handle.read_bulk(endpoint.address, buf, timeout) {
+                TransferType::Bulk => match handle.read_bulk(endpoint.address, &mut buf, timeout) {
                     Ok(len) => {
-                        unsafe { vec.set_len(len) };
-                        println!(" - read: {:?}", vec);
+                        buf.truncate(len);
+                        println!(" - read: {:?}", buf);
                     }
                     Err(err) => println!("could not read from endpoint: {}", err),
                 },
