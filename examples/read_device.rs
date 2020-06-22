@@ -1,4 +1,4 @@
-use std::{slice, str::FromStr, time::Duration};
+use std::{str::FromStr, time::Duration};
 
 use rusb::{
     Context, Device, DeviceDescriptor, DeviceHandle, Direction, Result, TransferType, UsbContext,
@@ -161,23 +161,21 @@ fn read_endpoint<T: UsbContext>(
 
     match configure_endpoint(handle, &endpoint) {
         Ok(_) => {
-            let mut buf = vec![0; 256];
+            let mut buf = [0; 256];
             let timeout = Duration::from_secs(1);
 
             match transfer_type {
                 TransferType::Interrupt => {
                     match handle.read_interrupt(endpoint.address, &mut buf, timeout) {
                         Ok(len) => {
-                            buf.truncate(len);
-                            println!(" - read: {:?}", buf);
+                            println!(" - read: {:?}", &buf[..len]);
                         }
                         Err(err) => println!("could not read from endpoint: {}", err),
                     }
                 }
                 TransferType::Bulk => match handle.read_bulk(endpoint.address, &mut buf, timeout) {
                     Ok(len) => {
-                        buf.truncate(len);
-                        println!(" - read: {:?}", buf);
+                        println!(" - read: {:?}", &buf[..len]);
                     }
                     Err(err) => println!("could not read from endpoint: {}", err),
                 },
