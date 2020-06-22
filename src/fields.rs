@@ -2,21 +2,23 @@ use libc::c_int;
 use libusb1_sys::constants::*;
 
 /// Device speeds. Indicates the speed at which a device is operating.
+/// - [libusb_supported_speed](http://libusb.sourceforge.net/api-1.0/group__libusb__dev.html#ga1454797ecc0de4d084c1619c420014f6)
+/// - [USB release versions](https://en.wikipedia.org/wiki/USB#Release_versions)
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
 pub enum Speed {
     /// The operating system doesn't know the device speed.
     Unknown,
 
-    /// The device is operating at low speed (1.5MBps).
+    /// The device is operating at low speed (1.5 Mbps).
     Low,
 
-    /// The device is operating at full speed (12MBps).
+    /// The device is operating at full speed (12 Mbps).
     Full,
 
-    /// The device is operating at high speed (480Mps).
+    /// The device is operating at high speed (480 Mbps).
     High,
 
-    /// The device is operating at super speed (5000Mbps).
+    /// The device is operating at super speed (5 Gbps).
     Super,
 }
 
