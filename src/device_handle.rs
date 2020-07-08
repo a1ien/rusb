@@ -1,6 +1,5 @@
 use std::{mem, ptr::NonNull, time::Duration};
 
-use bit_set::BitSet;
 use libc::{c_int, c_uchar, c_uint};
 use libusb1_sys::{constants::*, *};
 
@@ -15,12 +14,101 @@ use crate::{
     UsbContext,
 };
 
+/// Bit set representing claimed USB interfaces.
+#[derive(Copy, Clone, Debug, Default, Eq, PartialEq)]
+struct ClaimedInterfaces {
+    inner: [u128; 2],
+}
+
+impl ClaimedInterfaces {
+    /// Create a new bit set.
+    fn new() -> Self {
+        Self { inner: [0, 0] }
+    }
+
+    fn get_index_and_mask(interface: u8) -> (usize, u128) {
+        ((interface / 128) as usize, 1 << (interface % 128))
+    }
+
+    /// Mark `interface` as claimed.
+    fn insert(&mut self, interface: u8) {
+        let (index, mask) = ClaimedInterfaces::get_index_and_mask(interface);
+        self.inner[index] |= mask;
+    }
+
+    /// Mark `interface` as not claimed.
+    fn remove(&mut self, interface: u8) {
+        let (index, mask) = ClaimedInterfaces::get_index_and_mask(interface);
+        self.inner[index] &= !mask;
+    }
+
+    /// Returns true if this set contains `interface`.
+    fn contains(&self, interface: u8) -> bool {
+        let (index, mask) = ClaimedInterfaces::get_index_and_mask(interface);
+        self.inner[index] & mask != 0
+    }
+
+    /// Returns a count of the interfaces contained in this set.
+    fn size(&self) -> usize {
+        self.inner.iter().map(|v| v.count_ones()).sum::<u32>() as usize
+    }
+
+    /// Returns an iterator over the interfaces in this set.
+    fn iter(&self) -> ClaimedInterfacesIter {
+        ClaimedInterfacesIter::new(&self)
+    }
+}
+
+/// Iterator over interfaces.
+struct ClaimedInterfacesIter<'a> {
+    // Next interface to check as a possible value to return from the interator.
+    index: u16,
+
+    // Number of elements remaining in this iterator.
+    remaining: usize,
+
+    // The ClaimedInterfaces object that we're iterating over.
+    source: &'a ClaimedInterfaces,
+}
+
+impl<'a> ClaimedInterfacesIter<'a> {
+    /// Create a new iterator over the interfaces in `source`.
+    fn new<'source>(source: &'source ClaimedInterfaces) -> ClaimedInterfacesIter<'source> {
+        ClaimedInterfacesIter {
+            index: 0,
+            remaining: source.size(),
+            source,
+        }
+    }
+}
+
+impl<'a> Iterator for ClaimedInterfacesIter<'a> {
+    type Item = u8;
+
+    fn next(&mut self) -> Option<u8> {
+        while self.index <= u8::MAX as u16 {
+            let index = self.index as u8;
+            let contains = self.source.contains(index);
+            self.index += 1;
+            if contains {
+                self.remaining -= 1;
+                return Some(index);
+            }
+        }
+        None
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        (self.remaining, Some(self.remaining))
+    }
+}
+
 /// A handle to an open USB device.
 #[derive(Eq, PartialEq)]
 pub struct DeviceHandle<T: UsbContext> {
     context: T,
     handle: NonNull<libusb_device_handle>,
-    interfaces: BitSet,
+    interfaces: ClaimedInterfaces,
 }
 
 impl<T: UsbContext> Drop for DeviceHandle<T> {
@@ -155,7 +243,7 @@ impl<T: UsbContext> DeviceHandle<T> {
             self.handle.as_ptr(),
             c_int::from(iface)
         ));
-        self.interfaces.insert(iface as usize);
+        self.interfaces.insert(iface);
         Ok(())
     }
 
@@ -165,7 +253,7 @@ impl<T: UsbContext> DeviceHandle<T> {
             self.handle.as_ptr(),
             c_int::from(iface)
         ));
-        self.interfaces.remove(iface as usize);
+        self.interfaces.remove(iface);
         Ok(())
     }
 
@@ -704,6 +792,90 @@ pub(crate) unsafe fn from_libusb<T: UsbContext>(
     DeviceHandle {
         context: context,
         handle: NonNull::new_unchecked(handle),
-        interfaces: BitSet::with_capacity(u8::max_value() as usize + 1),
+        interfaces: ClaimedInterfaces::new(),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::ClaimedInterfaces;
+
+    #[test]
+    fn claimed_interfaces_empty() {
+        let empty = ClaimedInterfaces::new();
+        assert_eq!(empty.size(), 0);
+        for i in 0..=u8::MAX {
+            assert!(!empty.contains(i), "empty set should not contain {}", i);
+        }
+
+        let mut iter = empty.iter();
+        assert_eq!(iter.size_hint(), (0, Some(0)));
+        assert_eq!(iter.next(), None);
+    }
+
+    #[test]
+    fn claimed_interfaces_one_element() {
+        let mut interfaces = ClaimedInterfaces::new();
+        interfaces.insert(94);
+        assert_eq!(interfaces.size(), 1);
+        assert!(interfaces.contains(94));
+        for i in 0..=u8::MAX {
+            if i == 94 {
+                continue;
+            }
+            assert!(
+                !interfaces.contains(i),
+                "interfaces should not contain {}",
+                i
+            );
+        }
+
+        let mut iter = interfaces.iter();
+        assert_eq!(iter.size_hint(), (1, Some(1)));
+        assert_eq!(iter.next(), Some(94));
+        assert_eq!(iter.size_hint(), (0, Some(0)));
+        assert_eq!(iter.next(), None);
+    }
+
+    #[test]
+    fn claimed_interfaces_many_elements() {
+        let mut interfaces = ClaimedInterfaces::new();
+        let elements = vec![94, 0, 255, 17, 183, 6];
+
+        for (index, &interface) in elements.iter().enumerate() {
+            interfaces.insert(interface);
+            assert_eq!(interfaces.size(), index + 1);
+        }
+
+        // Validate contains().
+        for &interface in elements.iter() {
+            assert!(
+                interfaces.contains(interface),
+                "interfaces should contain {}",
+                interface
+            );
+        }
+
+        // Validate iter().
+        let contents = interfaces.iter().collect::<Vec<_>>().sort();
+        assert_eq!(contents, elements.clone().sort());
+
+        // Validate size_hint().
+        let mut iter = interfaces.iter();
+        let mut read = 0;
+        loop {
+            assert!(
+                read <= elements.len(),
+                "read elements {} should not exceed elements size {}",
+                read,
+                elements.len()
+            );
+            let remaining = elements.len() - read;
+            assert_eq!(iter.size_hint(), (remaining, Some(remaining)));
+            match iter.next() {
+                Some(_) => read += 1,
+                None => break,
+            }
+        }
     }
 }
