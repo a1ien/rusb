@@ -547,10 +547,11 @@ impl<T: UsbContext> DeviceHandle<T> {
         let mut buf = Vec::<u8>::with_capacity(255);
 
         let ptr = buf.as_mut_ptr() as *mut c_uchar;
-        let len = buf.len() as i32;
+        let capacity = buf.capacity() as i32;
 
-        let res =
-            unsafe { libusb_get_string_descriptor_ascii(self.handle.as_ptr(), index, ptr, len) };
+        let res = unsafe {
+            libusb_get_string_descriptor_ascii(self.handle.as_ptr(), index, ptr, capacity)
+        };
 
         if res < 0 {
             return Err(error::from_libusb(res));
