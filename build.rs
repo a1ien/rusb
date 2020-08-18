@@ -3,7 +3,7 @@ use std::io::Read;
 use std::path::{Path, PathBuf};
 use tar::Archive;
 
-static VERSION: &'static str = "1.0.22";
+static VERSION: &'static str = "1.0.23";
 
 fn link(name: &str, bundled: bool) {
     use std::env::var;

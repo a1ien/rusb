@@ -196,6 +196,8 @@ pub type libusb_hotplug_callback_handle = c_int;
 pub type libusb_hotplug_flag = c_int;
 pub type libusb_hotplug_event = c_int;
 
+pub type libusb_log_cb_mode = c_int;
+
 pub type libusb_transfer_cb_fn = extern "system" fn(*mut libusb_transfer);
 pub type libusb_pollfd_added_cb = extern "system" fn(c_int, c_short, *mut c_void);
 pub type libusb_pollfd_removed_cb = extern "system" fn(c_int, *mut c_void);
@@ -205,6 +207,9 @@ pub type libusb_hotplug_callback_fn = extern "system" fn(
     event: libusb_hotplug_event,
     user_data: *mut c_void,
 ) -> c_int;
+
+pub type libusb_log_cb = extern "system" fn(context: *mut libusb_context, c_int, *mut c_void);
+
 
 extern "system" {
     pub fn libusb_get_version() -> *const libusb_version;
@@ -216,6 +221,7 @@ extern "system" {
     pub fn libusb_init(context: *mut *mut libusb_context) -> c_int;
     pub fn libusb_exit(context: *mut libusb_context);
     pub fn libusb_set_debug(context: *mut libusb_context, level: c_int);
+    pub fn libusb_set_cb(context: *mut libusb_context, cb: libusb_log_cb, mode: c_int);
 
     pub fn libusb_get_device_list(
         context: *mut libusb_context,
@@ -260,6 +266,11 @@ extern "system" {
     pub fn libusb_get_max_packet_size(dev: *const libusb_device, endpoint: c_uchar) -> c_int;
     pub fn libusb_get_max_iso_packet_size(dev: *const libusb_device, endpoint: c_uchar) -> c_int;
 
+    pub fn libusb_wrap_sys_device(
+        context: *mut libusb_context,
+        sys_dev: *mut c_int,
+        handle: *mut *mut libusb_device_handle
+    ) -> c_int;
     pub fn libusb_open(dev: *const libusb_device, handle: *mut *mut libusb_device_handle) -> c_int;
     pub fn libusb_close(dev_handle: *mut libusb_device_handle);
     pub fn libusb_open_device_with_vid_pid(
