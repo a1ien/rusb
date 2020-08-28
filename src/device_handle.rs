@@ -1,4 +1,4 @@
-use std::{mem, ptr::NonNull, time::Duration};
+use std::{mem, ptr::NonNull, time::Duration, u8};
 
 use libc::{c_int, c_uchar, c_uint};
 use libusb1_sys::{constants::*, *};
@@ -800,6 +800,7 @@ pub(crate) unsafe fn from_libusb<T: UsbContext>(
 #[cfg(test)]
 mod tests {
     use super::ClaimedInterfaces;
+    use std::u8;
 
     #[test]
     fn claimed_interfaces_empty() {
