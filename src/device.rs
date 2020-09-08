@@ -12,6 +12,7 @@ use crate::{
     device_handle::{self, DeviceHandle},
     fields::{self, Speed},
     UsbContext,
+    Error,
 };
 
 /// A reference to a USB device.
@@ -56,6 +57,22 @@ impl<T: UsbContext> Device<T> {
     /// Get the raw libusb_device pointer, for advanced use in unsafe code
     pub fn as_raw(&self) -> *mut libusb_device {
         self.device.as_ptr()
+    }
+
+    /// # Safety
+    ///
+    /// Converts an existing `libusb_device` pointer into a `Device<T>`.
+    /// `device` must be a pointer to a valid `libusb_device`. Rusb increments refcount.
+    pub unsafe fn from_libusb(
+        context: T,
+        device: NonNull<libusb_device>,
+    ) -> Device<T> {
+        libusb_ref_device(device.as_ptr());
+
+        Device {
+            context,
+            device,
+        }
     }
 
     /// Reads the device descriptor.
@@ -119,24 +136,14 @@ impl<T: UsbContext> Device<T> {
 
         try_unsafe!(libusb_open(self.device.as_ptr(), handle.as_mut_ptr()));
 
-        Ok(unsafe { device_handle::from_libusb(self.context.clone(), handle.assume_init()) })
+        Ok(unsafe {
+            let ptr = NonNull::new(handle.assume_init()).ok_or(Error::NoDevice)?;
+            DeviceHandle::from_libusb(self.context.clone(), ptr)
+        })
     }
 
     /// Returns the device's port number
     pub fn port_number(&self) -> u8 {
         unsafe { libusb_get_port_number(self.device.as_ptr()) }
-    }
-}
-
-#[doc(hidden)]
-pub(crate) unsafe fn from_libusb<T: UsbContext>(
-    context: T,
-    device: *mut libusb_device,
-) -> Device<T> {
-    libusb_ref_device(device);
-
-    Device {
-        context,
-        device: NonNull::new_unchecked(device),
     }
 }

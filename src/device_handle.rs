@@ -139,10 +139,25 @@ impl<T: UsbContext> DeviceHandle<T> {
     /// Get the device associated to this handle
     pub fn device(&self) -> Device<T> {
         unsafe {
-            device::from_libusb(
+            device::Device::from_libusb(
                 self.context.clone(),
-                libusb_get_device(self.handle.as_ptr()),
+                std::ptr::NonNull::new_unchecked(libusb_get_device(self.handle.as_ptr())),
             )
+        }
+    }
+
+    /// # Safety
+    ///
+    /// Converts an existing `libusb_device_handle` pointer into a `DeviceHandle<T>`.
+    /// `handle` must be a pointer to a valid `libusb_device_handle`. Rusb assumes ownership of the handle, and will close it on `drop`.
+    pub unsafe fn from_libusb(
+        context: T,
+        handle: NonNull<libusb_device_handle>,
+    ) -> DeviceHandle<T> {
+        DeviceHandle {
+            context,
+            handle,
+            interfaces: ClaimedInterfaces::new(),
         }
     }
 
@@ -782,18 +797,6 @@ impl<T: UsbContext> DeviceHandle<T> {
             None => Err(Error::InvalidParam),
             Some(n) => self.read_string_descriptor(language, n, timeout),
         }
-    }
-}
-
-#[doc(hidden)]
-pub(crate) unsafe fn from_libusb<T: UsbContext>(
-    context: T,
-    handle: *mut libusb_device_handle,
-) -> DeviceHandle<T> {
-    DeviceHandle {
-        context: context,
-        handle: NonNull::new_unchecked(handle),
-        interfaces: ClaimedInterfaces::new(),
     }
 }
 

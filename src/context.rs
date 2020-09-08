@@ -77,12 +77,8 @@ pub trait UsbContext: Clone + Sized {
     ) -> Option<DeviceHandle<Self>> {
         let handle =
             unsafe { libusb_open_device_with_vid_pid(self.as_raw(), vendor_id, product_id) };
-
-        if handle.is_null() {
-            None
-        } else {
-            Some(unsafe { device_handle::from_libusb(self.clone(), handle) })
-        }
+        let ptr = std::ptr::NonNull::new(handle)?;
+        Some(unsafe { DeviceHandle::from_libusb(self.clone(), ptr) })
     }
 
     /// Sets the log level of a `libusb` for context.
@@ -224,7 +220,7 @@ extern "system" fn hotplug_callback<T: UsbContext>(
 ) -> c_int {
     unsafe {
         let mut reg = Box::<CallbackData<T>>::from_raw(reg as _);
-        let device = device::from_libusb(reg.context.clone(), device);
+        let device = device::Device::from_libusb(reg.context.clone(), std::ptr::NonNull::new_unchecked(device));
         match event {
             LIBUSB_HOTPLUG_EVENT_DEVICE_ARRIVED => reg.hotplug.device_arrived(device),
             LIBUSB_HOTPLUG_EVENT_DEVICE_LEFT => reg.hotplug.device_left(device),
