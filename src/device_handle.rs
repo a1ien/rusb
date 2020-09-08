@@ -139,7 +139,7 @@ impl<T: UsbContext> DeviceHandle<T> {
     /// Get the device associated to this handle
     pub fn device(&self) -> Device<T> {
         unsafe {
-            device::from_libusb(
+            device::Device::from_libusb(
                 self.context.clone(),
                 libusb_get_device(self.handle.as_ptr()),
             )

@@ -58,6 +58,19 @@ impl<T: UsbContext> Device<T> {
         self.device.as_ptr()
     }
 
+    /// Unsafe function to convert an existing libusb_device into a Device<T>. Useful for Android.
+    pub unsafe fn from_libusb(
+        context: T,
+        device: *mut libusb_device,
+    ) -> Device<T> {
+        libusb_ref_device(device);
+
+        Device {
+            context,
+            device: NonNull::new_unchecked(device),
+        }
+    }
+
     /// Reads the device descriptor.
     pub fn device_descriptor(&self) -> crate::Result<DeviceDescriptor> {
         let mut descriptor = mem::MaybeUninit::<libusb_device_descriptor>::uninit();
@@ -125,18 +138,5 @@ impl<T: UsbContext> Device<T> {
     /// Returns the device's port number
     pub fn port_number(&self) -> u8 {
         unsafe { libusb_get_port_number(self.device.as_ptr()) }
-    }
-}
-
-#[doc(hidden)]
-pub(crate) unsafe fn from_libusb<T: UsbContext>(
-    context: T,
-    device: *mut libusb_device,
-) -> Device<T> {
-    libusb_ref_device(device);
-
-    Device {
-        context,
-        device: NonNull::new_unchecked(device),
     }
 }
