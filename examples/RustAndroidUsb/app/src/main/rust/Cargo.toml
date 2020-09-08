@@ -1,0 +1,16 @@
+[package]
+name = "androidlib"
+version = "0.1.0"
+authors = ["Brent Gardner <bgardner@squarelabs.net>"]
+edition = "2018"
+
+[dependencies]
+jni = { version = "0.10.2", default-features = false }
+log = { version = "0.4", features = ["max_level_debug", "release_max_level_info"] }
+android_logger = "0.9.0"
+rusb = { path = "../../../../../../" }
+libusb1-sys = { version = "0.4.1", features = ["vendored"] }
+
+[lib]
+name = "androidlib"
+crate-type = ["cdylib"]
