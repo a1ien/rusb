@@ -146,6 +146,18 @@ impl<T: UsbContext> DeviceHandle<T> {
         }
     }
 
+    /// Unsafe function to convert an existing libusb_device_handle into a DeviceHandle<T>. Useful for Android.
+    pub unsafe fn from_libusb(
+        context: T,
+        handle: *mut libusb_device_handle,
+    ) -> DeviceHandle<T> {
+        DeviceHandle {
+            context: context,
+            handle: NonNull::new_unchecked(handle),
+            interfaces: ClaimedInterfaces::new(),
+        }
+    }
+
     /// Returns the active configuration number.
     pub fn active_configuration(&self) -> crate::Result<u8> {
         let mut config = mem::MaybeUninit::<c_int>::uninit();
@@ -782,18 +794,6 @@ impl<T: UsbContext> DeviceHandle<T> {
             None => Err(Error::InvalidParam),
             Some(n) => self.read_string_descriptor(language, n, timeout),
         }
-    }
-}
-
-#[doc(hidden)]
-pub(crate) unsafe fn from_libusb<T: UsbContext>(
-    context: T,
-    handle: *mut libusb_device_handle,
-) -> DeviceHandle<T> {
-    DeviceHandle {
-        context: context,
-        handle: NonNull::new_unchecked(handle),
-        interfaces: ClaimedInterfaces::new(),
     }
 }
 

@@ -132,7 +132,7 @@ impl<T: UsbContext> Device<T> {
 
         try_unsafe!(libusb_open(self.device.as_ptr(), handle.as_mut_ptr()));
 
-        Ok(unsafe { device_handle::from_libusb(self.context.clone(), handle.assume_init()) })
+        Ok(unsafe { DeviceHandle::from_libusb(self.context.clone(), handle.assume_init()) })
     }
 
     /// Returns the device's port number

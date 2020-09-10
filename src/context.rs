@@ -81,7 +81,7 @@ pub trait UsbContext: Clone + Sized {
         if handle.is_null() {
             None
         } else {
-            Some(unsafe { device_handle::from_libusb(self.clone(), handle) })
+            Some(unsafe { DeviceHandle::from_libusb(self.clone(), handle) })
         }
     }
 
