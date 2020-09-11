@@ -17,7 +17,7 @@ travis-ci = { repository = "a1ien/rusb" }
 vendored = [ "libusb1-sys/vendored" ]
 
 [dependencies]
-libusb1-sys = "0.4.1"
+libusb1-sys = { path = "/home/bgardner/workspace/libusb1-sys" }
 libc = "0.2"
 
 [dev-dependencies]
