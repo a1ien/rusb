@@ -2,12 +2,7 @@ use libc::{c_int, c_void, timeval};
 
 use std::{mem, ptr, sync::Arc, sync::Once, time::Duration};
 
-use crate::{
-    device::{self, Device},
-    device_handle::{self, DeviceHandle},
-    device_list::DeviceList,
-    error,
-};
+use crate::{device::Device, device_handle::DeviceHandle, device_list::DeviceList, error};
 use libusb1_sys::{constants::*, *};
 
 #[cfg(windows)]
@@ -220,7 +215,10 @@ extern "system" fn hotplug_callback<T: UsbContext>(
 ) -> c_int {
     unsafe {
         let mut reg = Box::<CallbackData<T>>::from_raw(reg as _);
-        let device = device::Device::from_libusb(reg.context.clone(), std::ptr::NonNull::new_unchecked(device));
+        let device = Device::from_libusb(
+            reg.context.clone(),
+            std::ptr::NonNull::new_unchecked(device),
+        );
         match event {
             LIBUSB_HOTPLUG_EVENT_DEVICE_ARRIVED => reg.hotplug.device_arrived(device),
             LIBUSB_HOTPLUG_EVENT_DEVICE_LEFT => reg.hotplug.device_left(device),

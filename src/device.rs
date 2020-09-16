@@ -9,10 +9,9 @@ use libusb1_sys::*;
 use crate::{
     config_descriptor::{self, ConfigDescriptor},
     device_descriptor::{self, DeviceDescriptor},
-    device_handle::{self, DeviceHandle},
+    device_handle::DeviceHandle,
     fields::{self, Speed},
-    UsbContext,
-    Error,
+    Error, UsbContext,
 };
 
 /// A reference to a USB device.
@@ -63,16 +62,10 @@ impl<T: UsbContext> Device<T> {
     ///
     /// Converts an existing `libusb_device` pointer into a `Device<T>`.
     /// `device` must be a pointer to a valid `libusb_device`. Rusb increments refcount.
-    pub unsafe fn from_libusb(
-        context: T,
-        device: NonNull<libusb_device>,
-    ) -> Device<T> {
+    pub unsafe fn from_libusb(context: T, device: NonNull<libusb_device>) -> Device<T> {
         libusb_ref_device(device.as_ptr());
 
-        Device {
-            context,
-            device,
-        }
+        Device { context, device }
     }
 
     /// Reads the device descriptor.
