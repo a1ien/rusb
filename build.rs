@@ -90,6 +90,19 @@ fn extract_source() -> PathBuf {
 fn make_source() {
     let libusb_source = extract_source();
 
+    /*
+    Example environment variables and values:
+    
+    CARGO_CFG_TARGET_ARCH: aarch64
+    CARGO_CFG_TARGET_ENDIAN: little
+    CARGO_CFG_TARGET_ENV:
+    CARGO_CFG_TARGET_FAMILY: unix
+    CARGO_CFG_TARGET_OS: android
+    CARGO_CFG_TARGET_POINTER_WIDTH: 64
+    CARGO_CFG_TARGET_VENDOR: unknown
+    CARGO_CFG_UNIX:
+    */
+
     // Provide metadata and include directory for dependencies
     println!("cargo:vendored=1");
     println!("cargo:static=1");
@@ -110,18 +123,20 @@ fn make_source() {
     // When building libusb from source, allow use of its logging facilities to aid debugging.
     // FIXME: This does not link correctly under MinGW due to a rustc bug, so only do it on MSVC
     // Ref: https://github.com/rust-lang/rust/issues/47048
-    if cfg!(target_env = "msvc") {
+    if std::env::var("CARGO_CFG_TARGET_ENV") == Ok("msvc".into()) {
         base_config.define("ENABLE_LOGGING", Some("1"));
     }
 
-    if cfg!(target_os = "macos") {
+    if std::env::var("CARGO_CFG_TARGET_OS") == Ok("macos".into()) {
         base_config.define("OS_DARWIN", Some("1"));
         base_config.file(libusb_source.join("libusb/os/darwin_usb.c"));
         link_framework("CoreFoundation");
         link_framework("IOKit");
         link("objc", false);
     }
-    if cfg!(target_os = "linux") {
+
+    if std::env::var("CARGO_CFG_TARGET_OS") == Ok("linux".into())
+            || std::env::var("CARGO_CFG_TARGET_OS") == Ok("android".into()) {
         base_config.define("OS_LINUX", Some("1"));
         base_config.define("HAVE_ASM_TYPES_H", Some("1"));
         base_config.define("HAVE_LINUX_NETLINK_H", Some("1"));
@@ -133,7 +148,7 @@ fn make_source() {
         base_config.define("_GNU_SOURCE", Some("1"));
     }
 
-    if cfg!(unix) {
+    if std::env::var("CARGO_CFG_TARGET_FAMILY") == Ok("unix".into()) {
         base_config.define("HAVE_DLFCN_H", Some("1"));
         base_config.define("HAVE_GETTIMEOFDAY", Some("1"));
         base_config.define("HAVE_INTTYPES_H", Some("1"));
@@ -166,11 +181,12 @@ fn make_source() {
             _ => {}
         };
 
+        println!("Including posix!");
         base_config.file(libusb_source.join("libusb/os/poll_posix.c"));
         base_config.file(libusb_source.join("libusb/os/threads_posix.c"));
     }
 
-    if cfg!(windows) {
+    if std::env::var("CARGO_CFG_TARGET_OS") == Ok("windows".into()) {
         #[cfg(target_env = "msvc")]
         base_config.define("_TIMESPEC_DEFINED", Some("1"));
         #[cfg(target_env = "msvc")]
