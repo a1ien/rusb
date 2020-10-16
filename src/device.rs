@@ -139,4 +139,18 @@ impl<T: UsbContext> Device<T> {
     pub fn port_number(&self) -> u8 {
         unsafe { libusb_get_port_number(self.device.as_ptr()) }
     }
+
+    /// Returns the device's parent
+    pub fn get_parent(&self) -> Option<Self> {
+        let device = unsafe { libusb_get_parent(self.device.as_ptr()) };
+        NonNull::new(device)
+            .map(|device|
+                 unsafe {
+                     Device::from_libusb(
+                         self.context.clone(),
+                         device,
+                     )
+                 }
+            )
+    }
 }
