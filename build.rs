@@ -223,7 +223,6 @@ fn main() {
         .unwrap_or_default();
 
     if cfg!(feature = "vendored") || !find_libusb_pkg(statik) {
-        extract_source();
         make_source();
     }
 }
