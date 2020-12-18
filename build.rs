@@ -1,9 +1,6 @@
-use std::env;
-use std::io::Read;
-use std::path::{Path, PathBuf};
-use tar::Archive;
+use std::{env, fs, path::PathBuf};
 
-static VERSION: &'static str = "1.0.23";
+static VERSION: &'static str = "1.0.24";
 
 fn link(name: &str, bundled: bool) {
     use std::env::var;
@@ -50,6 +47,7 @@ fn find_libusb_pkg(statik: bool) -> bool {
             for path in l.include_paths {
                 println!("cargo:include={}", path.to_str().unwrap());
             }
+            println!("cargo:version_number={}", l.version);
             true
         }
         Err(e) => {
@@ -59,40 +57,12 @@ fn find_libusb_pkg(statik: bool) -> bool {
     }
 }
 
-fn unpack<R: Read>(data: R, dst: &Path) -> std::io::Result<()> {
-    let mut archive = Archive::new(data);
-    let skip: PathBuf = "README".into();
-    for entry in archive.entries()? {
-        let mut entry = entry?;
-        if entry.path()?.file_name().unwrap() == skip {
-            continue;
-        }
-        entry.unpack_in(dst)?;
-    }
-    Ok(())
-}
-
-fn extract_source() -> PathBuf {
-    use libflate::gzip::Decoder;
-    use std::{fs, io::Cursor};
-
-    let basename = format!("libusb-{}", VERSION);
-    let filename = format!("libusb/{}.tar.gz", basename);
-
-    let mut source_dir = PathBuf::from(env::var("OUT_DIR").unwrap()).join("source");
-    let data = Cursor::new(fs::read(&filename).unwrap());
-    let gz_decoder = Decoder::new(data).unwrap();
-    unpack(gz_decoder, &source_dir).unwrap();
-    source_dir.push(basename);
-    source_dir
-}
-
 fn make_source() {
-    let libusb_source = extract_source();
+    let libusb_source = PathBuf::from("libusb");
 
     /*
     Example environment variables and values:
-    
+
     CARGO_CFG_TARGET_ARCH: aarch64
     CARGO_CFG_TARGET_ENDIAN: little
     CARGO_CFG_TARGET_ENV:
@@ -107,24 +77,28 @@ fn make_source() {
     println!("cargo:vendored=1");
     println!("cargo:static=1");
     let include_dir = PathBuf::from(env::var("OUT_DIR").unwrap()).join("include");
-    let _ = std::fs::create_dir(&include_dir);
-    std::fs::copy(
+    fs::create_dir_all(&include_dir).unwrap();
+    fs::copy(
         libusb_source.join("libusb/libusb.h"),
         include_dir.join("libusb.h"),
     )
     .unwrap();
     println!("cargo:include={}", include_dir.to_str().unwrap());
 
-    std::fs::File::create(format!("{}/{}", libusb_source.display(), "config.h")).unwrap();
+    fs::File::create(format!("{}/{}", include_dir.display(), "config.h")).unwrap();
     let mut base_config = cc::Build::new();
-    base_config.include(&libusb_source);
+    base_config.include(&include_dir);
     base_config.include(libusb_source.join("libusb"));
 
-    // When building libusb from source, allow use of its logging facilities to aid debugging.
-    // FIXME: This does not link correctly under MinGW due to a rustc bug, so only do it on MSVC
-    // Ref: https://github.com/rust-lang/rust/issues/47048
+    base_config.define("PRINTF_FORMAT(a, b)", Some(""));
+    base_config.define("ENABLE_LOGGING", Some("1"));
+
     if std::env::var("CARGO_CFG_TARGET_ENV") == Ok("msvc".into()) {
-        base_config.define("ENABLE_LOGGING", Some("1"));
+        fs::copy(
+            libusb_source.join("msvc/config.h"),
+            include_dir.join("config.h"),
+        )
+        .unwrap();
     }
 
     if std::env::var("CARGO_CFG_TARGET_OS") == Ok("macos".into()) {
@@ -136,36 +110,22 @@ fn make_source() {
     }
 
     if std::env::var("CARGO_CFG_TARGET_OS") == Ok("linux".into())
-            || std::env::var("CARGO_CFG_TARGET_OS") == Ok("android".into()) {
+        || std::env::var("CARGO_CFG_TARGET_OS") == Ok("android".into())
+    {
         base_config.define("OS_LINUX", Some("1"));
         base_config.define("HAVE_ASM_TYPES_H", Some("1"));
-        base_config.define("HAVE_LINUX_NETLINK_H", Some("1"));
-        base_config.define("HAVE_SYS_SOCKET_H", Some("1"));
-        base_config.define("USBI_TIMERFD_AVAILABLE", Some("1"));
+        base_config.define("_GNU_SOURCE", Some("1"));
+        base_config.define("HAVE_TIMERFD", Some("1"));
+        base_config.define("HAVE_EVENTFD", Some("1"));
         base_config.file(libusb_source.join("libusb/os/linux_netlink.c"));
         base_config.file(libusb_source.join("libusb/os/linux_usbfs.c"));
-        base_config.define("POLL_NFDS_TYPE", Some("nfds_t"));
-        base_config.define("_GNU_SOURCE", Some("1"));
     }
 
     if std::env::var("CARGO_CFG_TARGET_FAMILY") == Ok("unix".into()) {
-        base_config.define("HAVE_DLFCN_H", Some("1"));
-        base_config.define("HAVE_GETTIMEOFDAY", Some("1"));
-        base_config.define("HAVE_INTTYPES_H", Some("1"));
-        base_config.define("HAVE_MEMORY_H", Some("1"));
-        base_config.define("HAVE_POLL_H", Some("1"));
-        base_config.define("HAVE_STDINT_H", Some("1"));
-        base_config.define("HAVE_STDLIB_H", Some("1"));
-        base_config.define("HAVE_STRINGS_H", Some("1"));
-        base_config.define("HAVE_STRING_H", Some("1"));
-        base_config.define("HAVE_STRUCT_TIMESPEC", Some("1"));
-        base_config.define("HAVE_SYS_STAT_H", Some("1"));
         base_config.define("HAVE_SYS_TIME_H", Some("1"));
-        base_config.define("HAVE_SYS_TYPES_H", Some("1"));
-        base_config.define("HAVE_UNISTD_H", Some("1"));
-        base_config.define("POLL_NFDS_TYPE", Some("nfds_t"));
-        base_config.define("STDC_HEADERS", Some("1"));
-        base_config.define("THREADS_POSIX", Some("1"));
+        base_config.define("HAVE_NFDS_T", Some("1"));
+        base_config.define("PLATFORM_POSIX", Some("1"));
+        base_config.define("HAVE_CLOCK_GETTIME", Some("1"));
         base_config.define(
             "DEFAULT_VISIBILITY",
             Some("__attribute__((visibility(\"default\")))"),
@@ -175,35 +135,30 @@ fn make_source() {
             Ok(_lib) => {
                 base_config.define("USE_UDEV", Some("1"));
                 base_config.define("HAVE_LIBUDEV", Some("1"));
-                base_config.define("HAVE_LIBUDEV_H", Some("1"));
                 base_config.file(libusb_source.join("libusb/os/linux_udev.c"));
             }
             _ => {}
         };
 
         println!("Including posix!");
-        base_config.file(libusb_source.join("libusb/os/poll_posix.c"));
+        base_config.file(libusb_source.join("libusb/os/events_posix.c"));
         base_config.file(libusb_source.join("libusb/os/threads_posix.c"));
     }
 
     if std::env::var("CARGO_CFG_TARGET_OS") == Ok("windows".into()) {
         #[cfg(target_env = "msvc")]
-        base_config.define("_TIMESPEC_DEFINED", Some("1"));
-        #[cfg(target_env = "msvc")]
         base_config.flag("/source-charset:utf-8");
 
         base_config.warnings(false);
         base_config.define("OS_WINDOWS", Some("1"));
-        base_config.file(libusb_source.join("libusb/os/poll_windows.c"));
+        base_config.file(libusb_source.join("libusb/os/events_windows.c"));
         base_config.file(libusb_source.join("libusb/os/threads_windows.c"));
-        base_config.file(libusb_source.join("libusb/os/windows_nt_common.c"));
+        base_config.file(libusb_source.join("libusb/os/windows_common.c"));
         base_config.file(libusb_source.join("libusb/os/windows_usbdk.c"));
         base_config.file(libusb_source.join("libusb/os/windows_winusb.c"));
 
         base_config.define("DEFAULT_VISIBILITY", Some(""));
-        base_config.define("POLL_NFDS_TYPE", Some("unsigned int"));
-        base_config.define("HAVE_SIGNAL_H", Some("1"));
-        base_config.define("HAVE_SYS_TYPES_H", Some("1"));
+        base_config.define("PLATFORM_WINDOWS", Some("1"));
         link("user32", false);
     }
 
@@ -215,6 +170,7 @@ fn make_source() {
     base_config.file(libusb_source.join("libusb/sync.c"));
 
     base_config.compile("libusb.a");
+    println!("cargo:version_number={}", VERSION);
 }
 
 fn main() {

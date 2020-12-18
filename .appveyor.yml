@@ -30,6 +30,7 @@ environment:
 
 install:
   - ps: |
+      git submodule update --init --recursive
       # Install Rust
       appveyor-retry appveyor DownloadFile https://win.rustup.rs/ -FileName rustup-init.exe
       cmd.exe /c .\rustup-init.exe -y --default-host "$env:TARGET" --default-toolchain "$env:RUST_CHANNEL" 2`>`&1
