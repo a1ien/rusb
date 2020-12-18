@@ -53,3 +53,106 @@ fn test_get_device_list() {
         ffi::libusb_exit(context.assume_init());
     }
 }
+
+#[test]
+fn test_fill_control_setup() {
+    let mut buf = [0u8; ffi::constants::LIBUSB_CONTROL_SETUP_SIZE + 1];
+    unsafe {
+        ffi::libusb_fill_control_setup(
+            buf.as_mut_ptr(),
+            ffi::constants::LIBUSB_REQUEST_TYPE_VENDOR | ffi::constants::LIBUSB_ENDPOINT_OUT,
+            0x04,
+            0x4e,
+            0,
+            (buf.len() - ffi::constants::LIBUSB_CONTROL_SETUP_SIZE) as u16,
+        );
+    }
+    buf[ffi::constants::LIBUSB_CONTROL_SETUP_SIZE] = 0x01;
+    let setup: *mut ffi::libusb_control_setup = buf.as_mut_ptr() as *mut _;
+
+    assert_eq!(
+        unsafe { (*setup).bmRequestType },
+        ffi::constants::LIBUSB_REQUEST_TYPE_VENDOR | ffi::constants::LIBUSB_ENDPOINT_OUT
+    );
+    assert_eq!(unsafe { (*setup).bRequest }, 0x04);
+    assert_eq!(unsafe { u16::from_le((*setup).wValue) }, 0x4e);
+    assert_eq!(unsafe { u16::from_le((*setup).wIndex) }, 0);
+    assert_eq!(unsafe { u16::from_le((*setup).wLength) }, 1);
+}
+
+#[test]
+fn test_fill_control_transfer() {
+    extern "system" fn callback(_transfer: *mut ffi::libusb_transfer) {}
+
+    let mut buf = [0u8; ffi::constants::LIBUSB_CONTROL_SETUP_SIZE + 1];
+    unsafe {
+        ffi::libusb_fill_control_setup(
+            buf.as_mut_ptr(),
+            ffi::constants::LIBUSB_REQUEST_TYPE_VENDOR | ffi::constants::LIBUSB_ENDPOINT_OUT,
+            0x04,
+            0x4e,
+            0,
+            (buf.len() - ffi::constants::LIBUSB_CONTROL_SETUP_SIZE) as u16,
+        );
+    }
+    buf[ffi::constants::LIBUSB_CONTROL_SETUP_SIZE] = 0x05;
+
+    let mut transfer = std::mem::MaybeUninit::<ffi::libusb_transfer>::uninit();
+
+    unsafe {
+        ffi::libusb_fill_control_transfer(
+            transfer.as_mut_ptr(),
+            std::ptr::null_mut(),
+            buf.as_mut_ptr(),
+            callback,
+            std::ptr::null_mut(),
+            1000,
+        );
+    }
+    let transfer = unsafe { &mut transfer.assume_init() };
+    assert_eq!(transfer.endpoint, 0);
+    assert_eq!(
+        transfer.length as usize,
+        ffi::constants::LIBUSB_CONTROL_SETUP_SIZE + 1
+    );
+    assert_eq!(transfer.timeout, 1000);
+    assert_eq!(
+        transfer.transfer_type,
+        ffi::constants::LIBUSB_TRANSFER_TYPE_CONTROL
+    );
+    assert_eq!(transfer.buffer, buf.as_mut_ptr());
+
+    let data = unsafe {
+        std::slice::from_raw_parts(ffi::libusb_control_transfer_get_data(transfer as *mut _), 1)
+    };
+    assert_eq!(data[0], 0x05);
+}
+
+#[test]
+fn test_fill_bulk_transfer() {
+    extern "system" fn callback(_transfer: *mut ffi::libusb_transfer) {}
+
+    let mut transfer = std::mem::MaybeUninit::<ffi::libusb_transfer>::uninit();
+    let mut buf = [5u8; 64];
+    unsafe {
+        ffi::libusb_fill_bulk_transfer(
+            transfer.as_mut_ptr(),
+            std::ptr::null_mut(),
+            0x80,
+            buf.as_mut_ptr(),
+            buf.len() as libc::c_int,
+            callback,
+            std::ptr::null_mut(),
+            1000,
+        );
+    }
+    let transfer = unsafe { &transfer.assume_init() };
+    assert_eq!(transfer.endpoint, 0x80);
+    assert_eq!(transfer.timeout, 1000);
+    assert_eq!(
+        transfer.transfer_type,
+        ffi::constants::LIBUSB_TRANSFER_TYPE_BULK
+    );
+    assert_eq!(transfer.buffer, buf.as_mut_ptr());
+    assert_eq!(transfer.length, buf.len() as libc::c_int);
+}

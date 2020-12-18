@@ -169,6 +169,16 @@ pub struct libusb_container_id_descriptor {
     pub ContainerId: [u8; 16],
 }
 
+#[allow(non_snake_case)]
+#[repr(C, packed)]
+pub struct libusb_control_setup {
+    pub bmRequestType: u8,
+    pub bRequest: u8,
+    pub wValue: u16,
+    pub wIndex: u16,
+    pub wLength: u16,
+}
+
 #[repr(C)]
 pub struct libusb_transfer {
     pub dev_handle: *mut libusb_device_handle,
@@ -209,7 +219,6 @@ pub type libusb_hotplug_callback_fn = extern "system" fn(
 ) -> c_int;
 
 pub type libusb_log_cb = extern "system" fn(context: *mut libusb_context, c_int, *mut c_void);
-
 
 extern "system" {
     pub fn libusb_get_version() -> *const libusb_version;
@@ -269,7 +278,7 @@ extern "system" {
     pub fn libusb_wrap_sys_device(
         context: *mut libusb_context,
         sys_dev: *mut c_int,
-        handle: *mut *mut libusb_device_handle
+        handle: *mut *mut libusb_device_handle,
     ) -> c_int;
     pub fn libusb_open(dev: *const libusb_device, handle: *mut *mut libusb_device_handle) -> c_int;
     pub fn libusb_close(dev_handle: *mut libusb_device_handle);
@@ -460,6 +469,7 @@ extern "C" {
 }
 
 // defined as static inline in libusb.h
+#[inline]
 pub unsafe fn libusb_get_string_descriptor(
     dev_handle: *mut libusb_device_handle,
     desc_index: u8,
@@ -480,6 +490,7 @@ pub unsafe fn libusb_get_string_descriptor(
 }
 
 // defined as static inline in libusb.h
+#[inline]
 pub unsafe fn libusb_get_descriptor(
     dev_handle: *mut libusb_device_handle,
     desc_type: u8,
@@ -498,4 +509,185 @@ pub unsafe fn libusb_get_descriptor(
         length as u16,
         1000,
     )
+}
+
+#[inline]
+pub unsafe fn libusb_control_transfer_get_data(transfer: *mut libusb_transfer) -> *mut c_uchar {
+    (*transfer).buffer.add(constants::LIBUSB_CONTROL_SETUP_SIZE)
+}
+
+#[inline]
+pub unsafe fn libusb_control_transfer_get_setup(
+    transfer: *mut libusb_transfer,
+) -> *mut libusb_control_setup {
+    (*transfer).buffer as *mut _
+}
+
+#[allow(non_snake_case)]
+#[inline]
+pub unsafe fn libusb_fill_control_setup(
+    buffer: *mut c_uchar,
+    bmRequestType: u8,
+    bRequest: u8,
+    wValue: u16,
+    wIndex: u16,
+    wLength: u16,
+) {
+    let mut setup: *mut libusb_control_setup = buffer as *mut _;
+    (*setup).bmRequestType = bmRequestType;
+    (*setup).bRequest = bRequest;
+    (*setup).wValue = wValue.to_le();
+    (*setup).wIndex = wIndex.to_le();
+    (*setup).wLength = wLength.to_le();
+}
+
+#[inline]
+pub unsafe fn libusb_fill_control_transfer(
+    transfer: *mut libusb_transfer,
+    dev_handle: *mut libusb_device_handle,
+    buffer: *mut u8,
+    callback: libusb_transfer_cb_fn,
+    user_data: *mut c_void,
+    timeout: c_uint,
+) {
+    let setup: *mut libusb_control_setup = buffer as *mut c_void as *mut libusb_control_setup;
+
+    (*transfer).dev_handle = dev_handle;
+    (*transfer).endpoint = 0;
+    (*transfer).transfer_type = LIBUSB_TRANSFER_TYPE_CONTROL;
+    (*transfer).timeout = timeout;
+    (*transfer).buffer = buffer;
+    if !buffer.is_null() {
+        (*transfer).length =
+            (constants::LIBUSB_CONTROL_SETUP_SIZE as u16 + u16::from_le((*setup).wLength)).into();
+    }
+    (*transfer).user_data = user_data;
+    (*transfer).callback = callback;
+}
+
+#[inline]
+pub unsafe fn libusb_fill_bulk_transfer(
+    transfer: *mut libusb_transfer,
+    dev_handle: *mut libusb_device_handle,
+    endpoint: u8,
+    buffer: *mut u8,
+    length: c_int,
+    callback: libusb_transfer_cb_fn,
+    user_data: *mut c_void,
+    timeout: c_uint,
+) {
+    (*transfer).dev_handle = dev_handle;
+    (*transfer).endpoint = endpoint;
+    (*transfer).transfer_type = LIBUSB_TRANSFER_TYPE_BULK;
+    (*transfer).timeout = timeout;
+    (*transfer).buffer = buffer;
+    (*transfer).length = length;
+    (*transfer).user_data = user_data;
+    (*transfer).callback = callback;
+}
+
+#[inline]
+pub unsafe fn libusb_fill_bulk_stream_transfer(
+    transfer: *mut libusb_transfer,
+    dev_handle: *mut libusb_device_handle,
+    endpoint: u8,
+    stream_id: u32,
+    buffer: *mut u8,
+    length: c_int,
+    callback: libusb_transfer_cb_fn,
+    user_data: *mut c_void,
+    timeout: c_uint,
+) {
+    libusb_fill_bulk_transfer(
+        transfer, dev_handle, endpoint, buffer, length, callback, user_data, timeout,
+    );
+    (*transfer).transfer_type = LIBUSB_TRANSFER_TYPE_BULK_STREAM;
+    libusb_transfer_set_stream_id(transfer, stream_id);
+}
+
+#[inline]
+pub unsafe fn libusb_fill_interrupt_transfer(
+    transfer: *mut libusb_transfer,
+    dev_handle: *mut libusb_device_handle,
+    endpoint: u8,
+    buffer: *mut u8,
+    length: c_int,
+    callback: libusb_transfer_cb_fn,
+    user_data: *mut c_void,
+    timeout: c_uint,
+) {
+    (*transfer).dev_handle = dev_handle;
+    (*transfer).endpoint = endpoint;
+    (*transfer).transfer_type = LIBUSB_TRANSFER_TYPE_INTERRUPT;
+    (*transfer).timeout = timeout;
+    (*transfer).buffer = buffer;
+    (*transfer).length = length;
+    (*transfer).user_data = user_data;
+    (*transfer).callback = callback;
+}
+
+#[inline]
+pub unsafe fn libusb_fill_iso_transfer(
+    transfer: *mut libusb_transfer,
+    dev_handle: *mut libusb_device_handle,
+    endpoint: u8,
+    buffer: *mut u8,
+    length: c_int,
+    num_iso_packets: c_int,
+    callback: libusb_transfer_cb_fn,
+    user_data: *mut c_void,
+    timeout: c_uint,
+) {
+    (*transfer).dev_handle = dev_handle;
+    (*transfer).endpoint = endpoint;
+    (*transfer).transfer_type = LIBUSB_TRANSFER_TYPE_ISOCHRONOUS;
+    (*transfer).timeout = timeout;
+    (*transfer).buffer = buffer;
+    (*transfer).length = length;
+    (*transfer).num_iso_packets = num_iso_packets;
+    (*transfer).user_data = user_data;
+    (*transfer).callback = callback;
+}
+
+#[inline]
+pub unsafe fn libusb_set_iso_packet_lengths(transfer: *mut libusb_transfer, length: c_uint) {
+    for i in 0..(*transfer).num_iso_packets {
+        (*transfer)
+            .iso_packet_desc
+            .get_unchecked_mut(i as usize)
+            .length = length;
+    }
+}
+
+#[inline]
+pub unsafe fn libusb_get_iso_packet_buffer(
+    transfer: *mut libusb_transfer,
+    packet: c_uint,
+) -> *mut c_uchar {
+    if packet as c_int >= (*transfer).num_iso_packets {
+        return std::ptr::null_mut();
+    }
+    let mut offset = 0;
+    for i in 0..packet {
+        offset += (*transfer)
+            .iso_packet_desc
+            .get_unchecked_mut(i as usize)
+            .length;
+    }
+
+    (*transfer).buffer.add(offset as usize)
+}
+
+#[inline]
+pub unsafe fn libusb_get_iso_packet_buffer_simple(
+    transfer: *mut libusb_transfer,
+    packet: c_uint,
+) -> *mut c_uchar {
+    if packet as c_int >= (*transfer).num_iso_packets {
+        return std::ptr::null_mut();
+    }
+
+    (*transfer)
+        .buffer
+        .add(((*transfer).iso_packet_desc.get_unchecked_mut(0).length * packet) as usize)
 }
