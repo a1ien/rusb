@@ -48,7 +48,7 @@ pub trait Hotplug<T: UsbContext> {
 
 pub type Registration = c_int;
 
-pub trait UsbContext: Clone + Sized {
+pub trait UsbContext: Clone + Sized + Send + Sync {
     /// Get the raw libusb_context pointer, for advanced use in unsafe code.
     fn as_raw(&self) -> *mut libusb_context;
 
