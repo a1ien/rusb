@@ -153,3 +153,5 @@ pub const LIBUSB_OPTION_USE_USBDK: u32 = 0x01;
 // libusb_log_cb_mode
 pub const LIBUSB_LOG_CB_GLOBAL: libusb_log_cb_mode = 1 << 0;
 pub const LIBUSB_LOG_CB_CONTEXT: libusb_log_cb_mode = 1 << 1;
+
+pub const LIBUSB_CONTROL_SETUP_SIZE: usize = std::mem::size_of::<libusb_control_setup>();
