@@ -46,7 +46,29 @@ pub trait Hotplug<T: UsbContext> {
     fn device_left(&mut self, device: Device<T>);
 }
 
-pub type Registration = c_int;
+#[derive(Debug)]
+pub struct Registration<T: UsbContext> {
+    context: T,
+    handle: libusb_hotplug_callback_handle,
+}
+
+impl<T: UsbContext> Registration<T> {
+    fn get_handle(&self) -> libusb_hotplug_callback_handle {
+        self.handle
+    }
+}
+
+impl<T: UsbContext> Drop for Registration<T> {
+    fn drop(&mut self) {
+        let _call_back: Box<CallbackData<T>>;
+        #[cfg(libusb_hotplug_get_user_data)]
+        unsafe {
+            let user_data = libusb_hotplug_get_user_data(self.context.as_raw(), self.get_handle());
+            _call_back = Box::<CallbackData<T>>::from_raw(user_data as _);
+        }
+        unsafe { libusb_hotplug_deregister_callback(self.context.as_raw(), self.get_handle()) }
+    }
+}
 
 pub trait UsbContext: Clone + Sized + Send + Sync {
     /// Get the raw libusb_context pointer, for advanced use in unsafe code.
@@ -89,7 +111,7 @@ pub trait UsbContext: Clone + Sized + Send + Sync {
         product_id: Option<u16>,
         class: Option<u8>,
         callback: Box<dyn Hotplug<Self>>,
-    ) -> crate::Result<Registration> {
+    ) -> crate::Result<Registration<Self>> {
         let mut handle: libusb_hotplug_callback_handle = 0;
         let callback = CallbackData {
             context: self.clone(),
@@ -116,14 +138,14 @@ pub trait UsbContext: Clone + Sized + Send + Sync {
         if n < 0 {
             Err(error::from_libusb(n))
         } else {
-            Ok(handle)
+            Ok(Registration {
+                context: self.clone(),
+                handle,
+            })
         }
     }
 
-    fn unregister_callback(&self, reg: Registration) {
-        // TODO: fix handler leak
-        unsafe { libusb_hotplug_deregister_callback(self.as_raw(), reg) }
-    }
+    fn unregister_callback(&self, _reg: Registration<Self>) {}
 
     fn handle_events(&self, timeout: Option<Duration>) -> crate::Result<()> {
         let n = unsafe {
@@ -211,10 +233,10 @@ extern "system" fn hotplug_callback<T: UsbContext>(
     _ctx: *mut libusb_context,
     device: *mut libusb_device,
     event: libusb_hotplug_event,
-    reg: *mut c_void,
+    user_data: *mut c_void,
 ) -> c_int {
     unsafe {
-        let mut reg = Box::<CallbackData<T>>::from_raw(reg as _);
+        let mut reg = Box::<CallbackData<T>>::from_raw(user_data as _);
         let device = Device::from_libusb(
             reg.context.clone(),
             std::ptr::NonNull::new_unchecked(device),
