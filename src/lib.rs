@@ -460,6 +460,11 @@ extern "system" {
         ctx: *mut libusb_context,
         callback_handle: libusb_hotplug_callback_handle,
     );
+
+    pub fn libusb_hotplug_get_user_data(
+        ctx: *mut libusb_context,
+        callback_handle: libusb_hotplug_callback_handle,
+    ) -> *mut c_void;
 }
 
 // As libusb_set_option is a variatic function, it must use "C"
