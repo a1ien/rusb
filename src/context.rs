@@ -204,6 +204,9 @@ struct CallbackData<T: UsbContext> {
 impl Context {
     /// Opens a new `libusb` context.
     pub fn new() -> crate::Result<Self> {
+
+        eprintln!("Context::new() from async branch of rusb repo");
+        
         let mut context = mem::MaybeUninit::<*mut libusb_context>::uninit();
 
         try_unsafe!(libusb_init(context.as_mut_ptr()));
@@ -219,7 +222,7 @@ impl Context {
 
     /// Get the raw libusb_context pointer, for advanced use in unsafe code.
     pub fn as_raw(&self) -> *mut libusb_context {
-        self.inner.as_ptr()
+        self.context.inner.as_ptr()
     }
 
     /// Creates a new `libusb` context and sets runtime options.
