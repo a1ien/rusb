@@ -217,6 +217,11 @@ impl Context {
         })
     }
 
+    /// Get the raw libusb_context pointer, for advanced use in unsafe code.
+    pub fn as_raw(&self) -> *mut libusb_context {
+        self.inner.as_ptr()
+    }
+
     /// Creates a new `libusb` context and sets runtime options.
     pub fn with_options(opts: &[crate::UsbOption]) -> crate::Result<Self> {
         let mut this = Self::new()?;
