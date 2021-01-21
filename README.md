@@ -25,7 +25,7 @@ Add `rusb` as a dependency in `Cargo.toml`:
 
 ```toml
 [dependencies]
-rusb = "0.6"
+rusb = "0.7"
 ```
 
 Import the `rusb` crate. The starting point for nearly all `rusb` functionality is to create a
