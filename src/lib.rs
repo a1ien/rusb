@@ -3,6 +3,7 @@
 pub use libusb1_sys::constants;
 
 pub use crate::{
+    async_interface::{TransferStatus, AsyncTransfer},
     config_descriptor::{ConfigDescriptor, Interfaces},
     context::{Context, GlobalContext, Hotplug, LogLevel, Registration, UsbContext},
     device::Device,
@@ -43,6 +44,8 @@ mod fields;
 mod interface_descriptor;
 mod language;
 mod options;
+
+mod async_interface;
 
 /// Tests whether the running `libusb` library supports capability API.
 pub fn has_capability() -> bool {
