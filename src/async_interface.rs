@@ -100,7 +100,10 @@ impl AsyncTransfer {
 impl std::ops::Drop for AsyncTransfer {
 
 	fn drop(&mut self) {
-		unsafe{ libusb1_sys::libusb_free_transfer(self.ptr); }
+		unsafe{ 
+			libusb1_sys::libusb_cancel_transfer(self.ptr);
+			libusb1_sys::libusb_free_transfer(self.ptr); 
+		}
 	}
 
 }
