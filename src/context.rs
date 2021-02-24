@@ -41,7 +41,7 @@ impl Drop for ContextInner {
 unsafe impl Sync for Context {}
 unsafe impl Send for Context {}
 
-pub trait Hotplug<T: UsbContext> {
+pub trait Hotplug<T: UsbContext>: Send {
     fn device_arrived(&mut self, device: Device<T>);
     fn device_left(&mut self, device: Device<T>);
 }
