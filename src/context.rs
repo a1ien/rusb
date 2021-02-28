@@ -235,20 +235,24 @@ extern "system" fn hotplug_callback<T: UsbContext>(
     event: libusb_hotplug_event,
     user_data: *mut c_void,
 ) -> c_int {
-    unsafe {
-        let mut reg = Box::<CallbackData<T>>::from_raw(user_data as _);
-        let device = Device::from_libusb(
-            reg.context.clone(),
-            std::ptr::NonNull::new_unchecked(device),
-        );
+    let ret = std::panic::catch_unwind(|| {
+        let reg = unsafe { &mut *(user_data as *mut CallbackData<T>) };
+        let device = unsafe {
+            Device::from_libusb(
+                reg.context.clone(),
+                std::ptr::NonNull::new_unchecked(device),
+            )
+        };
         match event {
             LIBUSB_HOTPLUG_EVENT_DEVICE_ARRIVED => reg.hotplug.device_arrived(device),
             LIBUSB_HOTPLUG_EVENT_DEVICE_LEFT => reg.hotplug.device_left(device),
             _ => (),
-        }
-        mem::forget(reg);
+        };
+    });
+    match ret {
+        Ok(_) => 0,
+        Err(_) => 1,
     }
-    0
 }
 
 /// Library logging levels.
