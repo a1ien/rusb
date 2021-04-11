@@ -136,6 +136,11 @@ impl<T: UsbContext> DeviceHandle<T> {
         self.handle.as_ptr()
     }
 
+    /// Get the context associated with this device
+    pub fn context(&self) -> &T {
+        &self.context
+    }
+
     /// Get the device associated to this handle
     pub fn device(&self) -> Device<T> {
         unsafe {

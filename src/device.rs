@@ -59,6 +59,11 @@ impl<T: UsbContext> Device<T> {
         self.device.as_ptr()
     }
 
+    /// Get the context associated with this device
+    pub fn context(&self) -> &T {
+        &self.context
+    }
+
     /// # Safety
     ///
     /// Converts an existing `libusb_device` pointer into a `Device<T>`.
