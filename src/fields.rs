@@ -180,6 +180,12 @@ impl Version {
     }
 }
 
+impl std::fmt::Display for Version {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}.{}.{}", self.major(), self.minor(), self.sub_minor())
+    }
+}
+
 /// Builds a value for the `bmRequestType` field of a control transfer setup packet.
 ///
 /// The `bmRequestType` field of a USB control transfer setup packet is a bit field specifying
@@ -267,6 +273,11 @@ mod test {
     #[test]
     fn version_parses_full_version() {
         assert_eq!(Version(12, 3, 4), Version::from_bcd(0x1234));
+    }
+
+    #[test]
+    fn version_display() {
+        assert_eq!(Version(2, 45, 13).to_string(), "2.45.13");
     }
 
     // request_type for direction
