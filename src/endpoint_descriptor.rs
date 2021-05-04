@@ -84,6 +84,16 @@ impl<'a> EndpointDescriptor<'a> {
             }
         }
     }
+
+    /// For audio devices only: return the rate at which synchronization feedback is provided.
+    pub fn refresh(&self) -> u8 {
+        self.descriptor.bRefresh
+    }
+
+    /// For audio devices only: return the address if the synch endpoint.
+    pub fn synch_address(&self) -> u8 {
+        self.descriptor.bSynchAddress
+    }
 }
 
 impl<'a> fmt::Debug for EndpointDescriptor<'a> {
