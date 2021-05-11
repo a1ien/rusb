@@ -56,6 +56,6 @@ before_script:
         ./vcp/vcpkg install libusb:$VCPKG_PLATFORM
     fi
 script:
-  - cargo test --verbose --all
-  - cargo build --verbose --examples
+  - cargo test --workspace --verbose --all
+  - cargo build --workspace --verbose --examples
 
