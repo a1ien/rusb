@@ -2,23 +2,38 @@ use crate::{DeviceHandle, UsbContext};
 
 use libc::c_void;
 use libusb1_sys as ffi;
+use thiserror::Error;
 
 use std::convert::{TryFrom, TryInto};
 use std::marker::{PhantomData, PhantomPinned};
 use std::pin::Pin;
 use std::ptr::NonNull;
 
-// TODO: Make the Err variant useful
-type CbResult = Result<(), i32>;
+type CbResult<'a> = Result<&'a [u8], ReadError>;
+
+#[derive(Error, Debug)]
+pub enum ReadError {
+    #[error("Transfer timed out")]
+    Timeout,
+    #[error("Transfer is stalled")]
+    Stall,
+    #[error("Device was disconnected")]
+    Disconnected,
+    #[error("Other Error: {0}")]
+    Other(&'static str),
+    #[error("{0}ERRNO: {1}")]
+    Errno(&'static str, i32),
+}
 
 struct AsyncTransfer<'d, 'b, C: UsbContext, F> {
-    ptr: *mut ffi::libusb_transfer,
-    buf: &'b mut [u8],
+    ptr: NonNull<ffi::libusb_transfer>,
     closure: F,
-    _pin: PhantomPinned, // `ptr` holds a ptr to `buf` and `callback`, so we must ensure that we don't move
+    _pin: PhantomPinned, // `ptr` holds a ptr to `closure`, so mark !Unpin
     _device: PhantomData<&'d DeviceHandle<C>>,
+    _buf: PhantomData<&'b mut [u8]>,
 }
-impl<'d, 'b, C: UsbContext, F: FnMut(CbResult)> AsyncTransfer<'d, 'b, C, F> {
+// TODO: should CbResult lifetime be different from 'b?
+impl<'d, 'b, C: 'd + UsbContext, F: FnMut(CbResult<'b>) + Send> AsyncTransfer<'d, 'b, C, F> {
     #[allow(unused)]
     pub fn new_bulk(
         device: &'d DeviceHandle<C>,
@@ -28,6 +43,7 @@ impl<'d, 'b, C: UsbContext, F: FnMut(CbResult)> AsyncTransfer<'d, 'b, C, F> {
         timeout: std::time::Duration,
     ) -> Pin<Box<Self>> {
         // non-isochronous endpoints (e.g. control, bulk, interrupt) specify a value of 0
+        // This is step 1 of async API
         let ptr = unsafe { ffi::libusb_alloc_transfer(0) };
         let ptr = NonNull::new(ptr).expect("Could not allocate transfer!");
         let timeout = libc::c_uint::try_from(timeout.as_millis())
@@ -38,24 +54,32 @@ impl<'d, 'b, C: UsbContext, F: FnMut(CbResult)> AsyncTransfer<'d, 'b, C, F> {
         // changing (or its fields moving!). So routinely we will unsafely interact with
         // its fields mutably through a shared reference, but this is still sound.
         let result = Box::pin(Self {
-            ptr: std::ptr::null_mut(),
-            buf: buffer,
+            ptr,
             closure: callback,
             _pin: PhantomPinned,
             _device: PhantomData,
+            _buf: PhantomData,
         });
 
-        let closure_as_ptr: *mut F = {
-            let mut_ref: *const F = &result.closure;
-            mut_ref as *mut F
-        };
         unsafe {
+            // This casting, and passing it to the transfer struct, relies on
+            // the pointer being a regular pointer and not a fat pointer.
+            // Also, closure will be invoked from whatever thread polls, which
+            // may be different from the current thread. So it must be `Send`.
+            // Also, although many threads at once may poll concurrently, only
+            // one will actually ever execute the transfer at a time, so we do
+            // not need to worry about simultaneous writes to the buffer
+            let closure_as_ptr: *mut F = {
+                let ptr: *const F = &result.closure;
+                ptr as *mut F
+            };
+            // Step 2 of async api
             ffi::libusb_fill_bulk_transfer(
                 ptr.as_ptr(),
                 device.as_raw(),
                 endpoint,
-                result.buf.as_ptr() as *mut u8,
-                result.buf.len().try_into().unwrap(),
+                buffer.as_ptr() as *mut u8,
+                buffer.len().try_into().unwrap(),
                 Self::transfer_cb,
                 closure_as_ptr.cast(),
                 timeout,
@@ -64,9 +88,26 @@ impl<'d, 'b, C: UsbContext, F: FnMut(CbResult)> AsyncTransfer<'d, 'b, C, F> {
         result
     }
 
+    /// Returns whether the transfer was submitted successfully
+    fn submit_helper(transfer: *mut ffi::libusb_transfer) -> Result<(), ReadError> {
+        let errno = unsafe { ffi::libusb_submit_transfer(transfer) };
+        use ffi::constants::*;
+        match errno {
+            0 => Ok(()),
+            LIBUSB_ERROR_BUSY => {
+                unreachable!("Should not be possible for us to double-submit a transfer")
+            }
+            LIBUSB_ERROR_NOT_SUPPORTED => Err(ReadError::Other("Unsupported transfer!")),
+            LIBUSB_ERROR_INVALID_PARAM => Err(ReadError::Other("Transfer size too large!")),
+            LIBUSB_ERROR_NO_DEVICE => Err(ReadError::Disconnected),
+            _ => Err(ReadError::Errno("Unable to submit transfer. ", errno)),
+        }
+    }
+
     // We need to invoke our closure using a c-style function, so we store the closure
     // inside the custom user data field of the transfer struct, and then call the
     // user provided closure from there.
+    // Step 4 of async API
     extern "system" fn transfer_cb(transfer: *mut ffi::libusb_transfer) {
         // Safety: libusb should never make this null, so this is fine
         let transfer = unsafe { &mut *transfer };
@@ -83,7 +124,7 @@ impl<'d, 'b, C: UsbContext, F: FnMut(CbResult)> AsyncTransfer<'d, 'b, C, F> {
             std::mem::size_of::<*mut c_void>(),
         );
         // Safety: The pointer shouldn't be a fat pointer, and should be valid, so
-        // this should be fine
+        // this should be sound
         let closure = unsafe {
             let closure: *mut F = std::mem::transmute(transfer.user_data);
             &mut *closure
@@ -92,17 +133,27 @@ impl<'d, 'b, C: UsbContext, F: FnMut(CbResult)> AsyncTransfer<'d, 'b, C, F> {
         use ffi::constants::*;
         match transfer.status {
             LIBUSB_TRANSFER_CANCELLED => {
-                // Transfer was cancelled, free the transfer
+                // Step 5 of async API: Transfer was cancelled, free the transfer
                 unsafe { ffi::libusb_free_transfer(transfer) }
             }
             LIBUSB_TRANSFER_COMPLETED => {
-                // call user callback
-                (*closure)(Ok(()));
+                debug_assert!(transfer.length >= transfer.actual_length); // sanity
+                let data = unsafe {
+                    std::slice::from_raw_parts(transfer.buffer, transfer.actual_length as usize)
+                };
+                (*closure)(Ok(data));
             }
-            LIBUSB_TRANSFER_ERROR => (*closure)(Err(LIBUSB_TRANSFER_ERROR)),
-            LIBUSB_TRANSFER_TIMED_OUT => (*closure)(Err(LIBUSB_TRANSFER_TIMED_OUT)),
-            LIBUSB_TRANSFER_STALL => (*closure)(Err(LIBUSB_TRANSFER_STALL)),
-            LIBUSB_TRANSFER_NO_DEVICE => (*closure)(Err(LIBUSB_TRANSFER_NO_DEVICE)),
+            LIBUSB_TRANSFER_ERROR => (*closure)(Err(ReadError::Other(
+                "Error occurred during transfer execution",
+            ))),
+            LIBUSB_TRANSFER_TIMED_OUT => {
+                (*closure)(Err(ReadError::Timeout));
+                if let Err(err) = Self::submit_helper(transfer) {
+                    (*closure)(Err(err))
+                }
+            }
+            LIBUSB_TRANSFER_STALL => (*closure)(Err(ReadError::Stall)),
+            LIBUSB_TRANSFER_NO_DEVICE => (*closure)(Err(ReadError::Disconnected)),
             LIBUSB_TRANSFER_OVERFLOW => unreachable!(),
             _ => panic!("Found an unexpected error value for transfer status"),
         }
@@ -110,15 +161,16 @@ impl<'d, 'b, C: UsbContext, F: FnMut(CbResult)> AsyncTransfer<'d, 'b, C, F> {
 }
 impl<C: UsbContext, F> AsyncTransfer<'_, '_, C, F> {
     /// Helper function for the Drop impl.
-    fn drop_helper(this: Pin<&mut Self>) {
+    fn drop_helper(self: Pin<&mut Self>) {
         // Actual drop code goes here.
-        let errno = unsafe { ffi::libusb_cancel_transfer(this.ptr) };
+        let transfer_ptr = self.ptr.as_ptr();
+        let errno = unsafe { ffi::libusb_cancel_transfer(transfer_ptr) };
         match errno {
             0 | ffi::constants::LIBUSB_ERROR_NOT_FOUND => (),
             errno => {
                 log::warn!(
-                    "Could not cancel USB transfer. Memory may be leaked. Errno: {}",
-                    errno
+                    "Could not cancel USB transfer. Memory may be leaked. Errno: {}, Error message: {}",
+                    errno, unsafe{std::ffi::CStr::from_ptr( ffi::libusb_strerror(errno))}.to_str().unwrap()
                 )
             }
         }
@@ -127,8 +179,8 @@ impl<C: UsbContext, F> AsyncTransfer<'_, '_, C, F> {
 
 impl<C: UsbContext, F> Drop for AsyncTransfer<'_, '_, C, F> {
     fn drop(&mut self) {
-        // We call `drop_helper` because that function represents the actual type
-        // semantics that `self` has when being dropped.
+        // We call `drop_helper` because that function represents the actualsemantics
+        // that `self` has when being dropped.
         // (see https://doc.rust-lang.org/std/pin/index.html#drop-implementation)
         // Safety: `new_unchecked` is okay because we know this value is never used
         // again after being dropped.
