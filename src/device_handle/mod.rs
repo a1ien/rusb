@@ -1,3 +1,5 @@
+mod async_api;
+
 use std::{mem, ptr::NonNull, time::Duration, u8};
 
 use libc::{c_int, c_uchar, c_uint};
