@@ -8,14 +8,18 @@ use std::marker::{PhantomData, PhantomPinned};
 use std::pin::Pin;
 use std::ptr::NonNull;
 
-struct AsyncTransfer<'d, 'b, C: UsbContext, F: FnMut()> {
+// TODO: Make the Err variant useful
+type CbResult = Result<(), i32>;
+
+struct AsyncTransfer<'d, 'b, C: UsbContext, F> {
     ptr: *mut ffi::libusb_transfer,
     buf: &'b mut [u8],
     closure: F,
     _pin: PhantomPinned, // `ptr` holds a ptr to `buf` and `callback`, so we must ensure that we don't move
     _device: PhantomData<&'d DeviceHandle<C>>,
 }
-impl<'d, 'b, C: UsbContext, F: FnMut()> AsyncTransfer<'d, 'b, C, F> {
+impl<'d, 'b, C: UsbContext, F: FnMut(CbResult)> AsyncTransfer<'d, 'b, C, F> {
+    #[allow(unused)]
     pub fn new_bulk(
         device: &'d DeviceHandle<C>,
         endpoint: u8,
@@ -53,7 +57,7 @@ impl<'d, 'b, C: UsbContext, F: FnMut()> AsyncTransfer<'d, 'b, C, F> {
                 result.buf.as_ptr() as *mut u8,
                 result.buf.len().try_into().unwrap(),
                 Self::transfer_cb,
-                closure_as_ptr as *mut c_void,
+                closure_as_ptr.cast(),
                 timeout,
             )
         };
@@ -85,9 +89,49 @@ impl<'d, 'b, C: UsbContext, F: FnMut()> AsyncTransfer<'d, 'b, C, F> {
             &mut *closure
         };
 
-        // TODO: check some stuff
+        use ffi::constants::*;
+        match transfer.status {
+            LIBUSB_TRANSFER_CANCELLED => {
+                // Transfer was cancelled, free the transfer
+                unsafe { ffi::libusb_free_transfer(transfer) }
+            }
+            LIBUSB_TRANSFER_COMPLETED => {
+                // call user callback
+                (*closure)(Ok(()));
+            }
+            LIBUSB_TRANSFER_ERROR => (*closure)(Err(LIBUSB_TRANSFER_ERROR)),
+            LIBUSB_TRANSFER_TIMED_OUT => (*closure)(Err(LIBUSB_TRANSFER_TIMED_OUT)),
+            LIBUSB_TRANSFER_STALL => (*closure)(Err(LIBUSB_TRANSFER_STALL)),
+            LIBUSB_TRANSFER_NO_DEVICE => (*closure)(Err(LIBUSB_TRANSFER_NO_DEVICE)),
+            LIBUSB_TRANSFER_OVERFLOW => unreachable!(),
+            _ => panic!("Found an unexpected error value for transfer status"),
+        }
+    }
+}
+impl<C: UsbContext, F> AsyncTransfer<'_, '_, C, F> {
+    /// Helper function for the Drop impl.
+    fn drop_helper(this: Pin<&mut Self>) {
+        // Actual drop code goes here.
+        let errno = unsafe { ffi::libusb_cancel_transfer(this.ptr) };
+        match errno {
+            0 | ffi::constants::LIBUSB_ERROR_NOT_FOUND => (),
+            errno => {
+                log::warn!(
+                    "Could not cancel USB transfer. Memory may be leaked. Errno: {}",
+                    errno
+                )
+            }
+        }
+    }
+}
 
-        // call user callback
-        (*closure)();
+impl<C: UsbContext, F> Drop for AsyncTransfer<'_, '_, C, F> {
+    fn drop(&mut self) {
+        // We call `drop_helper` because that function represents the actual type
+        // semantics that `self` has when being dropped.
+        // (see https://doc.rust-lang.org/std/pin/index.html#drop-implementation)
+        // Safety: `new_unchecked` is okay because we know this value is never used
+        // again after being dropped.
+        Self::drop_helper(unsafe { Pin::new_unchecked(self) });
     }
 }
