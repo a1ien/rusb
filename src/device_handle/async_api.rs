@@ -9,10 +9,10 @@ use std::marker::{PhantomData, PhantomPinned};
 use std::pin::Pin;
 use std::ptr::NonNull;
 
-type CbResult<'a> = Result<&'a [u8], ReadError>;
+type CbResult<'a> = Result<&'a [u8], TransferError>;
 
 #[derive(Error, Debug)]
-pub enum ReadError {
+pub enum TransferError {
     #[error("Transfer timed out")]
     Timeout,
     #[error("Transfer is stalled")]
@@ -25,7 +25,7 @@ pub enum ReadError {
     Errno(&'static str, i32),
 }
 
-struct AsyncTransfer<'d, 'b, C: UsbContext, F> {
+pub struct AsyncTransfer<'d, 'b, C: UsbContext, F> {
     ptr: NonNull<ffi::libusb_transfer>,
     closure: F,
     _pin: PhantomPinned, // `ptr` holds a ptr to `closure`, so mark !Unpin
@@ -88,19 +88,24 @@ impl<'d, 'b, C: 'd + UsbContext, F: FnMut(CbResult<'b>) + Send> AsyncTransfer<'d
         result
     }
 
-    /// Returns whether the transfer was submitted successfully
-    fn submit_helper(transfer: *mut ffi::libusb_transfer) -> Result<(), ReadError> {
-        let errno = unsafe { ffi::libusb_submit_transfer(transfer) };
+    /// Submits a transfer to libusb's event engine.
+    /// # Panics
+    /// A transfer should not be double-submitted! Only re-submit after a submission has
+    /// returned Err, or the callback has gotten an Err.
+    // Step 3 of async API
+    #[allow(unused)]
+    pub fn submit(&mut self) -> Result<(), TransferError> {
+        let errno = unsafe { ffi::libusb_submit_transfer(self.ptr.as_ptr()) };
         use ffi::constants::*;
         match errno {
             0 => Ok(()),
             LIBUSB_ERROR_BUSY => {
-                unreachable!("Should not be possible for us to double-submit a transfer")
+                panic!("Do not double-submit a transfer!")
             }
-            LIBUSB_ERROR_NOT_SUPPORTED => Err(ReadError::Other("Unsupported transfer!")),
-            LIBUSB_ERROR_INVALID_PARAM => Err(ReadError::Other("Transfer size too large!")),
-            LIBUSB_ERROR_NO_DEVICE => Err(ReadError::Disconnected),
-            _ => Err(ReadError::Errno("Unable to submit transfer. ", errno)),
+            LIBUSB_ERROR_NOT_SUPPORTED => Err(TransferError::Other("Unsupported transfer!")),
+            LIBUSB_ERROR_INVALID_PARAM => Err(TransferError::Other("Transfer size too large!")),
+            LIBUSB_ERROR_NO_DEVICE => Err(TransferError::Disconnected),
+            _ => Err(TransferError::Errno("Unable to submit transfer. ", errno)),
         }
     }
 
@@ -143,17 +148,14 @@ impl<'d, 'b, C: 'd + UsbContext, F: FnMut(CbResult<'b>) + Send> AsyncTransfer<'d
                 };
                 (*closure)(Ok(data));
             }
-            LIBUSB_TRANSFER_ERROR => (*closure)(Err(ReadError::Other(
+            LIBUSB_TRANSFER_ERROR => (*closure)(Err(TransferError::Other(
                 "Error occurred during transfer execution",
             ))),
             LIBUSB_TRANSFER_TIMED_OUT => {
-                (*closure)(Err(ReadError::Timeout));
-                if let Err(err) = Self::submit_helper(transfer) {
-                    (*closure)(Err(err))
-                }
+                (*closure)(Err(TransferError::Timeout));
             }
-            LIBUSB_TRANSFER_STALL => (*closure)(Err(ReadError::Stall)),
-            LIBUSB_TRANSFER_NO_DEVICE => (*closure)(Err(ReadError::Disconnected)),
+            LIBUSB_TRANSFER_STALL => (*closure)(Err(TransferError::Stall)),
+            LIBUSB_TRANSFER_NO_DEVICE => (*closure)(Err(TransferError::Disconnected)),
             LIBUSB_TRANSFER_OVERFLOW => unreachable!(),
             _ => panic!("Found an unexpected error value for transfer status"),
         }
