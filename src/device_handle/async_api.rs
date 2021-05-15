@@ -8,8 +8,9 @@ use std::convert::{TryFrom, TryInto};
 use std::marker::{PhantomData, PhantomPinned};
 use std::pin::Pin;
 use std::ptr::NonNull;
+use std::time::Duration;
 
-type CbResult<'a> = Result<&'a [u8], TransferError>;
+pub type CbResult<'a> = Result<&'a [u8], TransferError>;
 
 #[derive(Error, Debug)]
 pub enum TransferError {
@@ -94,7 +95,7 @@ impl<'d, 'b, C: 'd + UsbContext, F: FnMut(CbResult<'b>) + Send> AsyncTransfer<'d
     /// returned Err, or the callback has gotten an Err.
     // Step 3 of async API
     #[allow(unused)]
-    pub fn submit(&mut self) -> Result<(), TransferError> {
+    pub fn submit(self: &mut Pin<Box<Self>>) -> Result<(), TransferError> {
         let errno = unsafe { ffi::libusb_submit_transfer(self.ptr.as_ptr()) };
         use ffi::constants::*;
         match errno {
@@ -188,4 +189,20 @@ impl<C: UsbContext, F> Drop for AsyncTransfer<'_, '_, C, F> {
         // again after being dropped.
         Self::drop_helper(unsafe { Pin::new_unchecked(self) });
     }
+}
+
+/// Polls for transfers and executes their callbacks. Will block until the
+/// given timeout, or return immediately if timeout is zero.
+pub fn poll_transfers(ctx: &impl UsbContext, timeout: Duration) {
+    let timeval = libc::timeval {
+        tv_sec: timeout.as_secs() as i64,
+        tv_usec: timeout.subsec_millis() as i64,
+    };
+    unsafe {
+        ffi::libusb_handle_events_timeout_completed(
+            ctx.as_raw(),
+            std::ptr::addr_of!(timeval),
+            std::ptr::null_mut(),
+        )
+    };
 }

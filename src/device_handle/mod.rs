@@ -1,4 +1,4 @@
-mod async_api;
+pub mod async_api;
 
 use std::{mem, ptr::NonNull, time::Duration, u8};
 

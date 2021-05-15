@@ -7,6 +7,7 @@ pub use crate::{
     context::{Context, GlobalContext, Hotplug, LogLevel, Registration, UsbContext},
     device::Device,
     device_descriptor::DeviceDescriptor,
+    device_handle::async_api::{poll_transfers, AsyncTransfer, CbResult},
     device_handle::DeviceHandle,
     device_list::{DeviceList, Devices},
     endpoint_descriptor::EndpointDescriptor,
@@ -106,6 +107,11 @@ pub fn open_device_with_vid_pid(
     if handle.is_null() {
         None
     } else {
-        Some(unsafe { DeviceHandle::from_libusb(GlobalContext::default(), std::ptr::NonNull::new_unchecked(handle)) })
+        Some(unsafe {
+            DeviceHandle::from_libusb(
+                GlobalContext::default(),
+                std::ptr::NonNull::new_unchecked(handle),
+            )
+        })
     }
 }
