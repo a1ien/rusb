@@ -195,8 +195,8 @@ impl<C: UsbContext, F> Drop for AsyncTransfer<'_, '_, C, F> {
 /// given timeout, or return immediately if timeout is zero.
 pub fn poll_transfers(ctx: &impl UsbContext, timeout: Duration) {
     let timeval = libc::timeval {
-        tv_sec: timeout.as_secs() as i64,
-        tv_usec: timeout.subsec_millis() as i64,
+        tv_sec: timeout.as_secs().try_into().unwrap(),
+        tv_usec: timeout.subsec_millis().try_into().unwrap(),
     };
     unsafe {
         ffi::libusb_handle_events_timeout_completed(
