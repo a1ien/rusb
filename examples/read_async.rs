@@ -22,12 +22,16 @@ fn main() {
 
     const NUM_TRANSFERS: usize = 32;
     const BUF_SIZE: usize = 1024;
-    let mut main_buffer = Box::new([0u8; BUF_SIZE * NUM_TRANSFERS]);
 
     let mut transfers = Vec::new();
-    for buf in main_buffer.chunks_exact_mut(BUF_SIZE) {
-        let mut transfer =
-            AsyncTransfer::new_bulk(&device, endpoint, buf, callback, Duration::from_secs(10));
+    for _ in 0..NUM_TRANSFERS {
+        let mut transfer = AsyncTransfer::new_bulk(
+            &device,
+            endpoint,
+            BUF_SIZE,
+            callback,
+            Duration::from_secs(10),
+        );
         transfer.submit().expect("Could not submit transfer");
         transfers.push(transfer);
     }

@@ -26,20 +26,19 @@ pub enum TransferError {
     Errno(&'static str, i32),
 }
 
-pub struct AsyncTransfer<'d, 'b, C: UsbContext, F> {
+pub struct AsyncTransfer<'d, C: UsbContext, F> {
     ptr: NonNull<ffi::libusb_transfer>,
     closure: F,
+    buffer: Box<[u8]>,
     _pin: PhantomPinned, // `ptr` holds a ptr to `closure`, so mark !Unpin
     _device: PhantomData<&'d DeviceHandle<C>>,
-    _buf: PhantomData<&'b mut [u8]>,
 }
-// TODO: should CbResult lifetime be different from 'b?
-impl<'d, 'b, C: 'd + UsbContext, F: FnMut(CbResult<'b>) + Send> AsyncTransfer<'d, 'b, C, F> {
+impl<'d, 'b, C: 'd + UsbContext, F: FnMut(CbResult<'b>) + Send> AsyncTransfer<'d, C, F> {
     #[allow(unused)]
     pub fn new_bulk(
         device: &'d DeviceHandle<C>,
         endpoint: u8,
-        buffer: &'b mut [u8],
+        buf_size: usize,
         callback: F,
         timeout: std::time::Duration,
     ) -> Pin<Box<Self>> {
@@ -57,9 +56,9 @@ impl<'d, 'b, C: 'd + UsbContext, F: FnMut(CbResult<'b>) + Send> AsyncTransfer<'d
         let result = Box::pin(Self {
             ptr,
             closure: callback,
+            buffer: vec![0u8; buf_size].into_boxed_slice(),
             _pin: PhantomPinned,
             _device: PhantomData,
-            _buf: PhantomData,
         });
 
         unsafe {
@@ -79,8 +78,8 @@ impl<'d, 'b, C: 'd + UsbContext, F: FnMut(CbResult<'b>) + Send> AsyncTransfer<'d
                 ptr.as_ptr(),
                 device.as_raw(),
                 endpoint,
-                buffer.as_ptr() as *mut u8,
-                buffer.len().try_into().unwrap(),
+                result.buffer.as_ptr() as *mut u8,
+                result.buffer.len().try_into().unwrap(),
                 Self::transfer_cb,
                 closure_as_ptr.cast(),
                 timeout,
@@ -162,7 +161,7 @@ impl<'d, 'b, C: 'd + UsbContext, F: FnMut(CbResult<'b>) + Send> AsyncTransfer<'d
         }
     }
 }
-impl<C: UsbContext, F> AsyncTransfer<'_, '_, C, F> {
+impl<C: UsbContext, F> AsyncTransfer<'_, C, F> {
     /// Helper function for the Drop impl.
     fn drop_helper(self: Pin<&mut Self>) {
         // Actual drop code goes here.
@@ -180,9 +179,9 @@ impl<C: UsbContext, F> AsyncTransfer<'_, '_, C, F> {
     }
 }
 
-impl<C: UsbContext, F> Drop for AsyncTransfer<'_, '_, C, F> {
+impl<C: UsbContext, F> Drop for AsyncTransfer<'_, C, F> {
     fn drop(&mut self) {
-        // We call `drop_helper` because that function represents the actualsemantics
+        // We call `drop_helper` because that function represents the actual semantics
         // that `self` has when being dropped.
         // (see https://doc.rust-lang.org/std/pin/index.html#drop-implementation)
         // Safety: `new_unchecked` is okay because we know this value is never used
@@ -193,16 +192,27 @@ impl<C: UsbContext, F> Drop for AsyncTransfer<'_, '_, C, F> {
 
 /// Polls for transfers and executes their callbacks. Will block until the
 /// given timeout, or return immediately if timeout is zero.
+/// Returns whether a transfer was completed
 pub fn poll_transfers(ctx: &impl UsbContext, timeout: Duration) {
     let timeval = libc::timeval {
         tv_sec: timeout.as_secs().try_into().unwrap(),
         tv_usec: timeout.subsec_millis().try_into().unwrap(),
     };
     unsafe {
-        ffi::libusb_handle_events_timeout_completed(
+        let errno = ffi::libusb_handle_events_timeout_completed(
             ctx.as_raw(),
             std::ptr::addr_of!(timeval),
             std::ptr::null_mut(),
-        )
-    };
+        );
+        use ffi::constants::*;
+        match errno {
+            0 => (),
+            LIBUSB_ERROR_INVALID_PARAM => panic!("Provided timeout was unexpectedly invalid"),
+            _ => panic!(
+                "Error when polling transfers. ERRNO: {}, Message: {}",
+                errno,
+                std::ffi::CStr::from_ptr(ffi::libusb_strerror(errno)).to_string_lossy()
+            ),
+        }
+    }
 }

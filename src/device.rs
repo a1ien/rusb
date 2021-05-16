@@ -10,9 +10,9 @@ use crate::{
     config_descriptor::{self, ConfigDescriptor},
     device_descriptor::{self, DeviceDescriptor},
     device_handle::DeviceHandle,
+    error,
     fields::{self, Speed},
     Error, UsbContext,
-    error,
 };
 
 /// A reference to a USB device.
@@ -150,27 +150,16 @@ impl<T: UsbContext> Device<T> {
     pub fn get_parent(&self) -> Option<Self> {
         let device = unsafe { libusb_get_parent(self.device.as_ptr()) };
         NonNull::new(device)
-            .map(|device|
-                 unsafe {
-                     Device::from_libusb(
-                         self.context.clone(),
-                         device,
-                     )
-                 }
-            )
+            .map(|device| unsafe { Device::from_libusb(self.context.clone(), device) })
     }
 
     ///  Get the list of all port numbers from root for the specified device
     pub fn port_numbers(&self) -> Result<Vec<u8>, Error> {
         // As per the USB 3.0 specs, the current maximum limit for the depth is 7.
-        let mut ports = [0;7];
+        let mut ports = [0; 7];
 
         let result = unsafe {
-            libusb_get_port_numbers(
-                self.device.as_ptr(),
-                ports.as_mut_ptr(),
-                ports.len() as i32
-            )
+            libusb_get_port_numbers(self.device.as_ptr(), ports.as_mut_ptr(), ports.len() as i32)
         };
 
         let ports_number = if result < 0 {
@@ -180,5 +169,4 @@ impl<T: UsbContext> Device<T> {
         };
         Ok(ports[0..ports_number as usize].to_vec())
     }
-
 }

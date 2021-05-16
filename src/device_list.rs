@@ -102,7 +102,12 @@ impl<'a, T: UsbContext> Iterator for Devices<'a, T> {
             let device = self.devices[self.index];
 
             self.index += 1;
-            Some(unsafe { device::Device::from_libusb(self.context.clone(), std::ptr::NonNull::new_unchecked(device)) })
+            Some(unsafe {
+                device::Device::from_libusb(
+                    self.context.clone(),
+                    std::ptr::NonNull::new_unchecked(device),
+                )
+            })
         } else {
             None
         }
