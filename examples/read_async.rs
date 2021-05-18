@@ -1,4 +1,4 @@
-use rusb::{AsyncTransfer, CbResult, Context, UsbContext};
+use rusb::{AsyncPool, Context, UsbContext};
 
 use std::str::FromStr;
 use std::time::Duration;
@@ -23,24 +23,27 @@ fn main() {
     const NUM_TRANSFERS: usize = 32;
     const BUF_SIZE: usize = 1024;
 
-    let mut transfers = Vec::new();
+    let mut buffers = Vec::new();
     for _ in 0..NUM_TRANSFERS {
-        let mut transfer = AsyncTransfer::new_bulk(
-            &device,
-            endpoint,
-            BUF_SIZE,
-            callback,
-            Duration::from_secs(10),
-        );
-        transfer.submit().expect("Could not submit transfer");
-        transfers.push(transfer);
+        let buf = Vec::with_capacity(BUF_SIZE);
+        buffers.push(buf);
     }
 
+    let mut async_pool = AsyncPool::new_bulk(device, endpoint, Duration::from_secs(5), buffers)
+        .expect("Failed to create async pool!");
+
+    let mut swap_vec = Vec::with_capacity(BUF_SIZE);
     loop {
-        rusb::poll_transfers(&ctx, Duration::from_secs(10));
+        let poll_result = async_pool.poll(Duration::from_secs(10), swap_vec);
+        match poll_result {
+            Ok(data) => {
+                println!("Got data: {:#?}", data);
+                swap_vec = data
+            }
+            Err((err, buf)) => {
+                eprintln!("Error: {}", err);
+                swap_vec = buf
+            }
+        }
     }
-}
-
-fn callback(result: CbResult) {
-    println!("{:?}", result)
 }
