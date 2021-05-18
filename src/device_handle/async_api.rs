@@ -88,10 +88,8 @@ impl<C: UsbContext> AsyncTransfer<C> {
         result
     }
 
-    // We need to invoke our closure using a c-style function, so we store the closure
-    // inside the custom user data field of the transfer struct, and then call the
-    // user provided closure from there.
-    // Step 4 of async API
+    // Part of step 4 of async API the transfer is finished being handled when
+    // `poll()` is called.
     extern "system" fn transfer_cb(transfer: *mut ffi::libusb_transfer) {
         // Safety: libusb should never make this null, so this is fine
         let transfer = unsafe { &mut *transfer };
@@ -112,17 +110,23 @@ impl<C: UsbContext> AsyncTransfer<C> {
             .push_back(transfer.pool_id);
     }
 
+    // Step 3 of async API
     fn submit(self: &mut Transfer<C>) -> Result<(), AsyncError> {
         todo!()
     }
 }
-// TODO: Figure out how to destroy transfers
+impl<C: UsbContext> Drop for AsyncTransfer<C> {
+    fn drop(&mut self) {
+        // TODO: Figure out how to destroy transfers, which is step 5 of async API.
+        todo!()
+    }
+}
 
 /// Represents a pool of asynchronous transfers, that can be polled to completion
 pub struct AsyncPool<C: UsbContext> {
     /// Contains the pool of AsyncTransfers
     pool: Vec<Transfer<C>>,
-    /// Contains the idxs of transfers in the `pool` that have completed
+    /// Contains the idxs of transfers in `pool` that have completed
     completed: CompletedQueue,
     device: Arc<DeviceHandle<C>>, // TODO: We hold refs to this, do we need it to be pinned?
 }
@@ -158,7 +162,7 @@ impl<C: UsbContext> AsyncPool<C> {
     }
 
     /// Once a transfer is completed, check the c struct for errors, otherwise swap
-    /// buffers
+    /// buffers. Step 4 of async API.
     fn handle_completed_transfer(
         transfer: &mut Transfer<C>,
         new_buf: Vec<u8>,
