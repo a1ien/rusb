@@ -106,6 +106,11 @@ pub fn open_device_with_vid_pid(
     if handle.is_null() {
         None
     } else {
-        Some(unsafe { DeviceHandle::from_libusb(GlobalContext::default(), std::ptr::NonNull::new_unchecked(handle)) })
+        Some(unsafe {
+            DeviceHandle::from_libusb(
+                GlobalContext::default(),
+                std::ptr::NonNull::new_unchecked(handle),
+            )
+        })
     }
 }
