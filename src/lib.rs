@@ -7,7 +7,7 @@ pub use crate::{
     context::{Context, GlobalContext, Hotplug, LogLevel, Registration, UsbContext},
     device::Device,
     device_descriptor::DeviceDescriptor,
-    device_handle::async_api::AsyncPool,
+    device_handle::async_api::{AsyncError, AsyncPool},
     device_handle::DeviceHandle,
     device_list::{DeviceList, Devices},
     endpoint_descriptor::EndpointDescriptor,

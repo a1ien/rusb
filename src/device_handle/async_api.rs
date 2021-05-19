@@ -12,7 +12,7 @@ use std::time::Duration;
 use thiserror::Error;
 
 type CompletedQueue = Arc<Mutex<VecDeque<usize>>>;
-type Transfer<C> = Pin<Box<AsyncTransfer<C>>>;
+type PinnedTransfer<C> = Pin<Box<AsyncTransfer<C>>>;
 
 #[derive(Error, Debug)]
 pub enum AsyncError {
@@ -148,7 +148,7 @@ impl<C: UsbContext> Drop for AsyncTransfer<C> {
 /// Represents a pool of asynchronous transfers, that can be polled to completion
 pub struct AsyncPool<C: UsbContext> {
     /// Contains the pool of AsyncTransfers
-    pool: Vec<Transfer<C>>,
+    pool: Vec<PinnedTransfer<C>>,
     /// Contains the idxs of transfers in `pool` that have completed
     completed: CompletedQueue,
     device: Arc<DeviceHandle<C>>, // TODO: We hold refs to this, do we need it to be pinned?
@@ -165,7 +165,7 @@ impl<C: UsbContext> AsyncPool<C> {
         let device = Arc::new(device);
 
         for (id, buf) in buffers.into_iter().enumerate() {
-            let mut transfer: Transfer<C> =
+            let mut transfer: PinnedTransfer<C> =
                 AsyncTransfer::new_bulk(id, completed.clone(), device.clone(), endpoint, buf);
             unsafe { transfer.as_mut().get_unchecked_mut() }.submit()?;
             pool.push(transfer);
@@ -209,7 +209,7 @@ impl<C: UsbContext> AsyncPool<C> {
     /// Once a transfer is completed, check the c struct for errors, otherwise swap
     /// buffers. Step 4 of async API.
     fn handle_completed_transfer(
-        transfer: &mut Transfer<C>,
+        transfer: &mut PinnedTransfer<C>,
         new_buf: Vec<u8>,
     ) -> Result<Vec<u8>, (AsyncError, Vec<u8>)> {
         use AsyncError as E;
