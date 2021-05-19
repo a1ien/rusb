@@ -29,12 +29,13 @@ fn main() {
         buffers.push(buf);
     }
 
-    let mut async_pool = AsyncPool::new_bulk(device, endpoint, Duration::from_secs(5), buffers)
-        .expect("Failed to create async pool!");
+    let mut async_pool =
+        AsyncPool::new_bulk(device, endpoint, buffers).expect("Failed to create async pool!");
 
     let mut swap_vec = Vec::with_capacity(BUF_SIZE);
+    let timeout = Duration::from_secs(10);
     loop {
-        let poll_result = async_pool.poll(Duration::from_secs(10), swap_vec);
+        let poll_result = async_pool.poll(timeout, swap_vec);
         match poll_result {
             Ok(data) => {
                 println!("Got data: {:#?}", data);

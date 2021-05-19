@@ -3,7 +3,7 @@ use libusb1_sys as ffi;
 
 use libc::c_void;
 use std::collections::VecDeque;
-use std::convert::{TryFrom, TryInto};
+use std::convert::TryInto;
 use std::marker::PhantomPinned;
 use std::pin::Pin;
 use std::ptr::NonNull;
@@ -16,8 +16,6 @@ type Transfer<C> = Pin<Box<AsyncTransfer<C>>>;
 
 #[derive(Error, Debug)]
 pub enum AsyncError {
-    #[error("Transfer timed out")]
-    TransferTimeout,
     #[error("Poll timed out")]
     PollTimeout,
     #[error("Transfer is stalled")]
@@ -49,14 +47,11 @@ impl<C: UsbContext> AsyncTransfer<C> {
         device: Arc<DeviceHandle<C>>,
         endpoint: u8,
         buffer: Vec<u8>,
-        timeout: std::time::Duration,
     ) -> Pin<Box<Self>> {
         // non-isochronous endpoints (e.g. control, bulk, interrupt) specify a value of 0
         // This is step 1 of async API
         let ptr = unsafe { ffi::libusb_alloc_transfer(0) };
         let ptr = NonNull::new(ptr).expect("Could not allocate transfer!");
-        let timeout = libc::c_uint::try_from(timeout.as_millis())
-            .expect("Duration was too long to fit into a c_uint");
 
         // Safety: Pinning `result` ensures it doesn't move, but we know that we will
         // want to access its fields mutably, we just don't want its memory location
@@ -82,7 +77,7 @@ impl<C: UsbContext> AsyncTransfer<C> {
                 result.buffer.capacity().try_into().unwrap(),
                 Self::transfer_cb,
                 user_data, // We haven't associated with a queue yet, so this is null
-                timeout,
+                0,
             )
         };
         result
@@ -162,7 +157,6 @@ impl<C: UsbContext> AsyncPool<C> {
     pub fn new_bulk(
         device: DeviceHandle<C>,
         endpoint: u8,
-        read_timeout: Duration,
         buffers: impl IntoIterator<Item = Vec<u8>>,
     ) -> Result<Self, AsyncError> {
         let buffers = buffers.into_iter();
@@ -171,14 +165,8 @@ impl<C: UsbContext> AsyncPool<C> {
         let device = Arc::new(device);
 
         for (id, buf) in buffers.into_iter().enumerate() {
-            let mut transfer: Transfer<C> = AsyncTransfer::new_bulk(
-                id,
-                completed.clone(),
-                device.clone(),
-                endpoint,
-                buf,
-                read_timeout,
-            );
+            let mut transfer: Transfer<C> =
+                AsyncTransfer::new_bulk(id, completed.clone(), device.clone(), endpoint, buf);
             unsafe { transfer.as_mut().get_unchecked_mut() }.submit()?;
             pool.push(transfer);
         }
@@ -204,7 +192,9 @@ impl<C: UsbContext> AsyncPool<C> {
             LIBUSB_TRANSFER_COMPLETED => Ok(()),
             LIBUSB_TRANSFER_CANCELLED => Err(E::Cancelled),
             LIBUSB_TRANSFER_ERROR => Err(E::Other("Error occurred during transfer execution")),
-            LIBUSB_TRANSFER_TIMED_OUT => Err(E::TransferTimeout),
+            LIBUSB_TRANSFER_TIMED_OUT => {
+                unreachable!("We are using timeout=0 which means no timeout")
+            }
             LIBUSB_TRANSFER_STALL => Err(E::Stall),
             LIBUSB_TRANSFER_NO_DEVICE => Err(E::Disconnected),
             LIBUSB_TRANSFER_OVERFLOW => {
