@@ -256,6 +256,8 @@ impl<C: UsbContext> AsyncPool<C> {
         }
     }
 }
+unsafe impl<C: UsbContext> Send for AsyncPool<C> {}
+unsafe impl<C: UsbContext> Sync for AsyncPool<C> {}
 
 /// Polls for transfers and executes their callbacks. Will block until the
 /// given timeout, or return immediately if timeout is zero.
