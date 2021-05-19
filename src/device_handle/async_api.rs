@@ -112,7 +112,21 @@ impl<C: UsbContext> AsyncTransfer<C> {
 
     // Step 3 of async API
     fn submit(self: &mut Transfer<C>) -> Result<(), AsyncError> {
-        todo!()
+        let transfer_struct = self.ptr;
+        let errno = unsafe { ffi::libusb_submit_transfer(transfer_struct.as_ptr()) };
+
+        use ffi::constants::*;
+        use AsyncError as E;
+        match errno {
+            0 => Ok(()),
+            LIBUSB_ERROR_NO_DEVICE => Err(E::Disconnected),
+            LIBUSB_ERROR_BUSY => {
+                unreachable!("We shouldn't be calling submit on transfers already submitted!")
+            }
+            LIBUSB_ERROR_NOT_SUPPORTED => Err(E::Other("Transfer not supported")),
+            LIBUSB_ERROR_INVALID_PARAM => Err(E::Other("Transfer size bigger than OS supports")),
+            _ => Err(E::Errno("Error while submitting transfer: ", errno)),
+        }
     }
 }
 impl<C: UsbContext> Drop for AsyncTransfer<C> {
@@ -167,7 +181,37 @@ impl<C: UsbContext> AsyncPool<C> {
         transfer: &mut Transfer<C>,
         new_buf: Vec<u8>,
     ) -> Result<Vec<u8>, (AsyncError, Vec<u8>)> {
-        todo!()
+        use AsyncError as E;
+
+        let transfer = unsafe { transfer.as_mut().get_unchecked_mut() };
+        let transfer_struct = unsafe { transfer.ptr.as_mut() };
+
+        use ffi::constants::*;
+        let result = match transfer_struct.status {
+            LIBUSB_TRANSFER_COMPLETED => Ok(()),
+            LIBUSB_TRANSFER_CANCELLED => Err(E::Cancelled),
+            LIBUSB_TRANSFER_ERROR => Err(E::Other("Error occurred during transfer execution")),
+            LIBUSB_TRANSFER_TIMED_OUT => Err(E::TransferTimeout),
+            LIBUSB_TRANSFER_STALL => Err(E::Stall),
+            LIBUSB_TRANSFER_NO_DEVICE => Err(E::Disconnected),
+            LIBUSB_TRANSFER_OVERFLOW => {
+                panic!("Device sent more data than expected. Is this even possible when reading?")
+            }
+            _ => panic!("Found an unexpected error value for transfer status"),
+        };
+        match result {
+            Err(err) => Err((err, new_buf)),
+            Ok(()) => {
+                debug_assert!(transfer_struct.length >= transfer_struct.actual_length); // sanity
+                unsafe {
+                    transfer
+                        .buffer
+                        .set_len(transfer_struct.actual_length as usize)
+                };
+                let data = std::mem::replace(&mut transfer.buffer, new_buf);
+                Ok(data)
+            }
+        }
     }
 
     /// Polls for the completion of async transfers. If successful, will swap the buffer
