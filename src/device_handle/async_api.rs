@@ -110,8 +110,22 @@ impl<C: UsbContext> AsyncTransfer<C> {
             .push_back(transfer.pool_id);
     }
 
+    /// Prerequisite: self.buffer ans self.ptr are both correctly set
+    fn swap_buffer(self: &mut AsyncTransfer<C>, new_buf: Vec<u8>) -> Vec<u8> {
+        let transfer_struct = unsafe { self.ptr.as_mut() };
+
+        let data = std::mem::replace(&mut self.buffer, new_buf);
+
+        // Update transfer struct for new buffer
+        transfer_struct.actual_length = 0; // TODO: Is this necessary?
+        transfer_struct.buffer = self.buffer.as_mut_ptr();
+        transfer_struct.length = self.buffer.capacity() as i32;
+
+        data
+    }
+
     // Step 3 of async API
-    fn submit(self: &mut Transfer<C>) -> Result<(), AsyncError> {
+    fn submit(self: &mut AsyncTransfer<C>) -> Result<(), AsyncError> {
         let transfer_struct = self.ptr;
         let errno = unsafe { ffi::libusb_submit_transfer(transfer_struct.as_ptr()) };
 
@@ -165,7 +179,7 @@ impl<C: UsbContext> AsyncPool<C> {
                 buf,
                 read_timeout,
             );
-            transfer.submit()?;
+            unsafe { transfer.as_mut().get_unchecked_mut() }.submit()?;
             pool.push(transfer);
         }
         Ok(Self {
@@ -182,7 +196,6 @@ impl<C: UsbContext> AsyncPool<C> {
         new_buf: Vec<u8>,
     ) -> Result<Vec<u8>, (AsyncError, Vec<u8>)> {
         use AsyncError as E;
-
         let transfer = unsafe { transfer.as_mut().get_unchecked_mut() };
         let transfer_struct = unsafe { transfer.ptr.as_mut() };
 
@@ -208,8 +221,18 @@ impl<C: UsbContext> AsyncPool<C> {
                         .buffer
                         .set_len(transfer_struct.actual_length as usize)
                 };
-                let data = std::mem::replace(&mut transfer.buffer, new_buf);
-                Ok(data)
+
+                let data = transfer.swap_buffer(new_buf);
+
+                let submit_result = transfer.submit();
+                match submit_result {
+                    Ok(()) => Ok(data),
+                    Err(err) => {
+                        // Take back the original buffer and return the error
+                        let new_buf = transfer.swap_buffer(data);
+                        Err((err, new_buf))
+                    }
+                }
             }
         }
     }
