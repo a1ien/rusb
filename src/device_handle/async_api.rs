@@ -177,6 +177,35 @@ impl<C: UsbContext> AsyncPool<C> {
         })
     }
 
+    /// Polls for the completion of async transfers. If successful, will swap the buffer
+    /// of the completed transfer with `new_buf`, otherwise returns `(err, new_buf)` so
+    /// that `new_buf` may be repurposed.
+    pub fn poll(
+        &mut self,
+        timeout: Duration,
+        new_buf: Vec<u8>,
+    ) -> Result<Vec<u8>, (AsyncError, Vec<u8>)> {
+        let pop_result = { self.completed.lock().unwrap().pop_front() };
+        if let Some(id) = pop_result {
+            let ref mut transfer = self.pool[id];
+            return Self::handle_completed_transfer(transfer, new_buf);
+        }
+        // No completed transfers, so poll for some new ones
+        poll_transfers(self.device.context(), timeout);
+        let pop_result = { self.completed.lock().unwrap().pop_front() };
+        if let Some(id) = pop_result {
+            let ref mut transfer = self.pool[id];
+            Self::handle_completed_transfer(transfer, new_buf)
+        } else {
+            Err((AsyncError::PollTimeout, new_buf))
+        }
+    }
+
+    /// Returns the number of async transfers in the pool.
+    pub fn size(&self) -> usize {
+        self.pool.len()
+    }
+
     /// Once a transfer is completed, check the c struct for errors, otherwise swap
     /// buffers. Step 4 of async API.
     fn handle_completed_transfer(
@@ -224,30 +253,6 @@ impl<C: UsbContext> AsyncPool<C> {
                     }
                 }
             }
-        }
-    }
-
-    /// Polls for the completion of async transfers. If successful, will swap the buffer
-    /// of the completed transfer with `new_buf`, otherwise returns `(err, new_buf)` so
-    /// that `new_buf` may be repurposed.
-    pub fn poll(
-        &mut self,
-        timeout: Duration,
-        new_buf: Vec<u8>,
-    ) -> Result<Vec<u8>, (AsyncError, Vec<u8>)> {
-        let pop_result = { self.completed.lock().unwrap().pop_front() };
-        if let Some(id) = pop_result {
-            let ref mut transfer = self.pool[id];
-            return Self::handle_completed_transfer(transfer, new_buf);
-        }
-        // No completed transfers, so poll for some new ones
-        poll_transfers(self.device.context(), timeout);
-        let pop_result = { self.completed.lock().unwrap().pop_front() };
-        if let Some(id) = pop_result {
-            let ref mut transfer = self.pool[id];
-            Self::handle_completed_transfer(transfer, new_buf)
-        } else {
-            Err((AsyncError::PollTimeout, new_buf))
         }
     }
 }
