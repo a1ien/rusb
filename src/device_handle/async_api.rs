@@ -95,6 +95,15 @@ impl<C: UsbContext> AsyncTransfer<C> {
             ffi::constants::LIBUSB_TRANSFER_TYPE_BULK
         );
 
+        // Before doing anything else, handle the case where the transfer was cancelled
+        // and we need to clean up the libusb resource
+        // Step 5 of async API
+        if transfer.status == ffi::constants::LIBUSB_TRANSFER_CANCELLED {
+            // NOTE: transfer.user_data has already been deallocated in the destructor.
+            unsafe { ffi::libusb_free_transfer(transfer) }
+            return;
+        }
+
         let transfer: *mut AsyncTransfer<C> = transfer.user_data.cast();
         let transfer = unsafe { &mut *transfer };
         // Mark transfer as completed
@@ -140,8 +149,33 @@ impl<C: UsbContext> AsyncTransfer<C> {
 }
 impl<C: UsbContext> Drop for AsyncTransfer<C> {
     fn drop(&mut self) {
-        // TODO: Figure out how to destroy transfers, which is step 5 of async API.
-        todo!()
+        match unsafe { ffi::libusb_cancel_transfer(self.ptr.as_ptr()) } {
+            // Doesn't actually cancel until the callback completes, so lets block until
+            // then
+            0 => {
+                // We already requested the transfer to be cancelled, so this should
+                // immediately run the callback when libusb_handle_events() is invoked
+                const TIMEOUT: libc::timeval = libc::timeval {
+                    tv_sec: 0,
+                    tv_usec: 0,
+                };
+                let errno = unsafe {
+                    ffi::libusb_handle_events_timeout_completed(
+                        self.device.context().as_raw(),
+                        &TIMEOUT,
+                        std::ptr::null_mut(),
+                    )
+                };
+                assert_eq!(errno, 0, "Failed to cancel transfer! ERRNO: {}", errno);
+            }
+            // transfer is not in progress, already complete, or already cancelled.
+            // Therefore, no need to do anything special.
+            ffi::constants::LIBUSB_ERROR_NOT_FOUND => (),
+            errno => panic!(
+                "Error while requesting transfer cancellation! ERRNO: {}",
+                errno
+            ),
+        }
     }
 }
 
