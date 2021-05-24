@@ -34,17 +34,35 @@ fn main() {
 
     let mut swap_vec = Vec::with_capacity(BUF_SIZE);
     let timeout = Duration::from_secs(10);
+
+    let mut num_bytes = 0u64;
+    let mut num_transfers = 0u64;
+    let mut last_time = std::time::Instant::now();
     loop {
         let poll_result = async_pool.poll(timeout, swap_vec);
         match poll_result {
             Ok(data) => {
-                println!("Got data: {:#?}", data);
+                num_bytes += data.len() as u64;
                 swap_vec = data
             }
             Err((err, buf)) => {
                 eprintln!("Error: {}", err);
                 swap_vec = buf
             }
+        }
+        num_transfers += 1;
+
+        let elapsed = last_time.elapsed();
+        if elapsed >= Duration::from_millis(1000) {
+            let elapsed = elapsed.as_secs_f32();
+            println!(
+                "KiB per second: {}, \tTx per second: {}",
+                num_bytes as f32 / 1024. / elapsed,
+                num_transfers as f32 / elapsed
+            );
+            num_bytes = 0;
+            num_transfers = 0;
+            last_time = std::time::Instant::now();
         }
     }
 }
