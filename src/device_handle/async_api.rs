@@ -28,6 +28,8 @@ pub enum AsyncError {
     Errno(&'static str, i32),
     #[error("Transfer was cancelled")]
     Cancelled,
+    #[error("Transfer could not fit into provided buffer with size of {0}")]
+    Overflow(usize),
 }
 
 struct AsyncTransfer<C: UsbContext> {
@@ -260,9 +262,7 @@ impl<C: UsbContext> AsyncPool<C> {
             }
             LIBUSB_TRANSFER_STALL => Err(E::Stall),
             LIBUSB_TRANSFER_NO_DEVICE => Err(E::Disconnected),
-            LIBUSB_TRANSFER_OVERFLOW => {
-                panic!("Device sent more data than expected. Is this even possible when reading?")
-            }
+            LIBUSB_TRANSFER_OVERFLOW => Err(E::Overflow(transfer.buffer.capacity())),
             _ => panic!("Found an unexpected error value for transfer status"),
         };
         match result {
