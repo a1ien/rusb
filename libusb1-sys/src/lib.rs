@@ -441,8 +441,8 @@ extern "system" {
     pub fn libusb_get_pollfds(context: *mut libusb_context) -> *const *mut libusb_pollfd;
     pub fn libusb_set_pollfd_notifiers(
         context: *mut libusb_context,
-        added_cb: libusb_pollfd_added_cb,
-        removed_cb: libusb_pollfd_removed_cb,
+        added_cb: Option<libusb_pollfd_added_cb>,
+        removed_cb: Option<libusb_pollfd_removed_cb>,
         user_data: *mut c_void,
     );
     pub fn libusb_hotplug_register_callback(
