@@ -110,6 +110,7 @@ pub trait UsbContext: Clone + Sized + Send + Sync {
         vendor_id: Option<u16>,
         product_id: Option<u16>,
         class: Option<u8>,
+        enumerate: bool,
         callback: Box<dyn Hotplug<Self>>,
     ) -> crate::Result<Registration<Self>> {
         let mut handle: libusb_hotplug_callback_handle = 0;
@@ -117,12 +118,20 @@ pub trait UsbContext: Clone + Sized + Send + Sync {
             context: self.clone(),
             hotplug: callback,
         };
+
+        let hotplug_flags = if enumerate {
+            LIBUSB_HOTPLUG_ENUMERATE
+        } else {
+            LIBUSB_HOTPLUG_NO_FLAGS
+        };
+
         let to = Box::new(callback);
+
         let n = unsafe {
             libusb_hotplug_register_callback(
                 self.as_raw(),
                 LIBUSB_HOTPLUG_EVENT_DEVICE_ARRIVED | LIBUSB_HOTPLUG_EVENT_DEVICE_LEFT,
-                LIBUSB_HOTPLUG_NO_FLAGS,
+                hotplug_flags,
                 vendor_id
                     .map(c_int::from)
                     .unwrap_or(LIBUSB_HOTPLUG_MATCH_ANY),
