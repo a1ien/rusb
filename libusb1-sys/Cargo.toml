@@ -6,8 +6,8 @@ authors = ["David Cuddeback <david.cuddeback@gmail.com>",
             "Ilya Averyanov <a1ien.n3t@gmail.com>"]
 description = "FFI bindings for libusb."
 license = "MIT"
-homepage = "https://github.com/a1ien/libusb1-sys"
-repository = "https://github.com/a1ien/libusb1-sys.git"
+homepage = "https://github.com/a1ien/rusb"
+repository = "https://github.com/a1ien/rusb.git"
 readme = "README.md"
 keywords = ["usb", "libusb", "hardware", "bindings"]
 edition = "2018"
@@ -23,6 +23,7 @@ include = [
     "Cargo.toml",
     "LICENSE",
     "README.md",
+    "CHANGELOG.md",
     "COPYING",
     "AUTHORS",
 ]
