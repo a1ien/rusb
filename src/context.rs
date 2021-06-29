@@ -116,6 +116,7 @@ pub trait UsbContext: Clone + Sized + Send + Sync {
     ///
     /// The callback will remain registered until the returned [Registration] is
     /// dropped, which can be done explicitly with [hotplug_unregister_callback].
+    #[must_use = "USB hotplug callbacks will be deregistered if the registration is dropped"]
     fn hotplug_register_callback(
         &self,
         vendor_id: Option<u16>,
