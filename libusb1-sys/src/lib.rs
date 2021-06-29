@@ -230,7 +230,7 @@ extern "system" {
     pub fn libusb_init(context: *mut *mut libusb_context) -> c_int;
     pub fn libusb_exit(context: *mut libusb_context);
     pub fn libusb_set_debug(context: *mut libusb_context, level: c_int);
-    pub fn libusb_set_log_cb(context: *mut libusb_context, cb: libusb_log_cb, mode: c_int);
+    pub fn libusb_set_log_cb(context: *mut libusb_context, cb: Option<libusb_log_cb>, mode: c_int);
 
     pub fn libusb_get_device_list(
         context: *mut libusb_context,
