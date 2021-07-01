@@ -20,6 +20,7 @@ pub use crate::{
     },
     language::{Language, PrimaryLanguage, SubLanguage},
     options::UsbOption,
+    transfer::{Transfer, TransferCallbackFunction, TransferStatus},
     version::{version, LibraryVersion},
 };
 
@@ -35,6 +36,7 @@ mod context;
 mod device;
 mod device_handle;
 mod device_list;
+mod transfer;
 
 mod config_descriptor;
 mod device_descriptor;
