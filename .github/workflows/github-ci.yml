@@ -1,0 +1,42 @@
+name: Rust
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            apt: 'libusb-1.0-0-dev'
+
+          - os: ubuntu-latest
+            apt: 'libudev-dev'
+
+          - os: macos-latest
+
+          - os: windows-latest
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: true
+
+      - name: Install
+        if: ${{ contains(matrix.os, 'ubuntu')}}
+        run: sudo apt-get install --no-install-recommends -y ${{ matrix.apt }}
+
+      - name: Build
+        run: cargo build --workspace --verbose --examples
+
+      - name: Run tests
+        run: cargo test --workspace --verbose --all
