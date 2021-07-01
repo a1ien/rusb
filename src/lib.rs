@@ -4,7 +4,9 @@ pub use libusb1_sys::constants;
 
 pub use crate::{
     config_descriptor::{ConfigDescriptor, Interfaces},
-    context::{Context, GlobalContext, Hotplug, LogLevel, Registration, UsbContext},
+    context::{
+        Context, GlobalContext, Hotplug, LogCallbackMode, LogLevel, Registration, UsbContext,
+    },
     device::Device,
     device_descriptor::DeviceDescriptor,
     device_handle::DeviceHandle,
