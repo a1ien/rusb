@@ -1,5 +1,6 @@
 //! This crate provides a safe wrapper around the native `libusb` library.
 
+pub use libusb1_sys as ffi;
 pub use libusb1_sys::constants;
 
 pub use crate::{
