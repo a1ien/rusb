@@ -1,4 +1,4 @@
-use std::{mem, ptr::NonNull, time::Duration, u8};
+use std::{mem, fmt::{self, Debug}, ptr::NonNull, time::Duration, u8};
 
 use libc::{c_int, c_uchar, c_uint};
 use libusb1_sys::{constants::*, *};
@@ -126,6 +126,16 @@ impl<T: UsbContext> Drop for DeviceHandle<T> {
 
 unsafe impl<T: UsbContext> Send for DeviceHandle<T> {}
 unsafe impl<T: UsbContext> Sync for DeviceHandle<T> {}
+
+impl<T: UsbContext> Debug for DeviceHandle<T> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.debug_struct("DeviceHandle")
+            .field("device", &self.device())
+            .field("handle", &self.handle)
+            .field("interfaces", &self.interfaces)
+            .finish()
+    }
+}
 
 impl<T: UsbContext> DeviceHandle<T> {
     /// Get the raw libusb_device_handle pointer, for advanced use in unsafe code.
