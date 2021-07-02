@@ -2,8 +2,10 @@
 
 ## Unreleased
 * Re-export libusb1-sys as ffi [#75]
+* impl Debug for DeviceHandle [#78]
 
 [#75]: https://github.com/a1ien/rusb/pull/75
+[#78]: https://github.com/a1ien/rusb/pull/78
 
 ## 0.8.1
 * Add getters for bRefresh and bSynchAddress [#61]
