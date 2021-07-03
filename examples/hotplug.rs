@@ -16,12 +16,17 @@ impl<T: UsbContext> rusb::Hotplug<T> for HotPlugHandler {
 fn main() -> rusb::Result<()> {
     if rusb::has_hotplug() {
         let context = Context::new()?;
-        let mut reg =
-            Some(context.register_callback(None, None, None, Box::new(HotPlugHandler {}))?);
+        let mut reg = Some(context.hotplug_register_callback(
+            None,
+            None,
+            None,
+            true,
+            Box::new(HotPlugHandler {}),
+        )?);
         loop {
             context.handle_events(None).unwrap();
             if let Some(reg) = reg.take() {
-                context.unregister_callback(reg);
+                context.hotplug_unregister_callback(reg);
             }
         }
     } else {
