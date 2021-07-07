@@ -25,6 +25,14 @@ pub struct UnhandledTransfer {
     data: Vec<u8>,
 }
 
+impl Drop for UnhandledTransfer {
+    fn drop(&mut self) {
+        unsafe {
+            libusb_free_transfer(self.handle);
+        }
+    }
+}
+
 impl UnhandledTransfer {
     pub fn new(device_handle: &mut DeviceHandle<Context>, iso_packets: i32) -> Result<*mut Self> {
         let handle = Self::allocate_transfer_handle(iso_packets)?;
@@ -53,13 +61,6 @@ impl UnhandledTransfer {
         }
 
         Ok(transfer)
-    }
-
-    pub fn drop(handle: *mut libusb_transfer) {
-        unsafe {
-            libusb_cancel_transfer(handle);
-            libusb_free_transfer(handle);
-        }
     }
 
     pub fn submit_transfer(
@@ -144,29 +145,39 @@ extern "system" fn libusb_transfer_callback_function(transfer_handle: *mut libus
         >((*transfer_handle).user_data))
     };
 
-    let state = transfer.state.clone();
-    let mut state = state.lock().unwrap();
+    let destroy_unhandled_transfer = {
+        let state = transfer.state.clone();
+        let mut state = state.lock().unwrap();
 
-    if state.is_transfer_dropped {
-        UnhandledTransfer::drop(state.handle);
-    } else {
-        state.status = OperationStatus::Completed;
+        if state.is_transfer_dropped {
+            unsafe {
+                libusb_cancel_transfer(state.handle);
+            }
 
-        let status = unsafe { (*state.handle).status };
-        if let Some(ref mut callback) = state.callback {
-            let status = TransferStatus::from_libusb(status);
-            let actual_length = unsafe { (*transfer_handle).actual_length };
-            callback(
-                status,
-                transfer
-                    .data
-                    .iter()
-                    .copied()
-                    .take(actual_length as usize)
-                    .collect(),
-            );
+            true
+        } else {
+            state.status = OperationStatus::Completed;
+
+            let staus = unsafe { (*state.handle).status };
+            if let Some(ref mut callback) = state.callback {
+                let status = TransferStatus::from_libusb(staus);
+                let actual_length = unsafe { (*transfer_handle).actual_length };
+                callback(
+                    status,
+                    transfer
+                        .data
+                        .iter()
+                        .copied()
+                        .take(actual_length as usize)
+                        .collect(),
+                );
+            }
+
+            false
         }
+    };
 
+    if !destroy_unhandled_transfer {
         // forget about transfer
         Box::into_raw(transfer);
     }

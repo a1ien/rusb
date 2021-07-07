@@ -60,15 +60,19 @@ pub struct Transfer<'a> {
 
 impl<'a> Drop for Transfer<'a> {
     fn drop(&mut self) {
-        let mut state = unsafe { (*self.unhandled_transfer).state.lock().unwrap() };
-        match state.status {
-            OperationStatus::Busy => {
-                state.is_transfer_dropped = true;
+        let destroy_unhandled_transfer = {
+            let mut state = unsafe { (*self.unhandled_transfer).state.lock().unwrap() };
+            match state.status {
+                OperationStatus::Busy => {
+                    state.is_transfer_dropped = true;
+                    false
+                }
+                OperationStatus::Completed => true,
             }
-            OperationStatus::Completed => {
-                UnhandledTransfer::drop(state.handle);
-                unsafe { Box::from_raw(self.unhandled_transfer) };
-            }
+        };
+
+        if destroy_unhandled_transfer {
+            unsafe { Box::from_raw(self.unhandled_transfer) };
         }
     }
 }
