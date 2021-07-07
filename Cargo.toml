@@ -23,6 +23,7 @@ members = ["libusb1-sys"]
 [dependencies]
 libusb1-sys = { path = "libusb1-sys", version = "0.5.0" }
 libc = "0.2"
+static_assertions = "1.1.0"
 
 [dev-dependencies]
 regex = "1"
