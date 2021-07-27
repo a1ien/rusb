@@ -3,6 +3,7 @@ use std::fmt;
 use libusb1_sys::*;
 
 use crate::fields::Version;
+use std::num::NonZeroU8;
 
 /// Describes a device.
 pub struct DeviceDescriptor {
@@ -21,27 +22,18 @@ impl DeviceDescriptor {
     }
 
     /// Returns the index of the string descriptor that contains the manufacturer name.
-    pub fn manufacturer_string_index(&self) -> Option<u8> {
-        match self.descriptor.iManufacturer {
-            0 => None,
-            n => Some(n),
-        }
+    pub fn manufacturer_string_index(&self) -> Option<NonZeroU8> {
+        NonZeroU8::new(self.descriptor.iManufacturer)
     }
 
     /// Returns the index of the string descriptor that contains the product name.
-    pub fn product_string_index(&self) -> Option<u8> {
-        match self.descriptor.iProduct {
-            0 => None,
-            n => Some(n),
-        }
+    pub fn product_string_index(&self) -> Option<NonZeroU8> {
+        NonZeroU8::new(self.descriptor.iProduct)
     }
 
     /// Returns the index of the string descriptor that contains the device's serial number.
-    pub fn serial_number_string_index(&self) -> Option<u8> {
-        match self.descriptor.iSerialNumber {
-            0 => None,
-            n => Some(n),
-        }
+    pub fn serial_number_string_index(&self) -> Option<NonZeroU8> {
+        NonZeroU8::new(self.descriptor.iSerialNumber)
     }
 
     /// Returns the device's class code.
@@ -132,7 +124,9 @@ mod test {
     fn it_has_manufacturer_string_index() {
         assert_eq!(
             Some(42),
-            super::from_libusb(device_descriptor!(iManufacturer: 42)).manufacturer_string_index()
+            super::from_libusb(device_descriptor!(iManufacturer: 42))
+                .manufacturer_string_index()
+                .map(Into::into)
         );
     }
 
@@ -148,7 +142,9 @@ mod test {
     fn it_has_product_string_index() {
         assert_eq!(
             Some(42),
-            super::from_libusb(device_descriptor!(iProduct: 42)).product_string_index()
+            super::from_libusb(device_descriptor!(iProduct: 42))
+                .product_string_index()
+                .map(Into::into)
         );
     }
 
@@ -164,7 +160,9 @@ mod test {
     fn it_has_serial_number_string_index() {
         assert_eq!(
             Some(42),
-            super::from_libusb(device_descriptor!(iSerialNumber: 42)).serial_number_string_index()
+            super::from_libusb(device_descriptor!(iSerialNumber: 42))
+                .serial_number_string_index()
+                .map(Into::into)
         );
     }
 

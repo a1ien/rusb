@@ -3,6 +3,7 @@ use std::{fmt, slice};
 use libusb1_sys::*;
 
 use crate::interface_descriptor::{self, Interface};
+use std::num::NonZeroU8;
 
 /// Describes a configuration.
 pub struct ConfigDescriptor {
@@ -42,13 +43,8 @@ impl ConfigDescriptor {
     }
 
     /// Returns the index of the string descriptor that describes the configuration.
-    pub fn description_string_index(&self) -> Option<u8> {
-        unsafe {
-            match (*self.descriptor).iConfiguration {
-                0 => None,
-                n => Some(n),
-            }
-        }
+    pub fn description_string_index(&self) -> Option<NonZeroU8> {
+        NonZeroU8::new(unsafe { (*self.descriptor).iConfiguration })
     }
 
     /// Returns the number of interfaces for this configuration.
@@ -185,7 +181,7 @@ mod test {
     #[test]
     fn it_has_description_string_index() {
         with_config!(config: config_descriptor!(iConfiguration: 42) => {
-            assert_eq!(Some(42), config.description_string_index());
+            assert_eq!(Some(42), config.description_string_index().map(Into::into));
         });
     }
 
