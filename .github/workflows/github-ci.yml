@@ -41,7 +41,7 @@ jobs:
 
       - name: Install
         if: ${{ contains(matrix.os, 'ubuntu') }}
-        run: sudo apt-get install --no-install-recommends -y ${{ matrix.apt }}
+        run: sudo apt-get update && sudo apt-get install --no-install-recommends -y ${{ matrix.apt }}
 
       - name: Install additional rust toolchain
         if: ${{ matrix.rust != '' }}
