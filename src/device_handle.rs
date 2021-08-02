@@ -691,32 +691,41 @@ impl<T: UsbContext> DeviceHandle<T> {
         index: u8,
         timeout: Duration,
     ) -> crate::Result<String> {
-        let mut buf = [0u8; 255];
+        let mut buf = [0u16; 128];
 
-        let len = self.read_control(
-            request_type(Direction::In, RequestType::Standard, Recipient::Device),
-            LIBUSB_REQUEST_GET_DESCRIPTOR,
-            u16::from(LIBUSB_DT_STRING) << 8 | u16::from(index),
-            language.lang_id(),
-            &mut buf,
-            timeout,
-        )?;
+        let len = {
+            // SAFETY: since we create slice from existing slice pointer valid
+            // alignment of [u8] less or equal to the [u16]
+            // size is less then allocated buffer (128 * 2 = 256 => 256 < 255)
+            let buf = unsafe {
+                std::slice::from_raw_parts_mut(
+                    buf.as_mut_ptr().cast::<u8>(),
+                    255, // Some devices choke on size > 255
+                )
+            };
 
-        if len < 2 || buf[0] != len as u8 || len & 0x01 != 0 {
-            return Err(Error::BadDescriptor);
-        }
+            let len = self.read_control(
+                request_type(Direction::In, RequestType::Standard, Recipient::Device),
+                LIBUSB_REQUEST_GET_DESCRIPTOR,
+                u16::from(LIBUSB_DT_STRING) << 8 | u16::from(index),
+                language.lang_id(),
+                buf,
+                timeout,
+            )?;
+
+            if len < 2 || buf[0] != len as u8 || len & 0x01 != 0 {
+                return Err(Error::BadDescriptor);
+            }
+
+            len
+        };
 
         if len == 2 {
             return Ok(String::new());
         }
 
-        let utf16: Vec<u16> = buf[..len]
-            .chunks(2)
-            .skip(1)
-            .map(|chunk| u16::from(chunk[0]) | u16::from(chunk[1]) << 8)
-            .collect();
-
-        String::from_utf16(&utf16).map_err(|_| Error::Other)
+        // len in bytes, skip first element(it's contain descriptor type and len)
+        String::from_utf16(&buf[1..(len / 2)]).map_err(|_| Error::Other)
     }
 
     /// Reads the device's manufacturer string descriptor (ascii).
