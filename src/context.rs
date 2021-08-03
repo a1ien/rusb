@@ -190,6 +190,15 @@ pub trait UsbContext: Clone + Sized + Send + Sync {
         }
     }
 
+    /// Interrupt any active thread that is handling events (for example with
+    /// [handle_events][`Self::handle_events()`]).
+    #[doc(alias = "libusb_interrupt_event_handler")]
+    fn interrupt_handle_events(&self) {
+        unsafe {
+            libusb_interrupt_event_handler(self.as_raw())
+        }
+    }
+
     fn next_timeout(&self) -> crate::Result<Option<Duration>> {
         let mut tv = timeval { tv_sec: 0, tv_usec: 0 };
         let n = unsafe {

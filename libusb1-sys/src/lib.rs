@@ -426,6 +426,7 @@ extern "system" {
         completed: *mut c_int,
     ) -> c_int;
     pub fn libusb_handle_events_locked(context: *mut libusb_context, tv: *const timeval) -> c_int;
+    pub fn libusb_interrupt_event_handler(context: *mut libusb_context);
 
     pub fn libusb_try_lock_events(context: *mut libusb_context) -> c_int;
     pub fn libusb_lock_events(context: *mut libusb_context);
