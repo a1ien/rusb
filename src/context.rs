@@ -50,6 +50,7 @@ pub trait Hotplug<T: UsbContext>: Send {
 }
 
 #[derive(Debug)]
+#[must_use = "USB hotplug callbacks will be deregistered if the registration is dropped"]
 pub struct Registration<T: UsbContext> {
     context: T,
     handle: libusb_hotplug_callback_handle,
@@ -141,9 +142,15 @@ pub trait UsbContext: Clone + Sized + Send + Sync {
     /// cause your callback's `device_arrived()` method to be called for them.
     ///
     /// The callback will remain registered until the returned [Registration] is
-    /// dropped, which can be done explicitly with
-    /// [hotplug_unregister_callback][Self::hotplug_unregister_callback()].
-    #[must_use = "USB hotplug callbacks will be deregistered if the registration is dropped"]
+    /// dropped, which can be done explicitly with [Context::hotplug_unregister_callback].
+    ///
+    /// When handling a [Hotplug::device_arrived] event it is considered safe to call
+    /// any `rusb` function that takes a [Device]. It also safe to open a device and
+    /// submit **asynchronous** transfers.
+    /// However, most other functions that take a [DeviceHandle] are **not safe** to call.
+    /// Examples of such functions are any of the synchronous API functions or
+    /// the blocking functions that retrieve various USB descriptors.
+    /// These functions must be used outside of the context of the [Hotplug] functions.
     fn hotplug_register_callback(
         &self,
         vendor_id: Option<u16>,
@@ -221,22 +228,21 @@ pub trait UsbContext: Clone + Sized + Send + Sync {
     /// [handle_events][`Self::handle_events()`]).
     #[doc(alias = "libusb_interrupt_event_handler")]
     fn interrupt_handle_events(&self) {
-        unsafe {
-            libusb_interrupt_event_handler(self.as_raw())
-        }
+        unsafe { libusb_interrupt_event_handler(self.as_raw()) }
     }
 
     fn next_timeout(&self) -> crate::Result<Option<Duration>> {
-        let mut tv = timeval { tv_sec: 0, tv_usec: 0 };
-        let n = unsafe {
-            libusb_get_next_timeout(self.as_raw(), &mut tv)
+        let mut tv = timeval {
+            tv_sec: 0,
+            tv_usec: 0,
         };
+        let n = unsafe { libusb_get_next_timeout(self.as_raw(), &mut tv) };
 
         if n < 0 {
             Err(error::from_libusb(n as c_int))
         } else if n == 0 {
             Ok(None)
-        }  else {
+        } else {
             let duration = Duration::new(tv.tv_sec as _, (tv.tv_usec * 1000) as _);
             Ok(Some(duration))
         }
