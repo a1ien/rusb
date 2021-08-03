@@ -105,11 +105,24 @@ pub trait UsbContext: Clone + Sized + Send + Sync {
         }
     }
 
-    fn register_callback(
+    /// Register a callback to be called on hotplug events. The callback's
+    /// [Hotplug::device_arrived] method is called when a new device is added to
+    /// the bus, and [Hotplug::device_left] is called when it is removed.
+    ///
+    /// Devices can optionally be filtered by vendor ([vendor_id]) and device id
+    /// ([device_id]). If [enumerate] is `true`, then devices that are already
+    /// connected will cause your callback's `device_arrived()` method to be
+    /// called for them.
+    ///
+    /// The callback will remain registered until the returned [Registration] is
+    /// dropped, which can be done explicitly with [hotplug_unregister_callback].
+    #[must_use = "USB hotplug callbacks will be deregistered if the registration is dropped"]
+    fn hotplug_register_callback(
         &self,
         vendor_id: Option<u16>,
         product_id: Option<u16>,
         class: Option<u8>,
+        enumerate: bool,
         callback: Box<dyn Hotplug<Self>>,
     ) -> crate::Result<Registration<Self>> {
         let mut handle: libusb_hotplug_callback_handle = 0;
@@ -117,12 +130,20 @@ pub trait UsbContext: Clone + Sized + Send + Sync {
             context: self.clone(),
             hotplug: callback,
         };
+
+        let hotplug_flags = if enumerate {
+            LIBUSB_HOTPLUG_ENUMERATE
+        } else {
+            LIBUSB_HOTPLUG_NO_FLAGS
+        };
+
         let to = Box::new(callback);
+
         let n = unsafe {
             libusb_hotplug_register_callback(
                 self.as_raw(),
                 LIBUSB_HOTPLUG_EVENT_DEVICE_ARRIVED | LIBUSB_HOTPLUG_EVENT_DEVICE_LEFT,
-                LIBUSB_HOTPLUG_NO_FLAGS,
+                hotplug_flags,
                 vendor_id
                     .map(c_int::from)
                     .unwrap_or(LIBUSB_HOTPLUG_MATCH_ANY),
@@ -145,7 +166,9 @@ pub trait UsbContext: Clone + Sized + Send + Sync {
         }
     }
 
-    fn unregister_callback(&self, _reg: Registration<Self>) {}
+    /// Unregisters the callback corresponding to the given registration. The
+    /// same thing can be achieved by dropping the registration.
+    fn hotplug_unregister_callback(&self, _reg: Registration<Self>) {}
 
     fn handle_events(&self, timeout: Option<Duration>) -> crate::Result<()> {
         let n = unsafe {
