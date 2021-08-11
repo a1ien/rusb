@@ -19,12 +19,12 @@ type MicroSeconds = ::libc::suseconds_t;
 pub struct GlobalContext {}
 
 /// A `libusb` context.
-#[derive(Clone, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Context {
     context: Arc<ContextInner>,
 }
 
-#[derive(Eq, PartialEq)]
+#[derive(Debug, Eq, PartialEq)]
 struct ContextInner {
     inner: ptr::NonNull<libusb_context>,
 }
