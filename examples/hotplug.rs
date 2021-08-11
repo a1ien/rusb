@@ -1,5 +1,4 @@
-use rusb::{Context, Device, UsbContext};
-use std::option::Option::Some;
+use rusb::{Context, Device, HotplugBuilder, UsbContext};
 
 struct HotPlugHandler;
 
@@ -13,22 +12,30 @@ impl<T: UsbContext> rusb::Hotplug<T> for HotPlugHandler {
     }
 }
 
+impl Drop for HotPlugHandler {
+    fn drop(&mut self) {
+        println!("HotPlugHandler dropped");
+    }
+}
+
 fn main() -> rusb::Result<()> {
     if rusb::has_hotplug() {
         let context = Context::new()?;
-        let mut reg = Some(context.hotplug_register_callback(
-            None,
-            None,
-            None,
-            true,
-            Box::new(HotPlugHandler {}),
-        )?);
+
+        let mut reg = Some(
+            HotplugBuilder::new()
+                .enumerate(true)
+                .register(&context, Box::new(HotPlugHandler {}))?,
+        );
+
         loop {
             context.handle_events(None).unwrap();
             if let Some(reg) = reg.take() {
-                context.hotplug_unregister_callback(reg);
+                context.unregister_callback(reg);
+                break;
             }
         }
+        Ok(())
     } else {
         eprint!("libusb hotplug api unsupported");
         Ok(())

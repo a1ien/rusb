@@ -5,7 +5,7 @@ pub use libusb1_sys::constants;
 
 pub use crate::{
     config_descriptor::{ConfigDescriptor, Interfaces},
-    context::{Context, GlobalContext, Hotplug, LogLevel, Registration, UsbContext},
+    context::{Context, GlobalContext, LogLevel, UsbContext},
     device::Device,
     device_descriptor::DeviceDescriptor,
     device_handle::DeviceHandle,
@@ -16,6 +16,7 @@ pub use crate::{
         request_type, Direction, Recipient, RequestType, Speed, SyncType, TransferType, UsageType,
         Version,
     },
+    hotplug::{Hotplug, HotplugBuilder, Registration},
     interface_descriptor::{
         EndpointDescriptors, Interface, InterfaceDescriptor, InterfaceDescriptors,
     },
@@ -41,6 +42,7 @@ mod config_descriptor;
 mod device_descriptor;
 mod endpoint_descriptor;
 mod fields;
+mod hotplug;
 mod interface_descriptor;
 mod language;
 mod options;
