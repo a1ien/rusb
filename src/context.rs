@@ -109,13 +109,13 @@ pub trait UsbContext: Clone + Sized + Send + Sync {
     /// [Hotplug::device_arrived] method is called when a new device is added to
     /// the bus, and [Hotplug::device_left] is called when it is removed.
     ///
-    /// Devices can optionally be filtered by vendor ([vendor_id]) and device id
-    /// ([device_id]). If [enumerate] is `true`, then devices that are already
-    /// connected will cause your callback's `device_arrived()` method to be
-    /// called for them.
+    /// Devices can optionally be filtered by `vendor_id` and `device_id`. If
+    /// `enumerate` is `true`, then devices that are already connected will
+    /// cause your callback's `device_arrived()` method to be called for them.
     ///
     /// The callback will remain registered until the returned [Registration] is
-    /// dropped, which can be done explicitly with [hotplug_unregister_callback].
+    /// dropped, which can be done explicitly with
+    /// [hotplug_unregister_callback][Self::hotplug_unregister_callback()].
     #[must_use = "USB hotplug callbacks will be deregistered if the registration is dropped"]
     fn hotplug_register_callback(
         &self,
@@ -187,6 +187,15 @@ pub trait UsbContext: Clone + Sized + Send + Sync {
             Err(error::from_libusb(n as c_int))
         } else {
             Ok(())
+        }
+    }
+
+    /// Interrupt any active thread that is handling events (for example with
+    /// [handle_events][`Self::handle_events()`]).
+    #[doc(alias = "libusb_interrupt_event_handler")]
+    fn interrupt_handle_events(&self) {
+        unsafe {
+            libusb_interrupt_event_handler(self.as_raw())
         }
     }
 
