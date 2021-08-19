@@ -70,7 +70,7 @@ impl<T: UsbContext> Drop for Registration<T> {
     }
 }
 
-pub trait UsbContext: Clone + Sized + Send + Sync {
+pub trait UsbContext: Clone + Send + Sync {
     /// Get the raw libusb_context pointer, for advanced use in unsafe code.
     fn as_raw(&self) -> *mut libusb_context;
 
