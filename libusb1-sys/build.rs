@@ -103,9 +103,11 @@ fn make_source() {
 
     if std::env::var("CARGO_CFG_TARGET_OS") == Ok("macos".into()) {
         base_config.define("OS_DARWIN", Some("1"));
+        base_config.define("TARGET_OS_OSX", Some("1"));
         base_config.file(libusb_source.join("libusb/os/darwin_usb.c"));
         link_framework("CoreFoundation");
         link_framework("IOKit");
+        link_framework("Security");
         link("objc", false);
     }
 
