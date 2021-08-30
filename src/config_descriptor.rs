@@ -71,14 +71,11 @@ impl ConfigDescriptor {
     }
 
     /// Returns the unknown 'extra' bytes that libusb does not understand.
-    pub fn extra(&self) -> Option<&[u8]> {
+    pub fn extra(&self) -> &[u8] {
         unsafe {
             match (*self.descriptor).extra_length {
-                len if len > 0 => Some(slice::from_raw_parts(
-                    (*self.descriptor).extra,
-                    len as usize,
-                )),
-                _ => None,
+                len if len > 0 => slice::from_raw_parts((*self.descriptor).extra, len as usize),
+                _ => &[],
             }
         }
     }

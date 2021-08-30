@@ -149,8 +149,8 @@ fn print_config<T: UsbContext>(config_desc: &ConfigDescriptor, handle: &mut Opti
     println!("      Remote Wakeup    {:>5}", config_desc.remote_wakeup());
     println!("    bMaxPower           {:4}mW", config_desc.max_power());
 
-    if let Some(extra) = config_desc.extra() {
-        println!("    {:?}", extra);
+    if !config_desc.extra().is_empty() {
+        println!("    {:?}", config_desc.extra());
     } else {
         println!("    no extra data");
     }
@@ -194,8 +194,8 @@ fn print_interface<T: UsbContext>(
             .unwrap_or(String::new()))
     );
 
-    if let Some(extra) = interface_desc.extra() {
-        println!("    {:?}", extra);
+    if interface_desc.extra().is_empty() {
+        println!("    {:?}", interface_desc.extra());
     } else {
         println!("    no extra data");
     }
