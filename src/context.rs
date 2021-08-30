@@ -2,6 +2,9 @@ use libc::{c_int, c_void, timeval};
 
 use std::{mem, ptr, sync::Arc, sync::Once, time::Duration};
 
+#[cfg(unix)]
+use std::os::unix::io::RawFd;
+
 use crate::{device::Device, device_handle::DeviceHandle, device_list::DeviceList, error};
 use libusb1_sys::{constants::*, *};
 
@@ -96,6 +99,30 @@ pub trait UsbContext: Clone + Sized + Send + Sync {
             unsafe { libusb_open_device_with_vid_pid(self.as_raw(), vendor_id, product_id) };
         let ptr = std::ptr::NonNull::new(handle)?;
         Some(unsafe { DeviceHandle::from_libusb(self.clone(), ptr) })
+    }
+
+    /// Opens the device with a pre-opened file descriptor.
+    ///
+    /// This is UNIX-only and platform-specific. It is currently working with
+    /// Linux/Android, but might work with other systems in the future.
+    ///
+    /// Note: This function does not take ownership of the specified file
+    /// descriptor. The caller has the responsibility of keeping it opened for
+    /// as long as the device handle.
+    #[cfg(unix)]
+    #[doc(alias = "libusb_wrap_sys_device")]
+    unsafe fn open_device_with_fd(&self, fd: RawFd) -> crate::Result<DeviceHandle<Self>> {
+        let mut handle = mem::MaybeUninit::<*mut libusb_device_handle>::uninit();
+
+        match libusb_wrap_sys_device(self.as_raw(), fd as _, handle.as_mut_ptr()) {
+            0 => {
+                let ptr =
+                    std::ptr::NonNull::new(handle.assume_init()).ok_or(crate::Error::NoDevice)?;
+
+                Ok(DeviceHandle::from_libusb(self.clone(), ptr))
+            }
+            err => Err(error::from_libusb(err)),
+        }
     }
 
     /// Sets the log level of a `libusb` for context.
