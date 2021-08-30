@@ -145,7 +145,7 @@ impl Version {
     /// Extracts a version from a binary coded decimal (BCD) field. BCD fields exist in USB
     /// descriptors as 16-bit integers encoding a version as `0xJJMN`, where `JJ` is the major
     /// version, `M` is the minor version, and `N` is the sub minor version. For example, 2.0 is
-    /// endoded as `0x0200` and 1.1 is encoded as `0x0110`.
+    /// encoded as `0x0200` and 1.1 is encoded as `0x0110`.
     pub fn from_bcd(mut raw: u16) -> Self {
         let sub_minor: u8 = (raw & 0x000F) as u8;
         raw >>= 4;
