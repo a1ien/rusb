@@ -142,10 +142,10 @@ pub const LIBUSB_REQUEST_SET_SEL: u8 = 0x30;
 pub const LIBUSB_SET_ISOCH_DELAY: u8 = 0x31;
 
 // libusb_hotplug
-pub const LIBUSB_HOTPLUG_NO_FLAGS: libusb_hotplug_flag = 0;
-pub const LIBUSB_HOTPLUG_ENUMERATE: libusb_hotplug_flag = 1 << 0;
-pub const LIBUSB_HOTPLUG_EVENT_DEVICE_ARRIVED: libusb_hotplug_event = 0x01;
-pub const LIBUSB_HOTPLUG_EVENT_DEVICE_LEFT: libusb_hotplug_event = 0x02;
+pub const LIBUSB_HOTPLUG_NO_FLAGS: c_int = 0;
+pub const LIBUSB_HOTPLUG_ENUMERATE: c_int = 1 << 0;
+pub const LIBUSB_HOTPLUG_EVENT_DEVICE_ARRIVED: c_int = 0x01;
+pub const LIBUSB_HOTPLUG_EVENT_DEVICE_LEFT: c_int = 0x02;
 pub const LIBUSB_HOTPLUG_MATCH_ANY: c_int = -1;
 
 pub const LIBUSB_OPTION_LOG_LEVEL: u32 = 0x00;

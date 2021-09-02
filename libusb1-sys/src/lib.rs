@@ -448,8 +448,8 @@ extern "system" {
     );
     pub fn libusb_hotplug_register_callback(
         ctx: *mut libusb_context,
-        events: libusb_hotplug_event,
-        flags: libusb_hotplug_flag,
+        events: c_int,
+        flags: c_int,
         vendor_id: c_int,
         product_id: c_int,
         dev_class: c_int,
