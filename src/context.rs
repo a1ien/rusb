@@ -1,11 +1,12 @@
-use libc::{c_int, c_void, timeval};
+use libc::{c_int, timeval};
 
 use std::{mem, ptr, sync::Arc, sync::Once, time::Duration};
 
 #[cfg(unix)]
 use std::os::unix::io::RawFd;
 
-use crate::{device::Device, device_handle::DeviceHandle, device_list::DeviceList, error};
+use crate::hotplug::{Hotplug, HotplugBuilder, Registration};
+use crate::{device_handle::DeviceHandle, device_list::DeviceList, error};
 use libusb1_sys::{constants::*, *};
 
 #[cfg(windows)]
@@ -43,35 +44,6 @@ impl Drop for ContextInner {
 
 unsafe impl Sync for Context {}
 unsafe impl Send for Context {}
-
-pub trait Hotplug<T: UsbContext>: Send {
-    fn device_arrived(&mut self, device: Device<T>);
-    fn device_left(&mut self, device: Device<T>);
-}
-
-#[derive(Debug)]
-pub struct Registration<T: UsbContext> {
-    context: T,
-    handle: libusb_hotplug_callback_handle,
-}
-
-impl<T: UsbContext> Registration<T> {
-    fn get_handle(&self) -> libusb_hotplug_callback_handle {
-        self.handle
-    }
-}
-
-impl<T: UsbContext> Drop for Registration<T> {
-    fn drop(&mut self) {
-        let _call_back: Box<CallbackData<T>>;
-        #[cfg(libusb_hotplug_get_user_data)]
-        unsafe {
-            let user_data = libusb_hotplug_get_user_data(self.context.as_raw(), self.get_handle());
-            _call_back = Box::<CallbackData<T>>::from_raw(user_data as _);
-        }
-        unsafe { libusb_hotplug_deregister_callback(self.context.as_raw(), self.get_handle()) }
-    }
-}
 
 pub trait UsbContext: Clone + Sized + Send + Sync {
     /// Get the raw libusb_context pointer, for advanced use in unsafe code.
@@ -136,66 +108,46 @@ pub trait UsbContext: Clone + Sized + Send + Sync {
     /// [Hotplug::device_arrived] method is called when a new device is added to
     /// the bus, and [Hotplug::device_left] is called when it is removed.
     ///
-    /// Devices can optionally be filtered by `vendor_id` and `device_id`. If
-    /// `enumerate` is `true`, then devices that are already connected will
-    /// cause your callback's `device_arrived()` method to be called for them.
+    /// Devices can optionally be filtered by vendor (`vendor_id`) and device id
+    /// (`product_id`).
     ///
     /// The callback will remain registered until the returned [Registration] is
-    /// dropped, which can be done explicitly with
-    /// [hotplug_unregister_callback][Self::hotplug_unregister_callback()].
-    #[must_use = "USB hotplug callbacks will be deregistered if the registration is dropped"]
-    fn hotplug_register_callback(
+    /// dropped, which can be done explicitly with [Context::unregister_callback].
+    ///
+    /// When handling a [Hotplug::device_arrived] event it is considered safe to call
+    /// any `rusb` function that takes a [crate::Device]. It also safe to open a device and
+    /// submit **asynchronous** transfers.
+    /// However, most other functions that take a [DeviceHandle] are **not safe** to call.
+    /// Examples of such functions are any of the synchronous API functions or
+    /// the blocking functions that retrieve various USB descriptors.
+    /// These functions must be used outside of the context of the [Hotplug] functions.
+    #[deprecated(since = "0.9.0", note = "Use HotplugBuilder")]
+    fn register_callback(
         &self,
         vendor_id: Option<u16>,
         product_id: Option<u16>,
         class: Option<u8>,
-        enumerate: bool,
         callback: Box<dyn Hotplug<Self>>,
     ) -> crate::Result<Registration<Self>> {
-        let mut handle: libusb_hotplug_callback_handle = 0;
-        let callback = CallbackData {
-            context: self.clone(),
-            hotplug: callback,
-        };
+        let mut builder = HotplugBuilder::new();
 
-        let hotplug_flags = if enumerate {
-            LIBUSB_HOTPLUG_ENUMERATE
-        } else {
-            LIBUSB_HOTPLUG_NO_FLAGS
-        };
-
-        let to = Box::new(callback);
-
-        let n = unsafe {
-            libusb_hotplug_register_callback(
-                self.as_raw(),
-                LIBUSB_HOTPLUG_EVENT_DEVICE_ARRIVED | LIBUSB_HOTPLUG_EVENT_DEVICE_LEFT,
-                hotplug_flags,
-                vendor_id
-                    .map(c_int::from)
-                    .unwrap_or(LIBUSB_HOTPLUG_MATCH_ANY),
-                product_id
-                    .map(c_int::from)
-                    .unwrap_or(LIBUSB_HOTPLUG_MATCH_ANY),
-                class.map(c_int::from).unwrap_or(LIBUSB_HOTPLUG_MATCH_ANY),
-                hotplug_callback::<Self>,
-                Box::into_raw(to) as *mut c_void,
-                &mut handle,
-            )
-        };
-        if n < 0 {
-            Err(error::from_libusb(n))
-        } else {
-            Ok(Registration {
-                context: self.clone(),
-                handle,
-            })
+        let mut builder = &mut builder;
+        if let Some(vendor_id) = vendor_id {
+            builder = builder.vendor_id(vendor_id)
         }
+        if let Some(product_id) = product_id {
+            builder = builder.product_id(product_id)
+        }
+        if let Some(class) = class {
+            builder = builder.class(class)
+        }
+
+        builder.register(self, callback)
     }
 
     /// Unregisters the callback corresponding to the given registration. The
     /// same thing can be achieved by dropping the registration.
-    fn hotplug_unregister_callback(&self, _reg: Registration<Self>) {}
+    fn unregister_callback(&self, _reg: Registration<Self>) {}
 
     fn handle_events(&self, timeout: Option<Duration>) -> crate::Result<()> {
         let n = unsafe {
@@ -221,22 +173,21 @@ pub trait UsbContext: Clone + Sized + Send + Sync {
     /// [handle_events][`Self::handle_events()`]).
     #[doc(alias = "libusb_interrupt_event_handler")]
     fn interrupt_handle_events(&self) {
-        unsafe {
-            libusb_interrupt_event_handler(self.as_raw())
-        }
+        unsafe { libusb_interrupt_event_handler(self.as_raw()) }
     }
 
     fn next_timeout(&self) -> crate::Result<Option<Duration>> {
-        let mut tv = timeval { tv_sec: 0, tv_usec: 0 };
-        let n = unsafe {
-            libusb_get_next_timeout(self.as_raw(), &mut tv)
+        let mut tv = timeval {
+            tv_sec: 0,
+            tv_usec: 0,
         };
+        let n = unsafe { libusb_get_next_timeout(self.as_raw(), &mut tv) };
 
         if n < 0 {
             Err(error::from_libusb(n as c_int))
         } else if n == 0 {
             Ok(None)
-        }  else {
+        } else {
             let duration = Duration::new(tv.tv_sec as _, (tv.tv_usec * 1000) as _);
             Ok(Some(duration))
         }
@@ -271,11 +222,6 @@ impl UsbContext for GlobalContext {
     }
 }
 
-struct CallbackData<T: UsbContext> {
-    context: T,
-    hotplug: Box<dyn Hotplug<T>>,
-}
-
 impl Context {
     /// Opens a new `libusb` context.
     pub fn new() -> crate::Result<Self> {
@@ -301,32 +247,6 @@ impl Context {
         }
 
         Ok(this)
-    }
-}
-
-extern "system" fn hotplug_callback<T: UsbContext>(
-    _ctx: *mut libusb_context,
-    device: *mut libusb_device,
-    event: libusb_hotplug_event,
-    user_data: *mut c_void,
-) -> c_int {
-    let ret = std::panic::catch_unwind(|| {
-        let reg = unsafe { &mut *(user_data as *mut CallbackData<T>) };
-        let device = unsafe {
-            Device::from_libusb(
-                reg.context.clone(),
-                std::ptr::NonNull::new_unchecked(device),
-            )
-        };
-        match event {
-            LIBUSB_HOTPLUG_EVENT_DEVICE_ARRIVED => reg.hotplug.device_arrived(device),
-            LIBUSB_HOTPLUG_EVENT_DEVICE_LEFT => reg.hotplug.device_left(device),
-            _ => (),
-        };
-    });
-    match ret {
-        Ok(_) => 0,
-        Err(_) => 1,
     }
 }
 
