@@ -70,6 +70,7 @@ pub const LIBUSB_SPEED_LOW: c_int = 1;
 pub const LIBUSB_SPEED_FULL: c_int = 2;
 pub const LIBUSB_SPEED_HIGH: c_int = 3;
 pub const LIBUSB_SPEED_SUPER: c_int = 4;
+pub const LIBUSB_SPEED_SUPER_PLUS: c_int = 5;
 
 // libusb_descriptor_type
 pub const LIBUSB_DT_DEVICE: u8 = 0x01;

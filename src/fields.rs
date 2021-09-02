@@ -5,6 +5,7 @@ use libusb1_sys::constants::*;
 /// - [libusb_supported_speed](http://libusb.sourceforge.net/api-1.0/group__libusb__dev.html#ga1454797ecc0de4d084c1619c420014f6)
 /// - [USB release versions](https://en.wikipedia.org/wiki/USB#Release_versions)
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
+#[non_exhaustive]
 pub enum Speed {
     /// The operating system doesn't know the device speed.
     Unknown,
@@ -20,11 +21,15 @@ pub enum Speed {
 
     /// The device is operating at super speed (5 Gbps).
     Super,
+
+    /// The device is operating at super speed (10 Gbps).
+    SuperPlus,
 }
 
 #[doc(hidden)]
 pub(crate) fn speed_from_libusb(n: c_int) -> Speed {
     match n {
+        LIBUSB_SPEED_SUPER_PLUS => Speed::SuperPlus,
         LIBUSB_SPEED_SUPER => Speed::Super,
         LIBUSB_SPEED_HIGH => Speed::High,
         LIBUSB_SPEED_FULL => Speed::Full,
