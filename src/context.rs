@@ -149,6 +149,10 @@ pub trait UsbContext: Clone + Sized + Send + Sync {
     /// same thing can be achieved by dropping the registration.
     fn unregister_callback(&self, _reg: Registration<Self>) {}
 
+    /// Handle any pending events.
+    /// If timeout less then 1 microseconds then this function will handle any already-pending
+    /// events and then immediately return in non-blocking style.
+    /// If timeout is [None] then function will handle any pending events in blocking mode.
     fn handle_events(&self, timeout: Option<Duration>) -> crate::Result<()> {
         let n = unsafe {
             match timeout {
