@@ -234,10 +234,11 @@ fn print_endpoint(endpoint_desc: &EndpointDescriptor) {
 
 fn get_speed(speed: Speed) -> &'static str {
     match speed {
+        Speed::SuperPlus => "10000 Mbps",
         Speed::Super => "5000 Mbps",
         Speed::High => " 480 Mbps",
         Speed::Full => "  12 Mbps",
         Speed::Low => " 1.5 Mbps",
-        Speed::Unknown => "(unknown)",
+        _ => "(unknown)",
     }
 }
