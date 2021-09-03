@@ -1,7 +1,7 @@
 # Changes
 
 
-## Unreleased
+## 0.6.0
 * Allow null function pointers for libusb_set_log_cb() [#74]
 * Allow null function pointers for libusb_set_pollfd_notifiers() [#71]
 * Fix building of recent libusb on macOS [#108]
