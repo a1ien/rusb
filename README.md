@@ -46,12 +46,9 @@ fn main() {
 }
 ```
 
-## Contributors
-* [dcuddeback](https://github.com/dcuddeback)
-* [nibua-r](https://github.com/nibua-r)
-* [kevinmehall](https://github.com/kevinmehall)
-
 ## License
-Copyright © 2015 David Cuddeback
-
 Distributed under the [MIT License](LICENSE).
+
+### License note.
+If you link native `libusb` (by example using `vendored` features) library statically then
+you must follow [GNU LGPL](https://github.com/libusb/libusb/blob/master/COPYING) from libusb.
