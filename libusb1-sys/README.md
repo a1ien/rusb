@@ -86,8 +86,6 @@ help is the information already available for `libusb`:
 
 
 ## License
-Copyright © 2015 David Cuddeback
-
 Distributed under the [MIT License](LICENSE).
 
 ### License note.
