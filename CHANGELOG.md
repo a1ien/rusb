@@ -1,6 +1,6 @@
 # Changes
 
-## Unreleased
+## 0.9.0
 * Re-export libusb1-sys as ffi [#75]
 * impl Debug for DeviceHandle [#78]
 * Add bind to libusb_get_next_timeout [#95]
