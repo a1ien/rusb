@@ -176,6 +176,19 @@ fn make_source() {
 }
 
 fn main() {
+    if std::env::var("EXTERNAL_LIBUSB") == Ok("1".into()) {
+        let include_dir = std::env::var("EXTERNAL_LIBUSB_INCLUDE")
+            .expect("EXTERNAL_LIBUSB_INCLUDE is required with EXTERNAL_LIBUSB set");
+
+        let lib_dir = std::env::var("EXTERNAL_LIBUSB_LIB")
+            .expect("EXTERNAL_LIBUSB_LIB is required with EXTERNAL_LIBUSB set");
+
+        println!("cargo:include={}/libusb.h", include_dir);
+        println!("cargo:rustc-link-search=native={}", lib_dir);
+        println!("cargo:rustc-link-lib=dylib=usb-1.0");
+        return;
+    }
+
     let statik = std::env::var("CARGO_CFG_TARGET_FEATURE")
         .map(|s| s.contains("crt-static"))
         .unwrap_or_default();
