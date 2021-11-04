@@ -143,7 +143,7 @@ pub enum Recipient {
 ///
 /// The intended use case of `Version` is to extract meaning from the version fields in USB
 /// descriptors, such as `bcdUSB` and `bcdDevice` in device descriptors.
-#[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy, Hash, PartialOrd, Ord)]
 pub struct Version(pub u8, pub u8, pub u8);
 
 impl Version {
@@ -283,6 +283,16 @@ mod test {
     #[test]
     fn version_display() {
         assert_eq!(Version(2, 45, 13).to_string(), "2.45.13");
+    }
+
+    #[test]
+    fn version_ord() {
+        assert!(Version(0, 0, 0) < Version(1, 2, 3));
+        assert!(Version(1, 0, 0) < Version(1, 2, 3));
+        assert!(Version(1, 2, 0) < Version(1, 2, 3));
+        assert!(Version(1, 2, 0) < Version(1, 3, 0));
+        assert!(Version(255, 255, 255) > Version(254, 0, 0));
+        assert!(Version(0, 255, 0) > Version(0, 254, 255));
     }
 
     // request_type for direction
