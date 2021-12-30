@@ -1,4 +1,10 @@
-use std::{mem, fmt::{self, Debug}, ptr::NonNull, time::Duration, u8};
+use std::{
+    fmt::{self, Debug},
+    mem,
+    ptr::NonNull,
+    time::Duration,
+    u8,
+};
 
 use libc::{c_int, c_uchar, c_uint};
 use libusb1_sys::{constants::*, *};
@@ -756,7 +762,7 @@ impl<T: UsbContext> DeviceHandle<T> {
     ) -> crate::Result<String> {
         match device.manufacturer_string_index() {
             None => Err(Error::InvalidParam),
-            Some(n) => self.read_string_descriptor_ascii(n),
+            Some(n) => self.read_string_descriptor_ascii(n.get()),
         }
     }
 
@@ -769,7 +775,7 @@ impl<T: UsbContext> DeviceHandle<T> {
     ) -> crate::Result<String> {
         match device.manufacturer_string_index() {
             None => Err(Error::InvalidParam),
-            Some(n) => self.read_string_descriptor(language, n, timeout),
+            Some(n) => self.read_string_descriptor(language, n.get(), timeout),
         }
     }
 
@@ -777,7 +783,7 @@ impl<T: UsbContext> DeviceHandle<T> {
     pub fn read_product_string_ascii(&self, device: &DeviceDescriptor) -> crate::Result<String> {
         match device.product_string_index() {
             None => Err(Error::InvalidParam),
-            Some(n) => self.read_string_descriptor_ascii(n),
+            Some(n) => self.read_string_descriptor_ascii(n.get()),
         }
     }
 
@@ -790,7 +796,7 @@ impl<T: UsbContext> DeviceHandle<T> {
     ) -> crate::Result<String> {
         match device.product_string_index() {
             None => Err(Error::InvalidParam),
-            Some(n) => self.read_string_descriptor(language, n, timeout),
+            Some(n) => self.read_string_descriptor(language, n.get(), timeout),
         }
     }
 
@@ -801,7 +807,7 @@ impl<T: UsbContext> DeviceHandle<T> {
     ) -> crate::Result<String> {
         match device.serial_number_string_index() {
             None => Err(Error::InvalidParam),
-            Some(n) => self.read_string_descriptor_ascii(n),
+            Some(n) => self.read_string_descriptor_ascii(n.get()),
         }
     }
 
@@ -814,7 +820,7 @@ impl<T: UsbContext> DeviceHandle<T> {
     ) -> crate::Result<String> {
         match device.serial_number_string_index() {
             None => Err(Error::InvalidParam),
-            Some(n) => self.read_string_descriptor(language, n, timeout),
+            Some(n) => self.read_string_descriptor(language, n.get(), timeout),
         }
     }
 
@@ -827,7 +833,7 @@ impl<T: UsbContext> DeviceHandle<T> {
     ) -> crate::Result<String> {
         match configuration.description_string_index() {
             None => Err(Error::InvalidParam),
-            Some(n) => self.read_string_descriptor(language, n, timeout),
+            Some(n) => self.read_string_descriptor(language, n.get(), timeout),
         }
     }
 
@@ -840,7 +846,7 @@ impl<T: UsbContext> DeviceHandle<T> {
     ) -> crate::Result<String> {
         match interface.description_string_index() {
             None => Err(Error::InvalidParam),
-            Some(n) => self.read_string_descriptor(language, n, timeout),
+            Some(n) => self.read_string_descriptor(language, n.get(), timeout),
         }
     }
 }

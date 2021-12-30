@@ -3,6 +3,7 @@ use std::{fmt, slice};
 use libusb1_sys::{libusb_endpoint_descriptor, libusb_interface, libusb_interface_descriptor};
 
 use crate::endpoint_descriptor::{self, EndpointDescriptor};
+use std::num::NonZeroU8;
 
 /// A device interface.
 ///
@@ -77,11 +78,8 @@ impl<'a> InterfaceDescriptor<'a> {
     }
 
     /// Returns the index of the string descriptor that describes the interface.
-    pub fn description_string_index(&self) -> Option<u8> {
-        match self.descriptor.iInterface {
-            0 => None,
-            n => Some(n),
-        }
+    pub fn description_string_index(&self) -> Option<NonZeroU8> {
+        NonZeroU8::new(self.descriptor.iInterface)
     }
 
     /// Returns the number of endpoints belonging to this interface.
@@ -238,7 +236,7 @@ mod test {
             vec!(Some(42)),
             unsafe { super::from_libusb(&interface!(interface_descriptor!(iInterface: 42))) }
                 .descriptors()
-                .map(|setting| setting.description_string_index())
+                .map(|setting| setting.description_string_index().map(Into::into))
                 .collect::<Vec<_>>()
         );
     }
