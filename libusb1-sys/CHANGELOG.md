@@ -1,5 +1,9 @@
 # Changes
 
+## unreleased
+* Bump vendored libusb version from 1.0.24 to 1.0.25 [#119]
+
+[#119]: https://github.com/a1ien/rusb/pull/119
 
 ## 0.6.0
 * Allow null function pointers for libusb_set_log_cb() [#74]
