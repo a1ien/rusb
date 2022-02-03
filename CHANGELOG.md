@@ -1,5 +1,10 @@
 # Changes
 
+## unreleased
+* impl Ord and PartialOrd for Version [#116]
+
+[#116]: https://github.com/a1ien/rusb/pull/116
+
 ## 0.9.0
 * Re-export libusb1-sys as ffi [#75]
 * impl Debug for DeviceHandle [#78]
