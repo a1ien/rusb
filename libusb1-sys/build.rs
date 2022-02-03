@@ -1,6 +1,6 @@
 use std::{env, fs, path::PathBuf};
 
-static VERSION: &'static str = "1.0.24";
+static VERSION: &str = "1.0.24";
 
 fn link(name: &str, bundled: bool) {
     use std::env::var;
@@ -133,13 +133,10 @@ fn make_source() {
             Some("__attribute__((visibility(\"default\")))"),
         );
 
-        match pkg_config::probe_library("libudev") {
-            Ok(_lib) => {
-                base_config.define("USE_UDEV", Some("1"));
-                base_config.define("HAVE_LIBUDEV", Some("1"));
-                base_config.file(libusb_source.join("libusb/os/linux_udev.c"));
-            }
-            _ => {}
+        if pkg_config::probe_library("libudev").is_ok() {
+            base_config.define("USE_UDEV", Some("1"));
+            base_config.define("HAVE_LIBUDEV", Some("1"));
+            base_config.file(libusb_source.join("libusb/os/linux_udev.c"));
         };
 
         println!("Including posix!");

@@ -141,9 +141,7 @@ impl<'a> Iterator for EndpointDescriptors<'a> {
     type Item = EndpointDescriptor<'a>;
 
     fn next(&mut self) -> Option<EndpointDescriptor<'a>> {
-        self.iter
-            .next()
-            .map(|endpoint| endpoint_descriptor::from_libusb(endpoint))
+        self.iter.next().map(endpoint_descriptor::from_libusb)
     }
 
     fn size_hint(&self) -> (usize, Option<usize>) {

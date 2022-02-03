@@ -1,4 +1,9 @@
-use std::{mem, fmt::{self, Debug}, ptr::NonNull, time::Duration, u8};
+use std::{
+    fmt::{self, Debug},
+    mem,
+    ptr::NonNull,
+    time::Duration,
+};
 
 use libc::{c_int, c_uchar, c_uint};
 use libusb1_sys::{constants::*, *};
@@ -55,7 +60,7 @@ impl ClaimedInterfaces {
 
     /// Returns an iterator over the interfaces in this set.
     fn iter(&self) -> ClaimedInterfacesIter {
-        ClaimedInterfacesIter::new(&self)
+        ClaimedInterfacesIter::new(self)
     }
 }
 
@@ -71,9 +76,9 @@ struct ClaimedInterfacesIter<'a> {
     source: &'a ClaimedInterfaces,
 }
 
-impl<'a> ClaimedInterfacesIter<'a> {
+impl ClaimedInterfacesIter<'_> {
     /// Create a new iterator over the interfaces in `source`.
-    fn new<'source>(source: &'source ClaimedInterfaces) -> ClaimedInterfacesIter<'source> {
+    fn new(source: &ClaimedInterfaces) -> ClaimedInterfacesIter {
         ClaimedInterfacesIter {
             index: 0,
             remaining: source.size(),
@@ -200,19 +205,13 @@ impl<T: UsbContext> DeviceHandle<T> {
     pub fn active_configuration(&self) -> crate::Result<u8> {
         let mut config = mem::MaybeUninit::<c_int>::uninit();
 
-        try_unsafe!(libusb_get_configuration(
-            self.as_raw(),
-            config.as_mut_ptr()
-        ));
+        try_unsafe!(libusb_get_configuration(self.as_raw(), config.as_mut_ptr()));
         Ok(unsafe { config.assume_init() } as u8)
     }
 
     /// Sets the device's active configuration.
     pub fn set_active_configuration(&mut self, config: u8) -> crate::Result<()> {
-        try_unsafe!(libusb_set_configuration(
-            self.as_raw(),
-            c_int::from(config)
-        ));
+        try_unsafe!(libusb_set_configuration(self.as_raw(), c_int::from(config)));
         Ok(())
     }
 
@@ -289,20 +288,14 @@ impl<T: UsbContext> DeviceHandle<T> {
     /// An interface must be claimed before operating on it. All claimed interfaces are released
     /// when the device handle goes out of scope.
     pub fn claim_interface(&mut self, iface: u8) -> crate::Result<()> {
-        try_unsafe!(libusb_claim_interface(
-            self.as_raw(),
-            c_int::from(iface)
-        ));
+        try_unsafe!(libusb_claim_interface(self.as_raw(), c_int::from(iface)));
         self.interfaces.insert(iface);
         Ok(())
     }
 
     /// Releases a claimed interface.
     pub fn release_interface(&mut self, iface: u8) -> crate::Result<()> {
-        try_unsafe!(libusb_release_interface(
-            self.as_raw(),
-            c_int::from(iface)
-        ));
+        try_unsafe!(libusb_release_interface(self.as_raw(), c_int::from(iface)));
         self.interfaces.remove(iface);
         Ok(())
     }
@@ -688,9 +681,8 @@ impl<T: UsbContext> DeviceHandle<T> {
         let ptr = buf.as_mut_ptr() as *mut c_uchar;
         let capacity = buf.capacity() as i32;
 
-        let res = unsafe {
-            libusb_get_string_descriptor_ascii(self.as_raw(), index, ptr, capacity)
-        };
+        let res =
+            unsafe { libusb_get_string_descriptor_ascii(self.as_raw(), index, ptr, capacity) };
 
         if res < 0 {
             return Err(error::from_libusb(res));
