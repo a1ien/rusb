@@ -151,6 +151,7 @@ pub const LIBUSB_HOTPLUG_MATCH_ANY: c_int = -1;
 pub const LIBUSB_OPTION_LOG_LEVEL: u32 = 0x00;
 pub const LIBUSB_OPTION_USE_USBDK: u32 = 0x01;
 pub const LIBUSB_OPTION_WEAK_AUTHORITY: u32 = 0x02;
+pub const LIBUSB_OPTION_NO_DEVICE_DISCOVERY: u32 = 0x02;
 
 // libusb_log_cb_mode
 pub const LIBUSB_LOG_CB_GLOBAL: libusb_log_cb_mode = 1 << 0;
