@@ -1,4 +1,5 @@
 use libusb1_sys as ffi;
+use std::time::Duration;
 
 #[test]
 fn test_version() {
@@ -27,6 +28,7 @@ fn test_init_and_exit() {
         unsafe {
             ffi::libusb_exit(context);
         }
+        std::thread::sleep(Duration::from_millis(1));
         context = std::ptr::null_mut();
     }
 }
