@@ -27,6 +27,8 @@ fn test_init_and_exit() {
         unsafe {
             ffi::libusb_exit(context);
         }
+        #[cfg(target_os = "macos")]
+        std::thread::sleep(std::time::Duration::from_millis(1));
         context = std::ptr::null_mut();
     }
 }
