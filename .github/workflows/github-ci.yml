@@ -13,26 +13,42 @@ jobs:
   build:
 
     runs-on: ${{ matrix.os }}
+    continue-on-error: ${{ matrix.experimental }}
     strategy:
       matrix:
         include:
           - os: ubuntu-latest
             apt: 'libusb-1.0-0-dev'
+            experimental: false
+            features: ""
 
           - os: ubuntu-latest
             apt: 'libudev-dev'
+            experimental: false
+            features: ""
 
           - os: macos-latest
+            experimental: true
+
+          - os: macos-latest
+            experimental: true
+            features: "--features vendored"
 
           - os: windows-latest
+            experimental: false
+            features: ""
 
           - os: windows-latest
             vcpkg: x86-windows-static-md
             rust: stable-i686-pc-windows-msvc
+            experimental: false
+            features: ""
 
           - os: windows-latest
             vcpkg: x64-windows-static-md
             rust: stable-x86_64-pc-windows-msvc
+            experimental: false
+            features: ""
 
     steps:
       - uses: actions/checkout@v2
@@ -52,7 +68,7 @@ jobs:
         run: C:/vcpkg/vcpkg integrate install && C:/vcpkg/vcpkg install libusb:${{ matrix.vcpkg }}
 
       - name: Build
-        run: cargo build --workspace -vv --examples
+        run: cargo build --workspace -vv --examples ${{ matrix.features }}
 
       - name: Run tests
-        run: cargo test --workspace --verbose --all
+        run: cargo test --workspace --verbose --all ${{ matrix.features }} -- --nocapture
