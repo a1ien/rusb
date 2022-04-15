@@ -74,7 +74,7 @@ fn read_device<T: UsbContext>(
     println!("Active configuration: {}", handle.active_configuration()?);
     println!("Languages: {:?}", languages);
 
-    if languages.len() > 0 {
+    if !languages.is_empty() {
         let language = languages[0];
 
         println!(

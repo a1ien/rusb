@@ -1,6 +1,6 @@
 use libc::{c_int, timeval};
 
-use std::{mem, ptr, sync::Arc, sync::Once, time::Duration};
+use std::{cmp::Ordering, mem, ptr, sync::Arc, sync::Once, time::Duration};
 
 #[cfg(unix)]
 use std::os::unix::io::RawFd;
@@ -187,13 +187,13 @@ pub trait UsbContext: Clone + Sized + Send + Sync {
         };
         let n = unsafe { libusb_get_next_timeout(self.as_raw(), &mut tv) };
 
-        if n < 0 {
-            Err(error::from_libusb(n as c_int))
-        } else if n == 0 {
-            Ok(None)
-        } else {
-            let duration = Duration::new(tv.tv_sec as _, (tv.tv_usec * 1000) as _);
-            Ok(Some(duration))
+        match n.cmp(&0) {
+            Ordering::Less => Err(error::from_libusb(n as c_int)),
+            Ordering::Equal => Ok(None),
+            Ordering::Greater => {
+                let duration = Duration::new(tv.tv_sec as _, (tv.tv_usec * 1000) as _);
+                Ok(Some(duration))
+            }
         }
     }
 }
