@@ -10,8 +10,24 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  build:
+  check-code:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+      with:
+        submodules: true
 
+    - name: Install
+      run: sudo apt-get update && sudo apt-get install --no-install-recommends -y libusb-1.0-0-dev
+
+    - name: Run check and format
+      run: |
+        cargo check --all-targets --examples
+        cargo fmt --check
+
+  build:
+    needs: [check-code]
     runs-on: ${{ matrix.os }}
     continue-on-error: ${{ matrix.experimental }}
     strategy:
