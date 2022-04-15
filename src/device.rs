@@ -33,9 +33,7 @@ impl<T: UsbContext> Drop for Device<T> {
 
 impl<T: UsbContext> Clone for Device<T> {
     fn clone(&self) -> Self {
-        unsafe {
-            Self::from_libusb(self.context.clone(), self.device)
-        }
+        unsafe { Self::from_libusb(self.context.clone(), self.device) }
     }
 }
 
