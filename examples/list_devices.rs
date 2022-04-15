@@ -27,7 +27,7 @@ fn list_devices() -> Result<()> {
             match device.open() {
                 Ok(h) => match h.read_languages(timeout) {
                     Ok(l) => {
-                        if l.len() > 0 {
+                        if !l.is_empty() {
                             Some(UsbDevice {
                                 handle: h,
                                 language: l[0],
