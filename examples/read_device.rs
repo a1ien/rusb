@@ -61,7 +61,7 @@ fn open_device<T: UsbContext>(
         if device_desc.vendor_id() == vid && device_desc.product_id() == pid {
             match device.open() {
                 Ok(handle) => return Some((device, device_desc, handle)),
-                Err(_) => continue,
+                Err(e) => panic!("Device found but failed to open: {}", e),
             }
         }
     }
