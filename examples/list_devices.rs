@@ -4,6 +4,8 @@ use rusb::{
 };
 use std::time::Duration;
 
+use usb_ids::{self, FromId};
+
 struct UsbDevice<T: UsbContext> {
     handle: DeviceHandle<T>,
     language: Language,
@@ -77,6 +79,20 @@ fn list_devices() -> Result<()> {
 }
 
 fn print_device<T: UsbContext>(device_desc: &DeviceDescriptor, handle: &mut Option<UsbDevice<T>>) {
+    let vid = device_desc.vendor_id();
+    let pid = device_desc.product_id();
+
+    let vendor_name = match usb_ids::Vendor::from_id(device_desc.vendor_id()) {
+        Some(vendor) => vendor.name(),
+        None => "Unknown vendor",
+    };
+
+    let product_name =
+        match usb_ids::Device::from_vid_pid(device_desc.vendor_id(), device_desc.product_id()) {
+            Some(product) => product.name(),
+            None => "Unknown product",
+        };
+
     println!("Device Descriptor:");
     println!(
         "  bcdUSB             {:2}.{}{}",
@@ -91,8 +107,8 @@ fn print_device<T: UsbContext>(device_desc: &DeviceDescriptor, handle: &mut Opti
     );
     println!("  bDeviceProtocol     {:#04x}", device_desc.protocol_code());
     println!("  bMaxPacketSize0      {:3}", device_desc.max_packet_size());
-    println!("  idVendor          {:#06x}", device_desc.vendor_id());
-    println!("  idProduct         {:#06x}", device_desc.product_id());
+    println!("  idVendor          {vid:#06x} {vendor_name}",);
+    println!("  idProduct         {pid:#06x} {product_name}",);
     println!(
         "  bcdDevice          {:2}.{}{}",
         device_desc.device_version().major(),
