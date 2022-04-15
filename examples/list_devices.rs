@@ -105,7 +105,7 @@ fn print_device<T: UsbContext>(device_desc: &DeviceDescriptor, handle: &mut Opti
         handle.as_mut().map_or(String::new(), |h| h
             .handle
             .read_manufacturer_string(h.language, device_desc, h.timeout)
-            .unwrap_or(String::new()))
+            .unwrap_or_default())
     );
     println!(
         "  iProduct             {:3} {}",
@@ -113,7 +113,7 @@ fn print_device<T: UsbContext>(device_desc: &DeviceDescriptor, handle: &mut Opti
         handle.as_mut().map_or(String::new(), |h| h
             .handle
             .read_product_string(h.language, device_desc, h.timeout)
-            .unwrap_or(String::new()))
+            .unwrap_or_default())
     );
     println!(
         "  iSerialNumber        {:3} {}",
@@ -121,7 +121,7 @@ fn print_device<T: UsbContext>(device_desc: &DeviceDescriptor, handle: &mut Opti
         handle.as_mut().map_or(String::new(), |h| h
             .handle
             .read_serial_number_string(h.language, device_desc, h.timeout)
-            .unwrap_or(String::new()))
+            .unwrap_or_default())
     );
     println!(
         "  bNumConfigurations   {:3}",
@@ -142,7 +142,7 @@ fn print_config<T: UsbContext>(config_desc: &ConfigDescriptor, handle: &mut Opti
         handle.as_mut().map_or(String::new(), |h| h
             .handle
             .read_configuration_string(h.language, config_desc, h.timeout)
-            .unwrap_or(String::new()))
+            .unwrap_or_default())
     );
     println!("    bmAttributes:");
     println!("      Self Powered     {:>5}", config_desc.self_powered());
@@ -191,7 +191,7 @@ fn print_interface<T: UsbContext>(
         handle.as_mut().map_or(String::new(), |h| h
             .handle
             .read_interface_string(h.language, interface_desc, h.timeout)
-            .unwrap_or(String::new()))
+            .unwrap_or_default())
     );
 
     if interface_desc.extra().is_empty() {
