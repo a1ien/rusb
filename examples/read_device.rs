@@ -1,4 +1,4 @@
-use std::{str::FromStr, time::Duration};
+use std::time::Duration;
 
 use rusb::{
     Context, Device, DeviceDescriptor, DeviceHandle, Direction, Result, TransferType, UsbContext,
@@ -12,16 +12,24 @@ struct Endpoint {
     address: u8,
 }
 
+fn convert_argument(input: &str) -> u16 {
+    if input.starts_with("0x") {
+        return u16::from_str_radix(input.trim_start_matches("0x"), 16).unwrap();
+    }
+    u16::from_str_radix(input, 10)
+        .expect("Invalid input, be sure to add `0x` for hexadecimal values.")
+}
+
 fn main() {
     let args: Vec<String> = std::env::args().collect();
 
     if args.len() < 3 {
-        println!("usage: read_device <vendor-id-in-base-10> <product-id-in-base-10>");
+        println!("usage: read_device <base-10/0xbase-16> <base-10/0xbase-16>");
         return;
     }
 
-    let vid: u16 = FromStr::from_str(args[1].as_ref()).unwrap();
-    let pid: u16 = FromStr::from_str(args[2].as_ref()).unwrap();
+    let vid = convert_argument(args[1].as_ref());
+    let pid = convert_argument(args[2].as_ref());
 
     match Context::new() {
         Ok(mut context) => match open_device(&mut context, vid, pid) {
@@ -53,7 +61,7 @@ fn open_device<T: UsbContext>(
         if device_desc.vendor_id() == vid && device_desc.product_id() == pid {
             match device.open() {
                 Ok(handle) => return Some((device, device_desc, handle)),
-                Err(_) => continue,
+                Err(e) => panic!("Device found but failed to open: {}", e),
             }
         }
     }
