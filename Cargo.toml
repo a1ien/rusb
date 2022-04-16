@@ -26,3 +26,4 @@ libc = "0.2"
 
 [dev-dependencies]
 regex = "1"
+usb-ids = "0.2.2"
