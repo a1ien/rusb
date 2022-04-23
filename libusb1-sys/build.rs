@@ -168,7 +168,7 @@ fn make_source() {
     base_config.file(libusb_source.join("libusb/strerror.c"));
     base_config.file(libusb_source.join("libusb/sync.c"));
 
-    base_config.compile("libusb.a");
+    base_config.compile("usb-vendored");
     println!("cargo:version_number={}", VERSION);
 }
 
