@@ -36,6 +36,9 @@ fn find_libusb_pkg(statik: bool) -> bool {
         Ok(l) => {
             for lib in l.libs {
                 if statik {
+                    if cfg!(target_os = "macos") && lib == "objc" {
+                        continue;
+                    }
                     println!("cargo:rustc-link-lib=static={}", lib);
                 }
             }
@@ -173,9 +176,19 @@ fn make_source() {
 }
 
 fn main() {
-    let statik = std::env::var("CARGO_CFG_TARGET_FEATURE")
-        .map(|s| s.contains("crt-static"))
-        .unwrap_or_default();
+    println!("cargo:rerun-if-env-changed=LIBUSB_STATIC");
+    let statik = {
+        if cfg!(target_os = "macos") {
+            match std::env::var("LIBUSB_STATIC").unwrap_or_default().as_ref() {
+                "" | "0" => false,
+                _ => true,
+            }
+        } else {
+            std::env::var("CARGO_CFG_TARGET_FEATURE")
+                .map(|s| s.contains("crt-static"))
+                .unwrap_or_default()
+        }
+    };
 
     let is_freebsd = std::env::var("CARGO_CFG_TARGET_OS") == Ok("freebsd".into());
 
