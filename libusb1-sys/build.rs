@@ -30,12 +30,35 @@ fn find_libusb_pkg(_statik: bool) -> bool {
     }
 }
 
+fn get_macos_major_version() -> Option<usize> {
+    if !cfg!(target_os = "macos") {
+        return None;
+    }
+
+    let output = std::process::Command::new("sw_vers")
+        .args(["-productVersion"])
+        .output()
+        .unwrap();
+    let version = std::str::from_utf8(&output.stdout).unwrap().trim_end();
+    let components: Vec<&str> = version.split('.').collect();
+    let major: usize = components[0].parse().unwrap();
+    Some(major)
+}
+
 #[cfg(not(target_env = "msvc"))]
 fn find_libusb_pkg(statik: bool) -> bool {
+    // https://github.com/rust-lang/rust/issues/96943
+    let needs_rustc_issue_96943_workaround: bool = get_macos_major_version()
+        .map(|major| major >= 11)
+        .unwrap_or_default();
+
     match pkg_config::Config::new().statik(statik).probe("libusb-1.0") {
         Ok(l) => {
             for lib in l.libs {
                 if statik {
+                    if needs_rustc_issue_96943_workaround && lib == "objc" {
+                        continue;
+                    }
                     println!("cargo:rustc-link-lib=static={}", lib);
                 }
             }
@@ -173,9 +196,19 @@ fn make_source() {
 }
 
 fn main() {
-    let statik = std::env::var("CARGO_CFG_TARGET_FEATURE")
-        .map(|s| s.contains("crt-static"))
-        .unwrap_or_default();
+    println!("cargo:rerun-if-env-changed=LIBUSB_STATIC");
+    let statik = {
+        if cfg!(target_os = "macos") {
+            match std::env::var("LIBUSB_STATIC").unwrap_or_default().as_ref() {
+                "" | "0" => false,
+                _ => true,
+            }
+        } else {
+            std::env::var("CARGO_CFG_TARGET_FEATURE")
+                .map(|s| s.contains("crt-static"))
+                .unwrap_or_default()
+        }
+    };
 
     let is_freebsd = std::env::var("CARGO_CFG_TARGET_OS") == Ok("freebsd".into());
 
