@@ -252,6 +252,18 @@ impl Context {
 
         Ok(this)
     }
+
+    /// Creates rusb Context from existing libusb context.
+    // SAFETY: the caller must guarantee that libusb_context is created properly.
+    pub fn from_raw(raw: *mut libusb_context) -> Self {
+        Context {
+            context: unsafe {
+                Arc::new(ContextInner {
+                    inner: ptr::NonNull::new_unchecked(raw),
+                })
+            },
+        }
+    }
 }
 
 /// Library logging levels.
