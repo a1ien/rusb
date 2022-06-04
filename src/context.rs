@@ -233,13 +233,7 @@ impl Context {
 
         try_unsafe!(libusb_init(context.as_mut_ptr()));
 
-        Ok(Context {
-            context: unsafe {
-                Arc::new(ContextInner {
-                    inner: ptr::NonNull::new_unchecked(context.assume_init()),
-                })
-            },
-        })
+        Ok(unsafe { Self::from_raw(context.assume_init()) })
     }
 
     /// Creates a new `libusb` context and sets runtime options.
@@ -251,6 +245,19 @@ impl Context {
         }
 
         Ok(this)
+    }
+
+    /// Creates rusb Context from existing libusb context.
+    /// Note: This transfers ownership of the context to Rust.
+    /// # Safety
+    /// This is unsafe because it does not check if the context is valid,
+    /// so the caller must guarantee that libusb_context is created properly.
+    pub unsafe fn from_raw(raw: *mut libusb_context) -> Self {
+        Context {
+            context: Arc::new(ContextInner {
+                inner: ptr::NonNull::new_unchecked(raw),
+            }),
+        }
     }
 }
 
