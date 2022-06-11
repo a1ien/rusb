@@ -137,7 +137,8 @@ mod test {
     // as `$config` should be stack-allocated to prevent memory leaks in the test suite.
     macro_rules! with_config {
         ($name:ident : $config:expr => $body:block) => {{
-            let $name = ManuallyDrop::new(unsafe { super::from_libusb(&$config) });
+            let config = $config;
+            let $name = ManuallyDrop::new(unsafe { super::from_libusb(&config) });
             $body;
         }};
     }
