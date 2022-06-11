@@ -6,7 +6,7 @@ const SUB_LANGUAGE_MASK: u16 = 0xFC00;
 /// A language consists of a primary language and a sub language. Primary languages are language
 /// families, such as English or Spanish. Sub languages identify a dialect of the primary language.
 /// The dialect may be based on regional differences (United States English compared to United
-/// Kindgdom English), writing systems (Cyrillic compared to Latin), or age (Modern compared to
+/// Kingdom English), writing systems (Cyrillic compared to Latin), or age (Modern compared to
 /// Traditional). Each primary language has its own set of sub languages.
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub struct Language {
