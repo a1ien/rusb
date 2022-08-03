@@ -156,10 +156,13 @@ fn make_source() {
             Some("__attribute__((visibility(\"default\")))"),
         );
 
-        if pkg_config::probe_library("libudev").is_ok() {
+        if let Ok(lib) = pkg_config::probe_library("libudev") {
             base_config.define("USE_UDEV", Some("1"));
             base_config.define("HAVE_LIBUDEV", Some("1"));
             base_config.file(libusb_source.join("libusb/os/linux_udev.c"));
+            for path in lib.include_paths {
+                base_config.include(path.to_str().unwrap());
+            }
         };
 
         println!("Including posix!");
