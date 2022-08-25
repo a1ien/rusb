@@ -206,7 +206,11 @@ impl std::fmt::Display for Version {
 ///
 /// rusb::request_type(Direction::In, RequestType::Standard, Recipient::Device);
 /// ```
-pub fn request_type(direction: Direction, request_type: RequestType, recipient: Recipient) -> u8 {
+pub const fn request_type(
+    direction: Direction,
+    request_type: RequestType,
+    recipient: Recipient,
+) -> u8 {
     let mut value: u8 = match direction {
         Direction::Out => LIBUSB_ENDPOINT_OUT,
         Direction::In => LIBUSB_ENDPOINT_IN,
