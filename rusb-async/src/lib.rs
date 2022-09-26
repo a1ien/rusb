@@ -12,180 +12,133 @@ use error::{Error, Result};
 
 pub use pool::TransferPool;
 
+// Transfer metadata: passed to user data and comes back in the callback
+// so we can identify the transfer.
+pub enum TransferType {
+    Bulk { endpoint: u8 },
+    Control { request_type: u8, request: u8, value: u16, index: u16 },
+    Isochronous { endpoint: u8, num_packets: u32 },
+    Interrupt { endpoint: u8 },
+}
+
 struct Transfer {
     ptr: NonNull<ffi::libusb_transfer>,
+    transfer_type: TransferType,
     buffer: Vec<u8>,
 }
 
+// Timeout of 0 means no timeout.
+const TRANSFER_TIMEOUT: u32 = 0;
+
 impl Transfer {
     // Invariant: Caller must ensure `device` outlives this transfer
-    unsafe fn bulk(
+    unsafe fn new(
         device: *mut ffi::libusb_device_handle,
-        endpoint: u8,
+        transfer_type: TransferType,
         mut buffer: Vec<u8>,
     ) -> Self {
-        // non-isochronous endpoints (e.g. control, bulk, interrupt) specify a value of 0
         // This is step 1 of async API
 
-        let ptr =
-            NonNull::new(ffi::libusb_alloc_transfer(0)).expect("Could not allocate transfer!");
+        let raw_ptr = match transfer_type {
+            TransferType::Isochronous { num_packets, .. } => ffi::libusb_alloc_transfer(num_packets as i32),
+            // non-isochronous endpoints (e.g. control, bulk, interrupt) specify a value of 0
+            _ => ffi::libusb_alloc_transfer(0),
+        };
 
-        let user_data = Box::into_raw(Box::new(AtomicBool::new(false))).cast::<libc::c_void>();
+        let ptr = NonNull::new(raw_ptr).expect("Failed to allocate transfer");
 
-        let length = if endpoint & ffi::constants::LIBUSB_ENDPOINT_DIR_MASK
-            == ffi::constants::LIBUSB_ENDPOINT_OUT
-        {
-            // for OUT endpoints: the currently valid data in the buffer
-            buffer.len()
-        } else {
-            // for IN endpoints: the full capacity
-            buffer.capacity()
+        // Save the tranfer metadata in the user data pointer
+        // TODO: Do we need to do this? Maybe it can be reconstructed from the other data in the callback?
+        // Is the atomic bool we removed necessary?
+        let user_data = Box::into_raw(Box::new(transfer_type)).cast::<libc::c_void>();
+
+        let length = match transfer_type {
+            TransferType::Control { .. } => buffer.len(),
+            TransferType::Bulk { endpoint } | TransferType::Interrupt { endpoint } | TransferType::Isochronous { endpoint, .. } => {
+                if endpoint & LIBUSB_ENDPOINT_DIR_MASK == LIBUSB_ENDPOINT_OUT {
+                    // for OUT endpoints: the currently valid data in the buffer
+                    buffer.len()
+                } else {
+                    // for IN endpoints: the full capacity
+                    buffer.capacity()
+                }
+            }
+        }.try_into().unwrap();
+
+        match transfer_type {
+            TransferType::Bulk { endpoint } => {
+                ffi::libusb_fill_bulk_transfer(
+                    ptr.as_ptr(),
+                    device,
+                    endpoint,
+                    buffer.as_mut_ptr(),
+                    length,
+                    Self::transfer_cb,
+                    user_data,
+                    TRANSFER_TIMEOUT,
+                );
+            },
+            TransferType::Interrupt { endpoint } => {
+                ffi::libusb_fill_interrupt_transfer(
+                    ptr.as_ptr(),
+                    device,
+                    endpoint,
+                    buffer.as_mut_ptr(),
+                    length,
+                    Self::transfer_cb,
+                    user_data,
+                    TRANSFER_TIMEOUT,
+                );
+            },
+            TransferType::Control { request_type, request, value, index} => {
+                // Extend the buffer to fit the setup data
+                //buffer.resize(buffer.len() + LIBUSB_CONTROL_SETUP_SIZE, 0);
+                // TODO: Figure out the correct behavior when the original buffer is not empty,
+                // and make sure that we update the length once filled. (and investigate boxed slice)
+                buffer.reserve(LIBUSB_CONTROL_SETUP_SIZE);
+
+                ffi::libusb_fill_control_setup(
+                    buffer.as_mut_ptr(),
+                    request_type,
+                    request,
+                    value,
+                    index,
+                    length as u16,
+                );
+
+                ffi::libusb_fill_control_transfer(
+                    ptr.as_ptr(),
+                    device,
+                    buffer.as_mut_ptr(),
+                    Self::transfer_cb,
+                    user_data,
+                    TRANSFER_TIMEOUT,
+                );
+            },
+            TransferType::Isochronous { endpoint, num_packets } => {
+                ffi::libusb_fill_iso_transfer(
+                    ptr.as_ptr(),
+                    device,
+                    endpoint,
+                    buffer.as_mut_ptr(),
+                    length,
+                    num_packets as i32, //btw why is this signed? shouldn't have a negative number of packets?
+                    Self::transfer_cb,
+                    user_data,
+                    TRANSFER_TIMEOUT,
+                );
+                ffi::libusb_set_iso_packet_lengths(ptr.as_ptr(), (length / num_packets as i32) as u32);
+            }
+        };
+
+        Self {
+            ptr,
+            transfer_type,
+            buffer,
         }
-        .try_into()
-        .unwrap();
 
-        ffi::libusb_fill_bulk_transfer(
-            ptr.as_ptr(),
-            device,
-            endpoint,
-            buffer.as_mut_ptr(),
-            length,
-            Self::transfer_cb,
-            user_data,
-            0,
-        );
-
-        Self { ptr, buffer }
     }
 
-    // Invariant: Caller must ensure `device` outlives this transfer
-    unsafe fn control(
-        device: *mut ffi::libusb_device_handle,
-
-        request_type: u8,
-        request: u8,
-        value: u16,
-        index: u16,
-        data: &[u8],
-    ) -> Self {
-        let mut buf = Vec::with_capacity(data.len() + LIBUSB_CONTROL_SETUP_SIZE);
-
-        let length = data.len() as u16;
-
-        ffi::libusb_fill_control_setup(
-            buf.as_mut_ptr() as *mut u8,
-            request_type,
-            request,
-            value,
-            index,
-            length,
-        );
-        Self::control_raw(device, buf)
-    }
-
-    // Invariant: Caller must ensure `device` outlives this transfer
-    unsafe fn control_raw(device: *mut ffi::libusb_device_handle, mut buffer: Vec<u8>) -> Self {
-        // non-isochronous endpoints (e.g. control, bulk, interrupt) specify a value of 0
-        // This is step 1 of async API
-
-        let ptr =
-            NonNull::new(ffi::libusb_alloc_transfer(0)).expect("Could not allocate transfer!");
-
-        let user_data = Box::into_raw(Box::new(AtomicBool::new(false))).cast::<libc::c_void>();
-
-        ffi::libusb_fill_control_transfer(
-            ptr.as_ptr(),
-            device,
-            buffer.as_mut_ptr(),
-            Self::transfer_cb,
-            user_data,
-            0,
-        );
-
-        Self { ptr, buffer }
-    }
-
-    // Invariant: Caller must ensure `device` outlives this transfer
-    unsafe fn interrupt(
-        device: *mut ffi::libusb_device_handle,
-        endpoint: u8,
-        mut buffer: Vec<u8>,
-    ) -> Self {
-        // non-isochronous endpoints (e.g. control, bulk, interrupt) specify a value of 0
-        // This is step 1 of async API
-
-        let ptr =
-            NonNull::new(ffi::libusb_alloc_transfer(0)).expect("Could not allocate transfer!");
-
-        let user_data = Box::into_raw(Box::new(AtomicBool::new(false))).cast::<libc::c_void>();
-
-        let length = if endpoint & ffi::constants::LIBUSB_ENDPOINT_DIR_MASK
-            == ffi::constants::LIBUSB_ENDPOINT_OUT
-        {
-            // for OUT endpoints: the currently valid data in the buffer
-            buffer.len()
-        } else {
-            // for IN endpoints: the full capacity
-            buffer.capacity()
-        }
-        .try_into()
-        .unwrap();
-
-        ffi::libusb_fill_interrupt_transfer(
-            ptr.as_ptr(),
-            device,
-            endpoint,
-            buffer.as_mut_ptr(),
-            length,
-            Self::transfer_cb,
-            user_data,
-            0,
-        );
-
-        Self { ptr, buffer }
-    }
-
-    // Invariant: Caller must ensure `device` outlives this transfer
-    unsafe fn iso(
-        device: *mut ffi::libusb_device_handle,
-        endpoint: u8,
-        mut buffer: Vec<u8>,
-        iso_packets: i32,
-    ) -> Self {
-        // isochronous endpoints
-        // This is step 1 of async API
-        let ptr = NonNull::new(ffi::libusb_alloc_transfer(iso_packets))
-            .expect("Could not allocate transfer!");
-
-        let user_data = Box::into_raw(Box::new(AtomicBool::new(false))).cast::<libc::c_void>();
-
-        let length = if endpoint & ffi::constants::LIBUSB_ENDPOINT_DIR_MASK
-            == ffi::constants::LIBUSB_ENDPOINT_OUT
-        {
-            // for OUT endpoints: the currently valid data in the buffer
-            buffer.len()
-        } else {
-            // for IN endpoints: the full capacity
-            buffer.capacity()
-        }
-        .try_into()
-        .unwrap();
-
-        ffi::libusb_fill_iso_transfer(
-            ptr.as_ptr(),
-            device,
-            endpoint,
-            buffer.as_mut_ptr(),
-            length,
-            iso_packets,
-            Self::transfer_cb,
-            user_data,
-            0,
-        );
-        ffi::libusb_set_iso_packet_lengths(ptr.as_ptr(), (length / iso_packets) as u32);
-
-        Self { ptr, buffer }
-    }
     // Part of step 4 of async API the transfer is finished being handled when
     // `poll()` is called.
     extern "system" fn transfer_cb(transfer: *mut ffi::libusb_transfer) {
