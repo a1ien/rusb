@@ -4,6 +4,7 @@ use std::time::{Duration, Instant};
 
 use rusb::{ffi, DeviceHandle, UsbContext};
 
+use crate::TransferType;
 use crate::{error::Error, error::Result, Transfer};
 
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -26,7 +27,11 @@ impl<C: UsbContext> TransferPool<C> {
         // Safety: If transfer is submitted, it is pushed onto `pending` where it will be
         // dropped before `device` is freed.
         unsafe {
-            let mut transfer = Transfer::bulk(self.device.as_raw(), endpoint, buf);
+            let mut transfer = Transfer::new(
+                self.device.as_raw(),
+                TransferType::Bulk { endpoint },
+                buf,
+            );
             transfer.submit()?;
             self.pending.push_back(transfer);
             Ok(())
@@ -44,13 +49,15 @@ impl<C: UsbContext> TransferPool<C> {
         // Safety: If transfer is submitted, it is pushed onto `pending` where it will be
         // dropped before `device` is freed.
         unsafe {
-            let mut transfer = Transfer::control(
+            let mut transfer = Transfer::new(
                 self.device.as_raw(),
-                request_type,
-                request,
-                value,
-                index,
-                data,
+                TransferType::Control {
+                    request_type,
+                    request,
+                    value,
+                    index,
+                },
+                data.to_vec(),
             );
             transfer.submit()?;
             self.pending.push_back(transfer);
@@ -58,6 +65,7 @@ impl<C: UsbContext> TransferPool<C> {
         }
     }
 
+    /*
     pub unsafe fn submit_control_raw(&mut self, buffer: Vec<u8>) -> Result<()> {
         // Safety: If transfer is submitted, it is pushed onto `pending` where it will be
         // dropped before `device` is freed.
@@ -68,12 +76,17 @@ impl<C: UsbContext> TransferPool<C> {
             Ok(())
         }
     }
+    */
 
     pub fn submit_interrupt(&mut self, endpoint: u8, buf: Vec<u8>) -> Result<()> {
         // Safety: If transfer is submitted, it is pushed onto `pending` where it will be
         // dropped before `device` is freed.
         unsafe {
-            let mut transfer = Transfer::interrupt(self.device.as_raw(), endpoint, buf);
+            let mut transfer = Transfer::new(
+                self.device.as_raw(),
+                TransferType::Interrupt { endpoint },
+                buf,
+            );
             transfer.submit()?;
             self.pending.push_back(transfer);
             Ok(())
@@ -84,7 +97,14 @@ impl<C: UsbContext> TransferPool<C> {
         // Safety: If transfer is submitted, it is pushed onto `pending` where it will be
         // dropped before `device` is freed.
         unsafe {
-            let mut transfer = Transfer::iso(self.device.as_raw(), endpoint, buf, iso_packets);
+            let mut transfer = Transfer::new(
+                self.device.as_raw(),
+                TransferType::Isochronous {
+                    endpoint,
+                    num_packets: iso_packets as u32 // TODO: Figure out which type to use, and stick to it :rofl:
+                },
+                buf,
+            );
             transfer.submit()?;
             self.pending.push_back(transfer);
             Ok(())
