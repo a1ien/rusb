@@ -50,7 +50,8 @@ impl Transfer {
         // Save the tranfer metadata in the user data pointer
         // TODO: Do we need to do this? Maybe it can be reconstructed from the other data in the callback?
         // Is the atomic bool we removed necessary?
-        let user_data = Box::into_raw(Box::new(transfer_type)).cast::<libc::c_void>();
+        //let user_data = Box::into_raw(Box::new(transfer_type)).cast::<libc::c_void>();
+        let user_data = Box::into_raw(Box::new(AtomicBool::new(false))).cast::<libc::c_void>();
 
         let length = match transfer_type {
             TransferType::Control { .. } => buffer.len(),
