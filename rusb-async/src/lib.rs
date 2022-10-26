@@ -31,6 +31,22 @@ struct Transfer {
 const TRANSFER_TIMEOUT: u32 = 0;
 
 impl Transfer {
+
+    fn get_length(buffer: &Vec<u8>, transfer_type: TransferType) -> usize {
+        match transfer_type {
+            TransferType::Control { .. } => buffer.len(),
+            TransferType::Bulk { endpoint } | TransferType::Interrupt { endpoint } | TransferType::Isochronous { endpoint, .. } => {
+                if endpoint & LIBUSB_ENDPOINT_DIR_MASK == LIBUSB_ENDPOINT_OUT {
+                    // for OUT endpoints: the currently valid data in the buffer
+                    buffer.len()
+                } else {
+                    // for IN endpoints: the full capacity
+                    buffer.capacity()
+                }
+            }
+        }
+    }
+
     // Invariant: Caller must ensure `device` outlives this transfer
     unsafe fn new(
         device: *mut ffi::libusb_device_handle,
@@ -53,18 +69,7 @@ impl Transfer {
         //let user_data = Box::into_raw(Box::new(transfer_type)).cast::<libc::c_void>();
         let user_data = Box::into_raw(Box::new(AtomicBool::new(false))).cast::<libc::c_void>();
 
-        let length = match transfer_type {
-            TransferType::Control { .. } => buffer.len(),
-            TransferType::Bulk { endpoint } | TransferType::Interrupt { endpoint } | TransferType::Isochronous { endpoint, .. } => {
-                if endpoint & LIBUSB_ENDPOINT_DIR_MASK == LIBUSB_ENDPOINT_OUT {
-                    // for OUT endpoints: the currently valid data in the buffer
-                    buffer.len()
-                } else {
-                    // for IN endpoints: the full capacity
-                    buffer.capacity()
-                }
-            }
-        }.try_into().unwrap();
+        let length = Self::get_length(&buffer, transfer_type);
 
         match transfer_type {
             TransferType::Bulk { endpoint } => {
