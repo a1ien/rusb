@@ -314,7 +314,8 @@ impl<T: UsbContext> DeviceHandle<T> {
     ///
     /// This function attempts to read from the interrupt endpoint with the address given by the
     /// `endpoint` parameter and fills `buf` with any data received from the endpoint. The function
-    /// blocks up to the amount of time specified by `timeout`. Minimal `timeout` is 1 microseconds.
+    /// blocks up to the amount of time specified by `timeout`. Minimal `timeout` is 1 milliseconds,
+    /// anything smaller will result in an infinite block.
     ///
     /// If the return value is `Ok(n)`, then `buf` is populated with `n` bytes of data received
     /// from the endpoint.
@@ -369,7 +370,8 @@ impl<T: UsbContext> DeviceHandle<T> {
     ///
     /// This function attempts to write the contents of `buf` to the interrupt endpoint with the
     /// address given by the `endpoint` parameter. The function blocks up to the amount of time
-    /// specified by `timeout`. Minimal `timeout` is 1 microseconds.
+    /// specified by `timeout`. Minimal `timeout` is 1 milliseconds, anything smaller will
+    /// result in an infinite block.
     ///
     /// If the return value is `Ok(n)`, then `n` bytes of `buf` were written to the endpoint.
     ///
@@ -422,7 +424,8 @@ impl<T: UsbContext> DeviceHandle<T> {
     ///
     /// This function attempts to read from the bulk endpoint with the address given by the
     /// `endpoint` parameter and fills `buf` with any data received from the endpoint. The function
-    /// blocks up to the amount of time specified by `timeout`. Minimal `timeout` is 1 microseconds.
+    /// blocks up to the amount of time specified by `timeout`. Minimal `timeout` is 1 milliseconds,
+    /// anything smaller will result in an infinite block.
     ///
     /// If the return value is `Ok(n)`, then `buf` is populated with `n` bytes of data received
     /// from the endpoint.
@@ -477,7 +480,8 @@ impl<T: UsbContext> DeviceHandle<T> {
     ///
     /// This function attempts to write the contents of `buf` to the bulk endpoint with the address
     /// given by the `endpoint` parameter. The function blocks up to the amount of time specified
-    /// by `timeout`. Minimal `timeout` is 1 microseconds.
+    /// by `timeout`. Minimal `timeout` is 1 milliseconds, anything smaller will result in an
+    /// infinite block.
     ///
     /// If the return value is `Ok(n)`, then `n` bytes of `buf` were written to the endpoint.
     ///
@@ -525,7 +529,8 @@ impl<T: UsbContext> DeviceHandle<T> {
     ///
     /// This function attempts to read data from the device using a control transfer and fills
     /// `buf` with any data received during the transfer. The function blocks up to the amount of
-    /// time specified by `timeout`. Minimal `timeout` is 1 microseconds.
+    /// time specified by `timeout`. Minimal `timeout` is 1 milliseconds, anything smaller will
+    /// result in an infinite block.
     ///
     /// The parameters `request_type`, `request`, `value`, and `index` specify the fields of the
     /// control transfer setup packet (`bmRequestType`, `bRequest`, `wValue`, and `wIndex`
@@ -584,7 +589,7 @@ impl<T: UsbContext> DeviceHandle<T> {
     ///
     /// This function attempts to write the contents of `buf` to the device using a control
     /// transfer. The function blocks up to the amount of time specified by `timeout`.
-    /// Minimal `timeout` is 1 microseconds.
+    /// Minimal `timeout` is 1 milliseconds, anything smaller will result in an infinite block.
     ///
     /// The parameters `request_type`, `request`, `value`, and `index` specify the fields of the
     /// control transfer setup packet (`bmRequestType`, `bRequest`, `wValue`, and `wIndex`
