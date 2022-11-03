@@ -4,6 +4,7 @@ pub use libusb1_sys as ffi;
 pub use libusb1_sys::constants;
 
 pub use crate::{
+    async_transfer::{CancellationToken, Transfer},
     config_descriptor::{ConfigDescriptor, Interfaces},
     context::{Context, GlobalContext, LogLevel, UsbContext},
     device::Device,
@@ -25,6 +26,8 @@ pub use crate::{
     version::{version, LibraryVersion},
 };
 
+pub use libusb1_sys::constants::LIBUSB_CONTROL_SETUP_SIZE as CONTROL_SETUP_SIZE;
+
 #[cfg(test)]
 #[macro_use]
 mod test_helpers;
@@ -38,6 +41,7 @@ mod device;
 mod device_handle;
 mod device_list;
 
+mod async_transfer;
 mod config_descriptor;
 mod device_descriptor;
 mod endpoint_descriptor;

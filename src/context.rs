@@ -150,24 +150,70 @@ pub trait UsbContext: Clone + Sized + Send + Sync {
     fn unregister_callback(&self, _reg: Registration<Self>) {}
 
     /// Handle any pending events.
+    ///
     /// If timeout less then 1 microseconds then this function will handle any already-pending
     /// events and then immediately return in non-blocking style.
     /// If timeout is [None] then function will handle any pending events in blocking mode.
-    fn handle_events(&self, timeout: Option<Duration>) -> crate::Result<()> {
-        let n = unsafe {
-            match timeout {
-                Some(t) => {
-                    let tv = timeval {
-                        tv_sec: t.as_secs() as Seconds,
-                        tv_usec: t.subsec_nanos() as MicroSeconds / 1000,
-                    };
-                    libusb_handle_events_timeout_completed(self.as_raw(), &tv, ptr::null_mut())
+    ///
+    /// This function is guaranteed to make progress.
+    ///
+    /// This function implements thread-safe event handling as described by
+    /// [Multi-threaded applications and asynchronous I/O](https://libusb.sourceforge.io/api-1.0/libusb_mtasync.html).
+    fn handle_events(
+        &self,
+        timeout: Option<Duration>,
+    ) -> crate::Result<()> {
+        use std::time::Instant;
+
+        let deadline = timeout.map(|timeout| Instant::now() + timeout);
+        let mut err = 0;
+
+        while {
+            // The timeout must at least be 1 millisecond in order for this function to make
+            // progress. In addition, we use a "do while" loop to guarantee that we make progress
+            // even if the timeout is zero.
+            let remaining = deadline
+                .map(|deadline| deadline
+                    .saturating_duration_since(Instant::now())
+                    .max(Duration::from_millis(1))
+                )
+                .unwrap_or(Duration::from_millis(1));
+
+            let tv = timeval {
+                tv_sec: remaining.as_secs() as Seconds,
+                tv_usec: remaining.subsec_nanos() as MicroSeconds / 1000,
+            };
+
+            // SAFETY: this simply tries to get the event lock in a non-blocking fashion.
+            if unsafe { libusb_try_lock_events(self.as_raw()) } == 0 {
+                // SAFETY: safe to check since we own the event lock.
+                if unsafe { libusb_event_handling_ok(self.as_raw()) } != 0 {
+                    // SAFETY: this thread is allowed to handle events.
+                    err = unsafe { libusb_handle_events_locked(self.as_raw(), &tv as *const _) };
                 }
-                None => libusb_handle_events_completed(self.as_raw(), ptr::null_mut()),
+
+                // SAFETY: we got the event lock, so it is safe to release.
+                unsafe { libusb_unlock_events(self.as_raw()) };
+            } else {
+                // SAFETY: this simply tries to get the waiters lock.
+                unsafe { libusb_lock_event_waiters(self.as_raw()) };
+
+                // SAFETY: safe to check since we own the waiters lock.
+                if unsafe { libusb_event_handler_active(self.as_raw()) } != 0 {
+                    // SAFETY: another thread is handling events, wait for an event.
+                    unsafe { libusb_wait_for_event(self.as_raw(), &tv as *const _) };
+                }
+
+                // SAFETY: we got the waiters lock, so it is safe to release.
+                unsafe { libusb_unlock_event_waiters(self.as_raw()) };
             }
-        };
-        if n < 0 {
-            Err(error::from_libusb(n as c_int))
+
+            // do while
+            err == 0 && deadline.map(|deadline| deadline > Instant::now()).unwrap_or(true)
+        } {}
+
+        if err < 0 {
+            Err(error::from_libusb(err as c_int))
         } else {
             Ok(())
         }

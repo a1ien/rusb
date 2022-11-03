@@ -27,3 +27,4 @@ libc = "0.2"
 [dev-dependencies]
 regex = "1"
 usb-ids = "0.2.2"
+tokio = { version = "1", features = ["full"] }
