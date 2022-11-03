@@ -37,7 +37,9 @@ async fn main() {
     let mut buffer = Vec::with_capacity(BUF_SIZE);
 
     loop {
-        let (bytes, n) = device.read_bulk_async(endpoint, buffer, timeout).await
+        let (bytes, n) = device
+            .read_bulk_async(endpoint, buffer, timeout)
+            .await
             .expect("Failed to submit transfer");
 
         println!("Got data: {} {:?}", n, &bytes[..n]);

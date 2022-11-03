@@ -9,8 +9,8 @@ use std::time::Duration;
 
 use crate::{DeviceHandle, Error, UsbContext};
 use libc::{c_int, c_uint};
-use libusb1_sys::*;
 use libusb1_sys::constants::*;
+use libusb1_sys::*;
 
 const LIBUSB_TRANSFER_ACTIVE: c_int = -1;
 
@@ -71,9 +71,7 @@ impl<T: UsbContext> Drop for InnerTransfer<T> {
     }
 }
 
-extern "system" fn transfer_finished<T: UsbContext>(
-    transfer_ptr: *mut libusb_transfer,
-) {
+extern "system" fn transfer_finished<T: UsbContext>(transfer_ptr: *mut libusb_transfer) {
     if transfer_ptr.is_null() {
         return;
     }
@@ -155,7 +153,8 @@ impl<T: UsbContext> Future for Transfer<T> {
     fn poll(self: Pin<&mut Self>, ctx: &mut Context<'_>) -> Poll<Self::Output> {
         // Poll libusb for any complete events.
         if let Err(e) = self.context.handle_events(Some(Duration::from_micros(0))) {
-            let buffer = self.buffer
+            let buffer = self
+                .buffer
                 .lock()
                 .unwrap()
                 .take()
@@ -180,7 +179,8 @@ impl<T: UsbContext> Future for Transfer<T> {
         //
         // In addition, `Future::poll()` should not be called a second time after it returns
         // `Poll::Ready`. Thus, it is safe to panic.
-        let buffer = self.buffer
+        let buffer = self
+            .buffer
             .lock()
             .unwrap()
             .take()
@@ -362,14 +362,7 @@ impl<T: UsbContext> Transfer<T> {
 
             // SAFETY: buffer has at least LIBUSB_CONTROL_SETUP_SIZE bytes and is a valid pointer.
             unsafe {
-                libusb_fill_control_setup(
-                    buffer,
-                    request_type,
-                    request,
-                    value,
-                    index,
-                    max_size
-                );
+                libusb_fill_control_setup(buffer, request_type, request, value, index, max_size);
             }
 
             // SAFETY: transfer_ptr, device.as_ptr(), buffer, state_ptr are all valid. This is the
@@ -452,12 +445,7 @@ impl<T: UsbContext> DeviceHandle<T> {
             return Err((data, Error::InvalidParam));
         }
 
-        let transfer = Transfer::new_bulk_transfer(
-            self,
-            endpoint,
-            data,
-            timeout,
-        )?;
+        let transfer = Transfer::new_bulk_transfer(self, endpoint, data, timeout)?;
 
         Ok(transfer.await?)
     }
@@ -570,12 +558,7 @@ impl<T: UsbContext> DeviceHandle<T> {
             return Err((data, Error::InvalidParam));
         }
 
-        let transfer = Transfer::new_bulk_transfer(
-            self,
-            endpoint,
-            data,
-            timeout,
-        )?;
+        let transfer = Transfer::new_bulk_transfer(self, endpoint, data, timeout)?;
 
         Ok(transfer.await?)
     }

@@ -159,10 +159,7 @@ pub trait UsbContext: Clone + Sized + Send + Sync {
     ///
     /// This function implements thread-safe event handling as described by
     /// [Multi-threaded applications and asynchronous I/O](https://libusb.sourceforge.io/api-1.0/libusb_mtasync.html).
-    fn handle_events(
-        &self,
-        timeout: Option<Duration>,
-    ) -> crate::Result<()> {
+    fn handle_events(&self, timeout: Option<Duration>) -> crate::Result<()> {
         use std::time::Instant;
 
         let deadline = timeout.map(|timeout| Instant::now() + timeout);
@@ -173,10 +170,11 @@ pub trait UsbContext: Clone + Sized + Send + Sync {
             // progress. In addition, we use a "do while" loop to guarantee that we make progress
             // even if the timeout is zero.
             let remaining = deadline
-                .map(|deadline| deadline
-                    .saturating_duration_since(Instant::now())
-                    .max(Duration::from_millis(1))
-                )
+                .map(|deadline| {
+                    deadline
+                        .saturating_duration_since(Instant::now())
+                        .max(Duration::from_millis(1))
+                })
                 .unwrap_or(Duration::from_millis(1));
 
             let tv = timeval {
@@ -209,7 +207,10 @@ pub trait UsbContext: Clone + Sized + Send + Sync {
             }
 
             // do while
-            err == 0 && deadline.map(|deadline| deadline > Instant::now()).unwrap_or(true)
+            err == 0
+                && deadline
+                    .map(|deadline| deadline > Instant::now())
+                    .unwrap_or(true)
         } {}
 
         if err < 0 {
