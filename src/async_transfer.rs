@@ -296,18 +296,16 @@ impl<T: UsbContext> Transfer<T> {
     /// [request_type()](fn.request_type.html). The meaning of the other parameters depends on the
     /// type of control request.
     ///
-    /// As these parameters are stored in the first
-    /// [`CONTROL_SETUP_SIZE`](crate::CONTROL_SETUP_SIZE) bytes of the control
-    /// request, the buffer must be at least [`CONTROL_SETUP_SIZE`](crate::CONTROL_SETUP_SIZE)
-    /// bytes in size.
+    /// As these parameters are stored in the first [`LIBUSB_CONTROL_SETUP_SIZE`] bytes of the
+    /// control request, the buffer must be at least [`LIBUSB_CONTROL_SETUP_SIZE`] bytes in size.
     ///
     /// The function blocks up to the amount of time specified by `timeout`. Minimal `timeout` is 1
     /// milliseconds, anything smaller will result in an infinite block.
     ///
     /// If the return value is `Ok((data, n))`, then `data` is populated with `n` bytes of data
     /// received from the device for read requests. This data can be found starting at offset
-    /// [`CONTROL_SETUP_SIZE`](crate::CONTROL_SETUP_SIZE) in `data`. Otherwise for write requests,
-    /// `n` bytes of `data` were written to the device.
+    /// [`LIBUSB_CONTROL_SETUP_SIZE`] in `data`. Otherwise for write requests, `n` bytes of `data`
+    /// were written to the device.
     ///
     /// ## Errors
     ///
@@ -317,12 +315,14 @@ impl<T: UsbContext> Transfer<T> {
     /// The errors returned by this function include:
     ///
     ///  * `InvalidParam` if buffer is not at least
-    ///  [`CONTROL_SETUP_SIZE`](crate::CONTROL_SETUP_SIZE) bytes in size.
+    ///  [`LIBUSB_CONTROL_SETUP_SIZE`] bytes in size.
     ///  * `Timeout` if the transfer timed out.
     ///  * `Interrupted` if the transfer was cancelled.
     ///  * `Pipe` if the endpoint halted.
     ///  * `NoDevice` if the device has been disconnected.
     ///  * `Io` if the transfer encountered an I/O error.
+    ///
+    /// [`LIBUSB_CONTROL_SETUP_SIZE`]: (crate::constants::LIBUSB_CONTROL_SETUP_SIZE)
     pub fn new_control_transfer(
         device: &DeviceHandle<T>,
         request_type: u8,
@@ -464,10 +464,8 @@ impl<T: UsbContext> DeviceHandle<T> {
     /// [request_type()](fn.request_type.html). The meaning of the other parameters depends on the
     /// type of control request.
     ///
-    /// As these parameters are stored in the first
-    /// [`CONTROL_SETUP_SIZE`](crate::CONTROL_SETUP_SIZE) bytes of the control
-    /// request, the buffer must be at least [`CONTROL_SETUP_SIZE`](crate::CONTROL_SETUP_SIZE)
-    /// bytes in size.
+    /// As these parameters are stored in the first [`LIBUSB_CONTROL_SETUP_SIZE`] bytes of the
+    /// control request, the buffer must be at least [`LIBUSB_CONTROL_SETUP_SIZE`] bytes in size.
     ///
     /// The function blocks up to the amount of time specified by `timeout`. Minimal `timeout` is 1
     /// milliseconds, anything smaller will result in an infinite block.
@@ -477,7 +475,7 @@ impl<T: UsbContext> DeviceHandle<T> {
     ///
     /// If the return value is `Ok((data, n))`, then `data` is populated with `n` bytes of data
     /// received from the device. This data can be found starting at offset
-    /// [`CONTROL_SETUP_SIZE`](crate::CONTROL_SETUP_SIZE) in `data`.
+    /// [`LIBUSB_CONTROL_SETUP_SIZE`] in `data`.
     ///
     /// ## Errors
     ///
@@ -487,13 +485,14 @@ impl<T: UsbContext> DeviceHandle<T> {
     /// The errors returned by this function include:
     ///
     ///  * `InvalidParam` if the `request_type` does not specify a read transfer.
-    ///  * `InvalidParam` if buffer is not at least
-    ///  [`CONTROL_SETUP_SIZE`](crate::CONTROL_SETUP_SIZE) bytes in size.
+    ///  * `InvalidParam` if buffer is not at least [`LIBUSB_CONTROL_SETUP_SIZE`] bytes in size.
     ///  * `Timeout` if the transfer timed out.
     ///  * `Interrupted` if the transfer was cancelled.
     ///  * `Pipe` if the endpoint halted.
     ///  * `NoDevice` if the device has been disconnected.
     ///  * `Io` if the transfer encountered an I/O error.
+    ///
+    /// [`LIBUSB_CONTROL_SETUP_SIZE`]: (crate::constants::LIBUSB_CONTROL_SETUP_SIZE)
     pub async fn read_control_async(
         &self,
         request_type: u8,
@@ -577,11 +576,9 @@ impl<T: UsbContext> DeviceHandle<T> {
     /// [request_type()](fn.request_type.html). The meaning of the other parameters depends on the
     /// type of control request.
     ///
-    /// As these parameters are stored in the first
-    /// [`CONTROL_SETUP_SIZE`](crate::CONTROL_SETUP_SIZE) bytes of the control
-    /// request, the buffer must be at least [`CONTROL_SETUP_SIZE`](crate::CONTROL_SETUP_SIZE)
-    /// bytes in size. The actual data must start at offset
-    /// [`CONTROL_SETUP_SIZE`](crate::CONTROL_SETUP_SIZE).
+    /// As these parameters are stored in the first [`LIBUSB_CONTROL_SETUP_SIZE`] bytes of the
+    /// control request, the buffer must be at least [`LIBUSB_CONTROL_SETUP_SIZE`] bytes in size.
+    /// The actual data must start at offset [`LIBUSB_CONTROL_SETUP_SIZE`].
     ///
     /// The function blocks up to the amount of time specified by `timeout`. Minimal `timeout` is 1
     /// milliseconds, anything smaller will result in an infinite block.
@@ -599,13 +596,14 @@ impl<T: UsbContext> DeviceHandle<T> {
     /// The errors returned by this function include:
     ///
     ///  * `InvalidParam` if the `request_type` does not specify a write transfer.
-    ///  * `InvalidParam` if buffer is not at least
-    ///  [`CONTROL_SETUP_SIZE`](crate::CONTROL_SETUP_SIZE) bytes in size.
+    ///  * `InvalidParam` if buffer is not at least [`LIBUSB_CONTROL_SETUP_SIZE`] bytes in size.
     ///  * `Timeout` if the transfer timed out.
     ///  * `Interrupted` if the transfer was cancelled.
     ///  * `Pipe` if the endpoint halted.
     ///  * `NoDevice` if the device has been disconnected.
     ///  * `Io` if the transfer encountered an I/O error.
+    ///
+    /// [`LIBUSB_CONTROL_SETUP_SIZE`]: (crate::constants::LIBUSB_CONTROL_SETUP_SIZE)
     pub async fn write_control_async(
         &self,
         request_type: u8,
