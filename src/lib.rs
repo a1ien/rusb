@@ -26,8 +26,6 @@ pub use crate::{
     version::{version, LibraryVersion},
 };
 
-pub use libusb1_sys::constants::LIBUSB_CONTROL_SETUP_SIZE as CONTROL_SETUP_SIZE;
-
 #[cfg(test)]
 #[macro_use]
 mod test_helpers;
