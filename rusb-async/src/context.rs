@@ -1,10 +1,10 @@
-use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Arc;
 use std::thread::JoinHandle;
 use std::time::Duration;
 
-use rusb::{Error, UsbContext};
 use rusb::ffi::*;
+use rusb::{Error, UsbContext};
 
 struct EventThread {
     thread: Option<JoinHandle<Result<(), Error>>>,
@@ -36,9 +36,7 @@ impl Drop for EventThread {
     fn drop(&mut self) {
         self.should_quit.store(true, Ordering::SeqCst);
 
-        let _ = self.thread
-            .take()
-            .map(|thread| thread.join());
+        let _ = self.thread.take().map(|thread| thread.join());
     }
 }
 
