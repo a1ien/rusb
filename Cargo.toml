@@ -18,7 +18,7 @@ travis-ci = { repository = "a1ien/rusb" }
 vendored = [ "libusb1-sys/vendored" ]
 
 [workspace]
-members = ["libusb1-sys"]
+members = ["libusb1-sys", "rusb-async"]
 
 [dependencies]
 libusb1-sys = { path = "libusb1-sys", version = "0.6.0" }
