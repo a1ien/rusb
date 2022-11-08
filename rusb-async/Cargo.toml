@@ -19,6 +19,7 @@ vendored = [ "rusb/vendored" ]
 
 [dependencies]
 async-trait = "0.1"
+futures = "0.3"
 rusb = { path = "..", version = "0.9.1" }
 libc = "0.2"
 
