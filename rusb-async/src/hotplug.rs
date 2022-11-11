@@ -66,16 +66,11 @@ impl HotplugBuilder {
     ) -> Result<Registration<U>, Error> {
         let (tx, rx): (Sender<HotplugEvent<U>>, Receiver<HotplugEvent<U>>) = channel(1);
 
-        let hotplug = Box::new(Hotplug {
-            tx,
-        });
+        let hotplug = Box::new(Hotplug { tx });
 
         let inner = self.inner.register(context, hotplug)?;
 
-        Ok(Registration {
-            _inner: inner,
-            rx,
-        })
+        Ok(Registration { _inner: inner, rx })
     }
 }
 
