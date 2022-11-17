@@ -128,7 +128,7 @@ impl<T: UsbContext> CancellationToken<T> {
 pub struct Transfer<T: UsbContext> {
     inner: Arc<Mutex<InnerTransfer<T>>>,
     _context: T,
-    buffer: Arc<Mutex<Option<Pin<Box<[u8]>>>>>,
+    buffer: Arc<Mutex<Option<Box<[u8]>>>>,
 }
 
 impl<T: UsbContext> Drop for Transfer<T> {
@@ -149,7 +149,7 @@ impl<T: UsbContext> Drop for Transfer<T> {
 }
 
 impl<T: UsbContext> Future for Transfer<T> {
-    type Output = Result<(Vec<u8>, usize), (Vec<u8>, Error)>;
+    type Output = Result<(Box<[u8]>, usize), (Box<[u8]>, Error)>;
 
     fn poll(self: Pin<&mut Self>, ctx: &mut Context<'_>) -> Poll<Self::Output> {
         let mut inner = self.inner.lock().unwrap();
@@ -172,7 +172,6 @@ impl<T: UsbContext> Future for Transfer<T> {
             .lock()
             .unwrap()
             .take()
-            .map(|buffer| Pin::<Box<[u8]>>::into_inner(buffer).into_vec())
             .unwrap();
 
         // The transfer completed.
@@ -222,9 +221,9 @@ impl<T: UsbContext> Transfer<T> {
     pub fn new_bulk_transfer(
         device: &DeviceHandle<T>,
         endpoint: u8,
-        data: Vec<u8>,
+        mut data: Box<[u8]>,
         timeout: Duration,
-    ) -> Result<Self, (Vec<u8>, Error)> {
+    ) -> Result<Self, (Box<[u8]>, Error)> {
         let context = device.context().clone();
         let device = unsafe { NonNull::new_unchecked(device.as_raw()) };
 
@@ -238,11 +237,9 @@ impl<T: UsbContext> Transfer<T> {
         let transfer_ptr = inner.as_ptr();
         let transfer = Arc::new(Mutex::new(inner));
 
-        let mut buffer: Pin<Box<[u8]>> = data.into_boxed_slice().into();
-
         let result = {
             let state_ptr = Arc::into_raw(transfer.clone()) as *mut c_void;
-            let buffer: *mut u8 = buffer.as_mut_ptr();
+            let buffer: *mut u8 = data.as_mut_ptr();
 
             unsafe {
                 libusb_fill_bulk_transfer(
@@ -261,13 +258,13 @@ impl<T: UsbContext> Transfer<T> {
         };
 
         if let Err(e) = check_transfer_error(result) {
-            return Err((Pin::<Box<[u8]>>::into_inner(buffer).into_vec(), e));
+            return Err((data, e));
         }
 
         Ok(Self {
             inner: transfer,
             _context: context,
-            buffer: Arc::new(Mutex::new(Some(buffer))),
+            buffer: Arc::new(Mutex::new(Some(data))),
         })
     }
 
@@ -316,9 +313,9 @@ impl<T: UsbContext> Transfer<T> {
         request: u8,
         value: u16,
         index: u16,
-        data: Vec<u8>,
+        mut data: Box<[u8]>,
         timeout: Duration,
-    ) -> Result<Self, (Vec<u8>, Error)> {
+    ) -> Result<Self, (Box<[u8]>, Error)> {
         if data.len() < LIBUSB_CONTROL_SETUP_SIZE {
             return Err((data, Error::InvalidParam));
         }
@@ -341,11 +338,9 @@ impl<T: UsbContext> Transfer<T> {
         let transfer_ptr = inner.as_ptr();
         let transfer = Arc::new(Mutex::new(inner));
 
-        let mut buffer: Pin<Box<[u8]>> = data.into_boxed_slice().into();
-
         let result = {
             let state_ptr = Arc::into_raw(transfer.clone()) as *mut c_void;
-            let buffer: *mut u8 = buffer.as_mut_ptr();
+            let buffer: *mut u8 = data.as_mut_ptr();
 
             // SAFETY: buffer has at least LIBUSB_CONTROL_SETUP_SIZE bytes and is a valid pointer.
             unsafe {
@@ -374,13 +369,13 @@ impl<T: UsbContext> Transfer<T> {
         };
 
         if let Err(e) = check_transfer_error(result) {
-            return Err((Pin::<Box<[u8]>>::into_inner(buffer).into_vec(), e));
+            return Err((data, e));
         }
 
         Ok(Self {
             inner: transfer,
             _context: context,
-            buffer: Arc::new(Mutex::new(Some(buffer))),
+            buffer: Arc::new(Mutex::new(Some(data))),
         })
     }
 
@@ -414,9 +409,9 @@ impl<T: UsbContext> Transfer<T> {
     pub fn new_interrupt_transfer(
         device: &DeviceHandle<T>,
         endpoint: u8,
-        data: Vec<u8>,
+        mut data: Box<[u8]>,
         timeout: Duration,
-    ) -> Result<Self, (Vec<u8>, Error)> {
+    ) -> Result<Self, (Box<[u8]>, Error)> {
         let context = device.context().clone();
         let device = unsafe { NonNull::new_unchecked(device.as_raw()) };
 
@@ -430,11 +425,9 @@ impl<T: UsbContext> Transfer<T> {
         let transfer_ptr = inner.as_ptr();
         let transfer = Arc::new(Mutex::new(inner));
 
-        let mut buffer: Pin<Box<[u8]>> = data.into_boxed_slice().into();
-
         let result = {
             let state_ptr = Arc::into_raw(transfer.clone()) as *mut c_void;
-            let buffer: *mut u8 = buffer.as_mut_ptr();
+            let buffer: *mut u8 = data.as_mut_ptr();
 
             unsafe {
                 libusb_fill_interrupt_transfer(
@@ -453,13 +446,13 @@ impl<T: UsbContext> Transfer<T> {
         };
 
         if let Err(e) = check_transfer_error(result) {
-            return Err((Pin::<Box<[u8]>>::into_inner(buffer).into_vec(), e));
+            return Err((data, e));
         }
 
         Ok(Self {
             inner: transfer,
             _context: context,
-            buffer: Arc::new(Mutex::new(Some(buffer))),
+            buffer: Arc::new(Mutex::new(Some(data))),
         })
     }
 
@@ -505,9 +498,9 @@ pub trait DeviceHandleExt {
     async fn read_bulk_async(
         &self,
         endpoint: u8,
-        data: Vec<u8>,
+        data: Box<[u8]>,
         timeout: Duration,
-    ) -> Result<(Vec<u8>, usize), (Vec<u8>, Error)>;
+    ) -> Result<(Box<[u8]>, usize), (Box<[u8]>, Error)>;
 
     /// Asynchronously reads data using a control transfer.
     ///
@@ -558,9 +551,9 @@ pub trait DeviceHandleExt {
         request: u8,
         value: u16,
         index: u16,
-        data: Vec<u8>,
+        data: Box<[u8]>,
         timeout: Duration,
-    ) -> Result<(Vec<u8>, usize), (Vec<u8>, Error)>;
+    ) -> Result<(Box<[u8]>, usize), (Box<[u8]>, Error)>;
 
     /// Asynchronously reads from an interrupt endpoint.
     ///
@@ -594,9 +587,9 @@ pub trait DeviceHandleExt {
     async fn read_interrupt_async(
         &self,
         endpoint: u8,
-        data: Vec<u8>,
+        data: Box<[u8]>,
         timeout: Duration,
-    ) -> Result<(Vec<u8>, usize), (Vec<u8>, Error)>;
+    ) -> Result<(Box<[u8]>, usize), (Box<[u8]>, Error)>;
 
     /// Asynchronously writes to a bulk endpoint.
     ///
@@ -629,9 +622,9 @@ pub trait DeviceHandleExt {
     async fn write_bulk_async(
         &self,
         endpoint: u8,
-        data: Vec<u8>,
+        data: Box<[u8]>,
         timeout: Duration,
-    ) -> Result<(Vec<u8>, usize), (Vec<u8>, Error)>;
+    ) -> Result<(Box<[u8]>, usize), (Box<[u8]>, Error)>;
 
     /// Asynchronously writes data using a control transfer.
     ///
@@ -681,9 +674,9 @@ pub trait DeviceHandleExt {
         request: u8,
         value: u16,
         index: u16,
-        data: Vec<u8>,
+        data: Box<[u8]>,
         timeout: Duration,
-    ) -> Result<(Vec<u8>, usize), (Vec<u8>, Error)>;
+    ) -> Result<(Box<[u8]>, usize), (Box<[u8]>, Error)>;
 
     /// Asynchronously writes to an interrupt endpoint.
     ///
@@ -716,9 +709,9 @@ pub trait DeviceHandleExt {
     async fn write_interrupt_async(
         &self,
         endpoint: u8,
-        data: Vec<u8>,
+        data: Box<[u8]>,
         timeout: Duration,
-    ) -> Result<(Vec<u8>, usize), (Vec<u8>, Error)>;
+    ) -> Result<(Box<[u8]>, usize), (Box<[u8]>, Error)>;
 }
 
 #[async_trait]
@@ -726,9 +719,9 @@ impl<T: UsbContext> DeviceHandleExt for DeviceHandle<T> {
     async fn read_bulk_async(
         &self,
         endpoint: u8,
-        data: Vec<u8>,
+        data: Box<[u8]>,
         timeout: Duration,
-    ) -> Result<(Vec<u8>, usize), (Vec<u8>, Error)> {
+    ) -> Result<(Box<[u8]>, usize), (Box<[u8]>, Error)> {
         if endpoint & LIBUSB_ENDPOINT_DIR_MASK != LIBUSB_ENDPOINT_IN {
             return Err((data, Error::InvalidParam));
         }
@@ -744,9 +737,9 @@ impl<T: UsbContext> DeviceHandleExt for DeviceHandle<T> {
         request: u8,
         value: u16,
         index: u16,
-        data: Vec<u8>,
+        data: Box<[u8]>,
         timeout: Duration,
-    ) -> Result<(Vec<u8>, usize), (Vec<u8>, Error)> {
+    ) -> Result<(Box<[u8]>, usize), (Box<[u8]>, Error)> {
         if request_type & LIBUSB_ENDPOINT_DIR_MASK != LIBUSB_ENDPOINT_IN {
             return Err((data, Error::InvalidParam));
         }
@@ -767,9 +760,9 @@ impl<T: UsbContext> DeviceHandleExt for DeviceHandle<T> {
     async fn read_interrupt_async(
         &self,
         endpoint: u8,
-        data: Vec<u8>,
+        data: Box<[u8]>,
         timeout: Duration,
-    ) -> Result<(Vec<u8>, usize), (Vec<u8>, Error)> {
+    ) -> Result<(Box<[u8]>, usize), (Box<[u8]>, Error)> {
         if endpoint & LIBUSB_ENDPOINT_DIR_MASK != LIBUSB_ENDPOINT_IN {
             return Err((data, Error::InvalidParam));
         }
@@ -782,9 +775,9 @@ impl<T: UsbContext> DeviceHandleExt for DeviceHandle<T> {
     async fn write_bulk_async(
         &self,
         endpoint: u8,
-        data: Vec<u8>,
+        data: Box<[u8]>,
         timeout: Duration,
-    ) -> Result<(Vec<u8>, usize), (Vec<u8>, Error)> {
+    ) -> Result<(Box<[u8]>, usize), (Box<[u8]>, Error)> {
         if endpoint & LIBUSB_ENDPOINT_DIR_MASK != LIBUSB_ENDPOINT_OUT {
             return Err((data, Error::InvalidParam));
         }
@@ -800,9 +793,9 @@ impl<T: UsbContext> DeviceHandleExt for DeviceHandle<T> {
         request: u8,
         value: u16,
         index: u16,
-        data: Vec<u8>,
+        data: Box<[u8]>,
         timeout: Duration,
-    ) -> Result<(Vec<u8>, usize), (Vec<u8>, Error)> {
+    ) -> Result<(Box<[u8]>, usize), (Box<[u8]>, Error)> {
         if request_type & LIBUSB_ENDPOINT_DIR_MASK != LIBUSB_ENDPOINT_OUT {
             return Err((data, Error::InvalidParam));
         }
@@ -823,9 +816,9 @@ impl<T: UsbContext> DeviceHandleExt for DeviceHandle<T> {
     async fn write_interrupt_async(
         &self,
         endpoint: u8,
-        data: Vec<u8>,
+        data: Box<[u8]>,
         timeout: Duration,
-    ) -> Result<(Vec<u8>, usize), (Vec<u8>, Error)> {
+    ) -> Result<(Box<[u8]>, usize), (Box<[u8]>, Error)> {
         if endpoint & LIBUSB_ENDPOINT_DIR_MASK != LIBUSB_ENDPOINT_OUT {
             return Err((data, Error::InvalidParam));
         }

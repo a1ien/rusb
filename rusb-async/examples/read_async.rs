@@ -35,7 +35,7 @@ async fn main() {
     );
 
     let timeout = Duration::from_secs(10);
-    let mut buffer = Vec::with_capacity(BUF_SIZE);
+    let mut buffer = vec![0u8; BUF_SIZE].into_boxed_slice();
 
     loop {
         let (bytes, n) = device
