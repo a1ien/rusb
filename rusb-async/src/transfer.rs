@@ -167,12 +167,7 @@ impl<T: UsbContext> Future for Transfer<T> {
         //
         // In addition, `Future::poll()` should not be called a second time after it returns
         // `Poll::Ready`. Thus, it is safe to panic.
-        let buffer = self
-            .buffer
-            .lock()
-            .unwrap()
-            .take()
-            .unwrap();
+        let buffer = self.buffer.lock().unwrap().take().unwrap();
 
         // The transfer completed.
         if inner.status == LIBUSB_TRANSFER_COMPLETED {
