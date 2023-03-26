@@ -1,6 +1,6 @@
 [package]
 name = "rusb"
-version = "0.9.1"
+version = "0.9.2"
 authors = ["David Cuddeback <david.cuddeback@gmail.com>", "Ilya Averyanov <a1ien.n3t@gmail.com>"]
 description = "Rust library for accessing USB devices."
 license = "MIT"
@@ -26,4 +26,4 @@ libc = "0.2"
 
 [dev-dependencies]
 regex = "1"
-usb-ids = "0.2.2"
+usb-ids = "1.2023.0"

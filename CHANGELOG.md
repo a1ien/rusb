@@ -1,6 +1,28 @@
 # Changes
 
-## unreleased
+## 0.9.2
+* Random corrections around the code [#127]
+* examples: list_devices: Add vendor and product name [#128]
+* examples: read_devices: Improve usage [#125]
+* context: create rusb `Context` from existing `libusb_context` [#135]
+* `new` now uses `from_raw` [#135]
+* Fix stack use after scope in tests [#138]
+* Fix United Kingdom misspelling in languages docs [#137]
+* fields.rs: Make request_type function a const fn [#142]
+* Increase endpoint descriptor's lifetime [#149]
+* Fix timeout documentation [#151]
+
+[#127]: https://github.com/a1ien/rusb/pull/116
+[#128]: https://github.com/a1ien/rusb/pull/116
+[#125]: https://github.com/a1ien/rusb/pull/116
+[#135]: https://github.com/a1ien/rusb/pull/116
+[#138]: https://github.com/a1ien/rusb/pull/116
+[#137]: https://github.com/a1ien/rusb/pull/116
+[#142]: https://github.com/a1ien/rusb/pull/116
+[#149]: https://github.com/a1ien/rusb/pull/116
+[#151]: https://github.com/a1ien/rusb/pull/116
+
+## 0.9.1
 * impl Ord and PartialOrd for Version [#116]
 
 [#116]: https://github.com/a1ien/rusb/pull/116
