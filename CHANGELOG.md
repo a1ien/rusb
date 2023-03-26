@@ -12,15 +12,15 @@
 * Increase endpoint descriptor's lifetime [#149]
 * Fix timeout documentation [#151]
 
-[#127]: https://github.com/a1ien/rusb/pull/116
-[#128]: https://github.com/a1ien/rusb/pull/116
-[#125]: https://github.com/a1ien/rusb/pull/116
-[#135]: https://github.com/a1ien/rusb/pull/116
-[#138]: https://github.com/a1ien/rusb/pull/116
-[#137]: https://github.com/a1ien/rusb/pull/116
-[#142]: https://github.com/a1ien/rusb/pull/116
-[#149]: https://github.com/a1ien/rusb/pull/116
-[#151]: https://github.com/a1ien/rusb/pull/116
+[#127]: https://github.com/a1ien/rusb/pull/127
+[#128]: https://github.com/a1ien/rusb/pull/128
+[#125]: https://github.com/a1ien/rusb/pull/125
+[#135]: https://github.com/a1ien/rusb/pull/135
+[#138]: https://github.com/a1ien/rusb/pull/135
+[#137]: https://github.com/a1ien/rusb/pull/137
+[#142]: https://github.com/a1ien/rusb/pull/142
+[#149]: https://github.com/a1ien/rusb/pull/149
+[#151]: https://github.com/a1ien/rusb/pull/151
 
 ## 0.9.1
 * impl Ord and PartialOrd for Version [#116]
