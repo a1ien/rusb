@@ -17,7 +17,7 @@ impl Language {
     /// Returns the language's 16-bit `LANGID`.
     ///
     /// Each language's `LANGID` is defined by the USB forum
-    /// <http://www.usb.org/developers/docs/USB_LANGIDs.pdf>.
+    /// <https://learn.microsoft.com/en-us/windows/win32/intl/language-identifier-constants-and-strings>.
     pub fn lang_id(self) -> u16 {
         self.raw
     }
