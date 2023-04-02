@@ -3,6 +3,8 @@
 pub use libusb1_sys as ffi;
 pub use libusb1_sys::constants;
 
+#[cfg(unix)]
+pub use crate::options::disable_device_discovery;
 pub use crate::{
     config_descriptor::{ConfigDescriptor, Interfaces},
     context::{Context, GlobalContext, LogLevel, UsbContext},
