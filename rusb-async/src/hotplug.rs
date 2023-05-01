@@ -64,7 +64,10 @@ impl HotplugBuilder {
         &mut self,
         context: T,
     ) -> Result<Registration<U>, Error> {
-        let (tx, rx): (UnboundedSender<HotplugEvent<U>>, UnboundedReceiver<HotplugEvent<U>>) = unbounded();
+        let (tx, rx): (
+            UnboundedSender<HotplugEvent<U>>,
+            UnboundedReceiver<HotplugEvent<U>>,
+        ) = unbounded();
 
         let hotplug = Box::new(Hotplug { tx });
 
