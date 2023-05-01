@@ -1,7 +1,7 @@
 use rusb::{Device, Error, UsbContext};
 
 use futures::{
-    channel::mpsc::{channel, Receiver, Sender},
+    channel::mpsc::{unbounded, UnboundedReceiver, UnboundedSender},
     SinkExt, StreamExt,
 };
 use std::borrow::Borrow;
@@ -64,7 +64,7 @@ impl HotplugBuilder {
         &mut self,
         context: T,
     ) -> Result<Registration<U>, Error> {
-        let (tx, rx): (Sender<HotplugEvent<U>>, Receiver<HotplugEvent<U>>) = channel(1);
+        let (tx, rx): (UnboundedSender<HotplugEvent<U>>, UnboundedReceiver<HotplugEvent<U>>) = unbounded();
 
         let hotplug = Box::new(Hotplug { tx });
 
@@ -75,7 +75,7 @@ impl HotplugBuilder {
 }
 
 struct Hotplug<T: UsbContext> {
-    tx: Sender<HotplugEvent<T>>,
+    tx: UnboundedSender<HotplugEvent<T>>,
 }
 
 impl<T: UsbContext> rusb::Hotplug<T> for Hotplug<T> {
@@ -95,7 +95,7 @@ impl<T: UsbContext> rusb::Hotplug<T> for Hotplug<T> {
 /// The hotplug registration which can be polled for [`HotplugEvents`](HotplugEvent).
 pub struct Registration<T: UsbContext> {
     _inner: rusb::Registration<T>,
-    rx: Receiver<HotplugEvent<T>>,
+    rx: UnboundedReceiver<HotplugEvent<T>>,
 }
 
 impl<T: UsbContext> Registration<T> {
