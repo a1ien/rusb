@@ -1,6 +1,6 @@
 use rusb::{
     ConfigDescriptor, DeviceDescriptor, DeviceHandle, DeviceList, EndpointDescriptor,
-    InterfaceDescriptor, Language, Result, Speed, UsbContext,
+    InterfaceDescriptor, Language, Result, UsbContext,
 };
 use std::time::Duration;
 
@@ -46,12 +46,13 @@ fn list_devices() -> Result<()> {
         };
 
         println!(
-            "Bus {:03} Device {:03} ID {:04x}:{:04x} {}",
+            "Bus {:03} Device {:03} ID {:04x}:{:04x} Speed {} ({} Mbps)",
             device.bus_number(),
             device.address(),
             device_desc.vendor_id(),
             device_desc.product_id(),
-            get_speed(device.speed())
+            device.speed(),
+            device.speed().as_mbps()
         );
         print_device(&device_desc, &mut usb_device);
 
@@ -246,15 +247,4 @@ fn print_endpoint(endpoint_desc: &EndpointDescriptor) {
         "        bInterval            {:3}",
         endpoint_desc.interval()
     );
-}
-
-fn get_speed(speed: Speed) -> &'static str {
-    match speed {
-        Speed::SuperPlus => "10000 Mbps",
-        Speed::Super => "5000 Mbps",
-        Speed::High => " 480 Mbps",
-        Speed::Full => "  12 Mbps",
-        Speed::Low => " 1.5 Mbps",
-        _ => "(unknown)",
-    }
 }

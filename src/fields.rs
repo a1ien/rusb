@@ -1,5 +1,6 @@
 use libc::c_int;
 use libusb1_sys::constants::*;
+use std::fmt;
 
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
@@ -28,6 +29,28 @@ pub enum Speed {
 
     /// The device is operating at super speed (10 Gbps).
     SuperPlus,
+}
+
+impl Speed {
+    /// Gets the speed in floating point megabits per second.
+    /// If the speed is unknown, it is reported as 0.0
+    pub fn as_mbps(&self) -> f64 {
+        use Speed::*;
+        match *self {
+            Low => 1.5,
+            Full => 12.0,
+            High => 480.0,
+            Super => 5000.0,
+            SuperPlus => 10000.0,
+            _ => 0.0,
+        }
+    }
+}
+
+impl fmt::Display for Speed {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{:?}", *self)
+    }
 }
 
 #[doc(hidden)]
