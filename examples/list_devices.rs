@@ -46,11 +46,12 @@ fn list_devices() -> Result<()> {
         };
 
         println!(
-            "Bus {:03} Device {:03} ID {:04x}:{:04x} {}",
+            "Bus {:03} Device {:03} ID {:04x}:{:04x} Port {} {}",
             device.bus_number(),
             device.address(),
             device_desc.vendor_id(),
             device_desc.product_id(),
+            device.port_string().unwrap_or_default(),
             get_speed(device.speed())
         );
         print_device(&device_desc, &mut usb_device);

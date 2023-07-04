@@ -175,4 +175,30 @@ impl<T: UsbContext> Device<T> {
         };
         Ok(ports[0..ports_number as usize].to_vec())
     }
+
+    /// Gets the a string describing the unique port to which the device is
+    /// attached.
+    ///
+    /// The port string is in the form:
+    /// ```text
+    /// <bus>[-<port>[.<port>[.<port>[...]]]]
+    /// ```
+    ///
+    /// like `4-1.2`. This can be used on any system, but is especially useful
+    /// in Linux as it is compatible with the port designation in the device
+    /// path and system path for USB devices.
+    pub fn port_string(&self) -> crate::Result<String> {
+        let mut s = self.bus_number().to_string();
+        let ports = self.port_numbers()?;
+
+        if !ports.is_empty() {
+            s.push_str(&format!("-{}", ports[0]));
+
+            for port in ports.iter().skip(1) {
+                s.push_str(&format!(".{}", port));
+            }
+        }
+        Ok(s)
+    }
+
 }
