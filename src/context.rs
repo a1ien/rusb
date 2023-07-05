@@ -1,5 +1,5 @@
 use libc::{c_int, timeval};
-
+use once_cell::sync::Lazy;
 use std::{cmp::Ordering, mem, ptr, sync::Arc, time::Duration};
 
 #[cfg(unix)]
@@ -45,7 +45,13 @@ impl Drop for ContextInner {
     }
 }
 
-const GLOBAL_CONTEXT: ContextInner = ContextInner(ptr::null_mut());
+/// The global context
+pub static GLOBAL_CONTEXT: Lazy<Context> = Lazy::new(|| {
+    let _ = unsafe { libusb_init(ptr::null_mut()) };
+    Context {
+        inner: Arc::new(ContextInner(ptr::null_mut())),
+    }
+});
 
 impl Context {
     /// Opens a new `libusb` context.
@@ -70,11 +76,10 @@ impl Context {
 
     /// Gets the global context
     pub fn global() -> Self {
-        // Call default() to initialize the global context
         Self::default()
     }
 
-    /// Determines if this is the global context.
+    /// Determines if this object is a reference the global context.
     pub fn is_global(&self) -> bool {
         self.inner.0.is_null()
     }
@@ -247,10 +252,7 @@ impl Context {
 
 impl Default for Context {
     fn default() -> Self {
-        let _ = unsafe { libusb_init(ptr::null_mut()) };
-        Self {
-            inner: Arc::new(GLOBAL_CONTEXT),
-        }
+        GLOBAL_CONTEXT.clone()
     }
 }
 
