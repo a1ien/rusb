@@ -1,4 +1,4 @@
-use crate::{error, Result, Context};
+use crate::{error, Context, Result};
 use libusb1_sys::{constants::*, libusb_set_option};
 use std::ptr;
 

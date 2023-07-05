@@ -1,13 +1,14 @@
 use crate::{
     constants::{
         LIBUSB_HOTPLUG_ENUMERATE, LIBUSB_HOTPLUG_EVENT_DEVICE_ARRIVED,
-            LIBUSB_HOTPLUG_EVENT_DEVICE_LEFT, LIBUSB_HOTPLUG_MATCH_ANY, LIBUSB_HOTPLUG_NO_FLAGS,
+        LIBUSB_HOTPLUG_EVENT_DEVICE_LEFT, LIBUSB_HOTPLUG_MATCH_ANY, LIBUSB_HOTPLUG_NO_FLAGS,
     },
+    error,
     ffi::{
         libusb_context, libusb_device, libusb_hotplug_callback_handle,
         libusb_hotplug_deregister_callback, libusb_hotplug_event, libusb_hotplug_register_callback,
     },
-    error, Result, Device, Context,
+    Context, Device, Result,
 };
 use std::{
     borrow::Borrow,
@@ -124,11 +125,7 @@ impl HotplugBuilder {
     /// [`Device`]: crate::Device
     /// [`DeviceHandle`]: crate::DeviceHandle
     /// [`Context::unregister_callback`]: method@crate::Context::unregister_callback
-    pub fn register(
-        self,
-        context: Context,
-        callback: Box<dyn Hotplug>,
-    ) -> Result<Registration> {
+    pub fn register(self, context: Context, callback: Box<dyn Hotplug>) -> Result<Registration> {
         let mut handle: libusb_hotplug_callback_handle = 0;
         let mut call_back = Box::new(CallbackData {
             context: context.borrow().clone(),

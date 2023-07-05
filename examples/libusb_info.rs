@@ -1,4 +1,3 @@
-
 fn main() {
     let version = rusb::version();
 

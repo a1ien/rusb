@@ -6,8 +6,10 @@ use std::{cmp::Ordering, mem, ptr, sync::Arc, time::Duration};
 use std::os::unix::io::RawFd;
 
 use crate::{
+    device_handle::DeviceHandle,
+    device_list::DeviceList,
+    error,
     hotplug::{Hotplug, HotplugBuilder, Registration},
-    device_handle::DeviceHandle, device_list::DeviceList, error,
     Error, Result,
 };
 use libusb1_sys::{constants::*, *};
@@ -68,7 +70,13 @@ impl Context {
 
     /// Gets the global context
     pub fn global() -> Self {
+        // Call default() to initialize the global context
         Self::default()
+    }
+
+    /// Determines if this is the global context.
+    pub fn is_global(&self) -> bool {
+        self.inner.0.is_null()
     }
 
     /// Creates rusb Context from existing libusb context.
@@ -77,7 +85,9 @@ impl Context {
     /// This is unsafe because it does not check if the context is valid,
     /// so the caller must guarantee that libusb_context is created properly.
     pub unsafe fn from_raw(raw: *mut libusb_context) -> Self {
-        Context { inner: Arc::new(ContextInner(raw)) }
+        Context {
+            inner: Arc::new(ContextInner(raw)),
+        }
     }
 
     /// Get the raw libusb_context pointer, for advanced use in unsafe code.
@@ -124,8 +134,7 @@ impl Context {
 
         match libusb_wrap_sys_device(self.as_raw(), fd as _, handle.as_mut_ptr()) {
             0 => {
-                let ptr =
-                    std::ptr::NonNull::new(handle.assume_init()).ok_or(Error::NoDevice)?;
+                let ptr = std::ptr::NonNull::new(handle.assume_init()).ok_or(Error::NoDevice)?;
 
                 Ok(DeviceHandle::from_libusb(self.clone(), ptr))
             }
@@ -238,7 +247,10 @@ impl Context {
 
 impl Default for Context {
     fn default() -> Self {
-        Self { inner: Arc::new(GLOBAL_CONTEXT) }
+        let _ = unsafe { libusb_init(ptr::null_mut()) };
+        Self {
+            inner: Arc::new(GLOBAL_CONTEXT),
+        }
     }
 }
 
@@ -274,5 +286,21 @@ impl LogLevel {
             LogLevel::Info => LIBUSB_LOG_LEVEL_INFO,
             LogLevel::Debug => LIBUSB_LOG_LEVEL_DEBUG,
         }
+    }
+}
+
+/////////////////////////////////////////////////////////////////////////////
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn is_global_context() {
+        let ctx = Context::global();
+        assert!(ctx.is_global());
+
+        let ctx = Context::new().unwrap();
+        assert!(!ctx.is_global());
     }
 }

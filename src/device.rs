@@ -12,7 +12,7 @@ use crate::{
     device_handle::DeviceHandle,
     error,
     fields::{self, Speed},
-    Error, Result, Context,
+    Context, Error, Result,
 };
 
 /// A reference to a USB device.

@@ -1,8 +1,6 @@
 use std::time::Duration;
 
-use rusb::{
-    Context, Device, DeviceDescriptor, DeviceHandle, Direction, Result, TransferType,
-};
+use rusb::{Context, Device, DeviceDescriptor, DeviceHandle, Direction, Result, TransferType};
 
 #[derive(Debug)]
 struct Endpoint {
@@ -150,11 +148,7 @@ fn find_readable_endpoint(
     None
 }
 
-fn read_endpoint(
-    handle: &mut DeviceHandle,
-    endpoint: Endpoint,
-    transfer_type: TransferType,
-) {
+fn read_endpoint(handle: &mut DeviceHandle, endpoint: Endpoint, transfer_type: TransferType) {
     println!("Reading from endpoint: {:?}", endpoint);
 
     let has_kernel_driver = match handle.kernel_driver_active(endpoint.iface) {
@@ -198,10 +192,7 @@ fn read_endpoint(
     }
 }
 
-fn configure_endpoint(
-    handle: &mut DeviceHandle,
-    endpoint: &Endpoint,
-) -> Result<()> {
+fn configure_endpoint(handle: &mut DeviceHandle, endpoint: &Endpoint) -> Result<()> {
     handle.set_active_configuration(endpoint.config)?;
     handle.claim_interface(endpoint.iface)?;
     handle.set_alternate_setting(endpoint.iface, endpoint.setting)?;

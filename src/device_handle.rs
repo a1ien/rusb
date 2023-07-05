@@ -190,10 +190,7 @@ impl DeviceHandle {
     ///
     /// Converts an existing `libusb_device_handle` pointer into a `DeviceHandle`.
     /// `handle` must be a pointer to a valid `libusb_device_handle`. Rusb assumes ownership of the handle, and will close it on `drop`.
-    pub unsafe fn from_libusb(
-        context: Context,
-        handle: NonNull<libusb_device_handle>,
-    ) -> Self {
+    pub unsafe fn from_libusb(context: Context, handle: NonNull<libusb_device_handle>) -> Self {
         Self {
             context,
             handle: Some(handle),

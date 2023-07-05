@@ -13,7 +13,9 @@ struct UsbDevice {
 }
 
 fn main() {
-    list_devices().unwrap();
+    if let Err(err) = list_devices() {
+        eprintln!("{}", err);
+    }
 }
 
 fn list_devices() -> Result<()> {
@@ -172,10 +174,7 @@ fn print_config(config_desc: &ConfigDescriptor, handle: &mut Option<UsbDevice>) 
     }
 }
 
-fn print_interface(
-    interface_desc: &InterfaceDescriptor,
-    handle: &mut Option<UsbDevice>,
-) {
+fn print_interface(interface_desc: &InterfaceDescriptor, handle: &mut Option<UsbDevice>) {
     println!("    Interface Descriptor:");
     println!(
         "      bInterfaceNumber     {:3}",

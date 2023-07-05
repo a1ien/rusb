@@ -97,10 +97,7 @@ pub fn set_log_level(level: LogLevel) {
 ///
 /// Returns a device handle for the first device found matching `vendor_id` and `product_id`.
 /// On error, or if the device could not be found, it returns `None`.
-pub fn open_device_with_vid_pid(
-    vendor_id: u16,
-    product_id: u16,
-) -> Option<DeviceHandle> {
+pub fn open_device_with_vid_pid(vendor_id: u16, product_id: u16) -> Option<DeviceHandle> {
     let handle = unsafe {
         libusb1_sys::libusb_open_device_with_vid_pid(
             Context::global().as_raw(),
@@ -113,10 +110,7 @@ pub fn open_device_with_vid_pid(
         None
     } else {
         Some(unsafe {
-            DeviceHandle::from_libusb(
-                Context::global(),
-                std::ptr::NonNull::new_unchecked(handle),
-            )
+            DeviceHandle::from_libusb(Context::global(), std::ptr::NonNull::new_unchecked(handle))
         })
     }
 }

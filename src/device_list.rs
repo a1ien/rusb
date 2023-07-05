@@ -1,6 +1,6 @@
 use libc::c_int;
 
-use std::{mem, ptr, slice};
+use std::{mem, slice};
 
 use crate::{
     context::Context,
@@ -27,22 +27,7 @@ impl Drop for DeviceList {
 
 impl DeviceList {
     pub fn new() -> Result<Self> {
-        let mut list = mem::MaybeUninit::<*const *mut libusb_device>::uninit();
-
-        let n =
-            unsafe { libusb_get_device_list(ptr::null_mut(), list.as_mut_ptr()) };
-
-        if n < 0 {
-            Err(error::from_libusb(n as c_int))
-        } else {
-            Ok(unsafe {
-                DeviceList {
-                    context: Default::default(),
-                    list: list.assume_init(),
-                    len: n as usize,
-                }
-            })
-        }
+        Self::new_with_context(Context::default())
     }
 
     pub fn new_with_context(context: Context) -> Result<Self> {
