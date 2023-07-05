@@ -1,13 +1,13 @@
-use rusb::{Context, Device, HotplugBuilder, UsbContext};
+use rusb::{Context, Device, HotplugBuilder};
 
 struct HotPlugHandler;
 
-impl<T: UsbContext> rusb::Hotplug<T> for HotPlugHandler {
-    fn device_arrived(&mut self, device: Device<T>) {
+impl rusb::Hotplug for HotPlugHandler {
+    fn device_arrived(&mut self, device: Device) {
         println!("device arrived {:?}", device);
     }
 
-    fn device_left(&mut self, device: Device<T>) {
+    fn device_left(&mut self, device: Device) {
         println!("device left {:?}", device);
     }
 }
@@ -25,7 +25,7 @@ fn main() -> rusb::Result<()> {
         let mut reg = Some(
             HotplugBuilder::new()
                 .enumerate(true)
-                .register(&context, Box::new(HotPlugHandler {}))?,
+                .register(context.clone(), Box::new(HotPlugHandler {}))?,
         );
 
         loop {

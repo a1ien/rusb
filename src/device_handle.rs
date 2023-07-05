@@ -16,7 +16,7 @@ use crate::{
     fields::{request_type, Direction, Recipient, RequestType},
     interface_descriptor::InterfaceDescriptor,
     language::Language,
-    UsbContext,
+    Context,
 };
 
 /// Bit set representing claimed USB interfaces.
@@ -110,13 +110,13 @@ impl<'a> Iterator for ClaimedInterfacesIter<'a> {
 
 /// A handle to an open USB device.
 #[derive(Eq, PartialEq)]
-pub struct DeviceHandle<T: UsbContext> {
-    context: T,
+pub struct DeviceHandle {
+    context: Context,
     handle: Option<NonNull<libusb_device_handle>>,
     interfaces: ClaimedInterfaces,
 }
 
-impl<T: UsbContext> Drop for DeviceHandle<T> {
+impl Drop for DeviceHandle {
     /// Closes the device.
     fn drop(&mut self) {
         unsafe {
@@ -131,10 +131,10 @@ impl<T: UsbContext> Drop for DeviceHandle<T> {
     }
 }
 
-unsafe impl<T: UsbContext> Send for DeviceHandle<T> {}
-unsafe impl<T: UsbContext> Sync for DeviceHandle<T> {}
+unsafe impl Send for DeviceHandle {}
+unsafe impl Sync for DeviceHandle {}
 
-impl<T: UsbContext> Debug for DeviceHandle<T> {
+impl Debug for DeviceHandle {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         f.debug_struct("DeviceHandle")
             .field("device", &self.device())
@@ -144,7 +144,7 @@ impl<T: UsbContext> Debug for DeviceHandle<T> {
     }
 }
 
-impl<T: UsbContext> DeviceHandle<T> {
+impl DeviceHandle {
     /// Get the raw libusb_device_handle pointer, for advanced use in unsafe code.
     ///
     /// This structure tracks claimed interfaces, and will get out if sync if interfaces are
@@ -172,12 +172,12 @@ impl<T: UsbContext> DeviceHandle<T> {
     }
 
     /// Get the context associated with this device
-    pub fn context(&self) -> &T {
+    pub fn context(&self) -> &Context {
         &self.context
     }
 
     /// Get the device associated to this handle
-    pub fn device(&self) -> Device<T> {
+    pub fn device(&self) -> Device {
         unsafe {
             device::Device::from_libusb(
                 self.context.clone(),
@@ -188,13 +188,13 @@ impl<T: UsbContext> DeviceHandle<T> {
 
     /// # Safety
     ///
-    /// Converts an existing `libusb_device_handle` pointer into a `DeviceHandle<T>`.
+    /// Converts an existing `libusb_device_handle` pointer into a `DeviceHandle`.
     /// `handle` must be a pointer to a valid `libusb_device_handle`. Rusb assumes ownership of the handle, and will close it on `drop`.
     pub unsafe fn from_libusb(
-        context: T,
+        context: Context,
         handle: NonNull<libusb_device_handle>,
-    ) -> DeviceHandle<T> {
-        DeviceHandle {
+    ) -> Self {
+        Self {
             context,
             handle: Some(handle),
             interfaces: ClaimedInterfaces::new(),

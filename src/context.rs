@@ -1,12 +1,15 @@
 use libc::{c_int, timeval};
 
-use std::{cmp::Ordering, mem, ptr, sync::Arc, sync::Once, time::Duration};
+use std::{cmp::Ordering, mem, ptr, sync::Arc, time::Duration};
 
 #[cfg(unix)]
 use std::os::unix::io::RawFd;
 
-use crate::hotplug::{Hotplug, HotplugBuilder, Registration};
-use crate::{device_handle::DeviceHandle, device_list::DeviceList, error};
+use crate::{
+    hotplug::{Hotplug, HotplugBuilder, Registration},
+    device_handle::DeviceHandle, device_list::DeviceList, error,
+    Error, Result,
+};
 use libusb1_sys::{constants::*, *};
 
 #[cfg(windows)]
@@ -19,38 +22,71 @@ type Seconds = ::libc::time_t;
 #[cfg(not(windows))]
 type MicroSeconds = ::libc::suseconds_t;
 
-#[derive(Copy, Clone, Eq, PartialEq, Default)]
-pub struct GlobalContext {}
-
 /// A `libusb` context.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Context {
-    context: Arc<ContextInner>,
+    inner: Arc<ContextInner>,
 }
 
 #[derive(Debug, Eq, PartialEq)]
-struct ContextInner {
-    inner: ptr::NonNull<libusb_context>,
-}
+struct ContextInner(*mut libusb_context);
+
+unsafe impl Sync for ContextInner {}
+unsafe impl Send for ContextInner {}
 
 impl Drop for ContextInner {
     /// Closes the `libusb` context.
     fn drop(&mut self) {
         unsafe {
-            libusb_exit(self.inner.as_ptr());
+            libusb_exit(self.0);
         }
     }
 }
 
-unsafe impl Sync for Context {}
-unsafe impl Send for Context {}
+const GLOBAL_CONTEXT: ContextInner = ContextInner(ptr::null_mut());
 
-pub trait UsbContext: Clone + Sized + Send + Sync {
+impl Context {
+    /// Opens a new `libusb` context.
+    pub fn new() -> Result<Self> {
+        let mut context = mem::MaybeUninit::<*mut libusb_context>::uninit();
+
+        try_unsafe!(libusb_init(context.as_mut_ptr()));
+
+        Ok(unsafe { Self::from_raw(context.assume_init()) })
+    }
+
+    /// Creates a new `libusb` context and sets runtime options.
+    pub fn with_options(opts: &[crate::UsbOption]) -> Result<Self> {
+        let mut this = Self::new()?;
+
+        for opt in opts {
+            opt.apply(&mut this)?;
+        }
+
+        Ok(this)
+    }
+
+    /// Gets the global context
+    pub fn global() -> Self {
+        Self::default()
+    }
+
+    /// Creates rusb Context from existing libusb context.
+    /// Note: This transfers ownership of the context to Rust.
+    /// # Safety
+    /// This is unsafe because it does not check if the context is valid,
+    /// so the caller must guarantee that libusb_context is created properly.
+    pub unsafe fn from_raw(raw: *mut libusb_context) -> Self {
+        Context { inner: Arc::new(ContextInner(raw)) }
+    }
+
     /// Get the raw libusb_context pointer, for advanced use in unsafe code.
-    fn as_raw(&self) -> *mut libusb_context;
+    pub fn as_raw(&self) -> *mut libusb_context {
+        self.inner.0
+    }
 
     /// Returns a list of the current USB devices.
-    fn devices(&self) -> crate::Result<DeviceList<Self>> {
+    pub fn devices(&self) -> Result<DeviceList> {
         DeviceList::new_with_context(self.clone())
     }
 
@@ -62,11 +98,11 @@ pub trait UsbContext: Clone + Sized + Send + Sync {
     ///
     /// Returns a device handle for the first device found matching `vendor_id` and `product_id`.
     /// On error, or if the device could not be found, it returns `None`.
-    fn open_device_with_vid_pid(
+    pub fn open_device_with_vid_pid(
         &self,
         vendor_id: u16,
         product_id: u16,
-    ) -> Option<DeviceHandle<Self>> {
+    ) -> Option<DeviceHandle> {
         let handle =
             unsafe { libusb_open_device_with_vid_pid(self.as_raw(), vendor_id, product_id) };
         let ptr = std::ptr::NonNull::new(handle)?;
@@ -83,13 +119,13 @@ pub trait UsbContext: Clone + Sized + Send + Sync {
     /// as long as the device handle.
     #[cfg(unix)]
     #[doc(alias = "libusb_wrap_sys_device")]
-    unsafe fn open_device_with_fd(&self, fd: RawFd) -> crate::Result<DeviceHandle<Self>> {
+    pub unsafe fn open_device_with_fd(&self, fd: RawFd) -> Result<DeviceHandle> {
         let mut handle = mem::MaybeUninit::<*mut libusb_device_handle>::uninit();
 
         match libusb_wrap_sys_device(self.as_raw(), fd as _, handle.as_mut_ptr()) {
             0 => {
                 let ptr =
-                    std::ptr::NonNull::new(handle.assume_init()).ok_or(crate::Error::NoDevice)?;
+                    std::ptr::NonNull::new(handle.assume_init()).ok_or(Error::NoDevice)?;
 
                 Ok(DeviceHandle::from_libusb(self.clone(), ptr))
             }
@@ -98,7 +134,7 @@ pub trait UsbContext: Clone + Sized + Send + Sync {
     }
 
     /// Sets the log level of a `libusb` for context.
-    fn set_log_level(&mut self, level: LogLevel) {
+    pub fn set_log_level(&mut self, level: LogLevel) {
         unsafe {
             libusb_set_debug(self.as_raw(), level.as_c_int());
         }
@@ -122,13 +158,13 @@ pub trait UsbContext: Clone + Sized + Send + Sync {
     /// the blocking functions that retrieve various USB descriptors.
     /// These functions must be used outside of the context of the [Hotplug] functions.
     #[deprecated(since = "0.9.0", note = "Use HotplugBuilder")]
-    fn register_callback(
+    pub fn register_callback(
         &self,
         vendor_id: Option<u16>,
         product_id: Option<u16>,
         class: Option<u8>,
-        callback: Box<dyn Hotplug<Self>>,
-    ) -> crate::Result<Registration<Self>> {
+        callback: Box<dyn Hotplug>,
+    ) -> Result<Registration> {
         let mut builder = HotplugBuilder::new();
 
         let mut builder = &mut builder;
@@ -142,18 +178,20 @@ pub trait UsbContext: Clone + Sized + Send + Sync {
             builder = builder.class(class)
         }
 
-        builder.register(self, callback)
+        builder.register(self.clone(), callback)
     }
 
     /// Unregisters the callback corresponding to the given registration. The
     /// same thing can be achieved by dropping the registration.
-    fn unregister_callback(&self, _reg: Registration<Self>) {}
+    pub fn unregister_callback(&self, _reg: Registration) {}
 
     /// Handle any pending events.
-    /// If timeout less then 1 microseconds then this function will handle any already-pending
-    /// events and then immediately return in non-blocking style.
-    /// If timeout is [None] then function will handle any pending events in blocking mode.
-    fn handle_events(&self, timeout: Option<Duration>) -> crate::Result<()> {
+    ///
+    /// If timeout less then 1 microseconds then this function will handle
+    /// any already-pending events and then immediately return in non-blocking
+    /// style. If timeout is [None] then function will handle any pending
+    /// events in blocking mode.
+    pub fn handle_events(&self, timeout: Option<Duration>) -> Result<()> {
         let n = unsafe {
             match timeout {
                 Some(t) => {
@@ -176,11 +214,11 @@ pub trait UsbContext: Clone + Sized + Send + Sync {
     /// Interrupt any active thread that is handling events (for example with
     /// [handle_events][`Self::handle_events()`]).
     #[doc(alias = "libusb_interrupt_event_handler")]
-    fn interrupt_handle_events(&self) {
+    pub fn interrupt_handle_events(&self) {
         unsafe { libusb_interrupt_event_handler(self.as_raw()) }
     }
 
-    fn next_timeout(&self) -> crate::Result<Option<Duration>> {
+    pub fn next_timeout(&self) -> Result<Option<Duration>> {
         let mut tv = timeval {
             tv_sec: 0,
             tv_usec: 0,
@@ -198,68 +236,13 @@ pub trait UsbContext: Clone + Sized + Send + Sync {
     }
 }
 
-impl UsbContext for Context {
-    fn as_raw(&self) -> *mut libusb_context {
-        self.context.inner.as_ptr()
+impl Default for Context {
+    fn default() -> Self {
+        Self { inner: Arc::new(GLOBAL_CONTEXT) }
     }
 }
 
-impl UsbContext for GlobalContext {
-    fn as_raw(&self) -> *mut libusb_context {
-        static mut USB_CONTEXT: *mut libusb_context = ptr::null_mut();
-        static ONCE: Once = Once::new();
-
-        ONCE.call_once(|| {
-            let mut context = mem::MaybeUninit::<*mut libusb_context>::uninit();
-            unsafe {
-                USB_CONTEXT = match libusb_init(context.as_mut_ptr()) {
-                    0 => context.assume_init(),
-                    err => panic!(
-                        "Can't init Global usb context, error {:?}",
-                        error::from_libusb(err)
-                    ),
-                }
-            };
-        });
-        // Clone data that is safe to use concurrently.
-        unsafe { USB_CONTEXT }
-    }
-}
-
-impl Context {
-    /// Opens a new `libusb` context.
-    pub fn new() -> crate::Result<Self> {
-        let mut context = mem::MaybeUninit::<*mut libusb_context>::uninit();
-
-        try_unsafe!(libusb_init(context.as_mut_ptr()));
-
-        Ok(unsafe { Self::from_raw(context.assume_init()) })
-    }
-
-    /// Creates a new `libusb` context and sets runtime options.
-    pub fn with_options(opts: &[crate::UsbOption]) -> crate::Result<Self> {
-        let mut this = Self::new()?;
-
-        for opt in opts {
-            opt.apply(&mut this)?;
-        }
-
-        Ok(this)
-    }
-
-    /// Creates rusb Context from existing libusb context.
-    /// Note: This transfers ownership of the context to Rust.
-    /// # Safety
-    /// This is unsafe because it does not check if the context is valid,
-    /// so the caller must guarantee that libusb_context is created properly.
-    pub unsafe fn from_raw(raw: *mut libusb_context) -> Self {
-        Context {
-            context: Arc::new(ContextInner {
-                inner: ptr::NonNull::new_unchecked(raw),
-            }),
-        }
-    }
-}
+/////////////////////////////////////////////////////////////////////////////
 
 /// Library logging levels.
 #[derive(Clone, Copy)]
@@ -273,12 +256,12 @@ pub enum LogLevel {
     /// Warning and error messages are printed to `stderr`.
     Warning,
 
-    /// Informational messages are printed to `stdout`. Warnings and error messages are printed to
-    /// `stderr`.
+    /// Informational messages are printed to `stdout`. Warnings and error
+    /// messages are printed to `stderr`.
     Info,
 
-    /// Debug and informational messages are printed to `stdout`. Warnings and error messages are
-    /// printed to `stderr`.
+    /// Debug and informational messages are printed to `stdout`. Warnings and
+    /// error messages are printed to `stderr`.
     Debug,
 }
 

@@ -1,12 +1,14 @@
-use crate::constants::{
-    LIBUSB_HOTPLUG_ENUMERATE, LIBUSB_HOTPLUG_EVENT_DEVICE_ARRIVED,
-    LIBUSB_HOTPLUG_EVENT_DEVICE_LEFT, LIBUSB_HOTPLUG_MATCH_ANY, LIBUSB_HOTPLUG_NO_FLAGS,
+use crate::{
+    constants::{
+        LIBUSB_HOTPLUG_ENUMERATE, LIBUSB_HOTPLUG_EVENT_DEVICE_ARRIVED,
+            LIBUSB_HOTPLUG_EVENT_DEVICE_LEFT, LIBUSB_HOTPLUG_MATCH_ANY, LIBUSB_HOTPLUG_NO_FLAGS,
+    },
+    ffi::{
+        libusb_context, libusb_device, libusb_hotplug_callback_handle,
+        libusb_hotplug_deregister_callback, libusb_hotplug_event, libusb_hotplug_register_callback,
+    },
+    error, Result, Device, Context,
 };
-use crate::ffi::{
-    libusb_context, libusb_device, libusb_hotplug_callback_handle,
-    libusb_hotplug_deregister_callback, libusb_hotplug_event, libusb_hotplug_register_callback,
-};
-use crate::{error, Device, UsbContext};
 use std::{
     borrow::Borrow,
     ffi::c_void,
@@ -25,25 +27,25 @@ use std::{
 /// [`Device`]: crate::Device
 /// [`DeviceHandle`]: crate::DeviceHandle
 /// [`Context::unregister_callback`]: method@crate::Context::unregister_callback
-pub trait Hotplug<T: UsbContext>: Send {
-    fn device_arrived(&mut self, device: Device<T>);
-    fn device_left(&mut self, device: Device<T>);
+pub trait Hotplug: Send {
+    fn device_arrived(&mut self, device: Device);
+    fn device_left(&mut self, device: Device);
 }
 
 #[derive(Debug)]
 #[must_use = "USB hotplug callbacks will be deregistered if the registration is dropped"]
-pub struct Registration<T: UsbContext> {
+pub struct Registration {
     handle: libusb_hotplug_callback_handle,
-    call_back: Box<CallbackData<T>>,
+    call_back: Box<CallbackData>,
 }
 
-impl<T: UsbContext> Registration<T> {
+impl Registration {
     fn get_handle(&self) -> libusb_hotplug_callback_handle {
         self.handle
     }
 }
 
-impl<T: UsbContext> Drop for Registration<T> {
+impl Drop for Registration {
     fn drop(&mut self) {
         unsafe {
             libusb_hotplug_deregister_callback(self.call_back.context.as_raw(), self.get_handle())
@@ -122,11 +124,11 @@ impl HotplugBuilder {
     /// [`Device`]: crate::Device
     /// [`DeviceHandle`]: crate::DeviceHandle
     /// [`Context::unregister_callback`]: method@crate::Context::unregister_callback
-    pub fn register<U: UsbContext, T: Borrow<U>>(
+    pub fn register(
         self,
-        context: T,
-        callback: Box<dyn Hotplug<U>>,
-    ) -> crate::Result<Registration<U>> {
+        context: Context,
+        callback: Box<dyn Hotplug>,
+    ) -> Result<Registration> {
         let mut handle: libusb_hotplug_callback_handle = 0;
         let mut call_back = Box::new(CallbackData {
             context: context.borrow().clone(),
@@ -155,7 +157,7 @@ impl HotplugBuilder {
                 self.class
                     .map(c_int::from)
                     .unwrap_or(LIBUSB_HOTPLUG_MATCH_ANY),
-                hotplug_callback::<U>,
+                hotplug_callback,
                 user_data,
                 &mut handle,
             )
@@ -168,15 +170,12 @@ impl HotplugBuilder {
     }
 }
 
-struct CallbackData<T: UsbContext> {
-    context: T,
-    hotplug: Box<dyn Hotplug<T>>,
+struct CallbackData {
+    context: Context,
+    hotplug: Box<dyn Hotplug>,
 }
 
-impl<T> Debug for CallbackData<T>
-where
-    T: UsbContext + Debug,
-{
+impl Debug for CallbackData {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         f.debug_struct("CallbackData")
             .field("context", &self.context)
@@ -184,14 +183,14 @@ where
     }
 }
 
-pub extern "system" fn hotplug_callback<T: UsbContext>(
+pub extern "system" fn hotplug_callback(
     _ctx: *mut libusb_context,
     device: *mut libusb_device,
     event: libusb_hotplug_event,
     user_data: *mut c_void,
 ) -> c_int {
     let ret = std::panic::catch_unwind(|| {
-        let reg = unsafe { &mut *(user_data as *mut CallbackData<T>) };
+        let reg = unsafe { &mut *(user_data as *mut CallbackData) };
         let device = unsafe {
             Device::from_libusb(
                 reg.context.clone(),

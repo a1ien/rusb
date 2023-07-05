@@ -1,4 +1,3 @@
-use rusb::UsbContext;
 
 fn main() {
     let version = rusb::version();

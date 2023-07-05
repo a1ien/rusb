@@ -1,13 +1,13 @@
 use rusb::{
     ConfigDescriptor, DeviceDescriptor, DeviceHandle, DeviceList, EndpointDescriptor,
-    InterfaceDescriptor, Language, Result, Speed, UsbContext,
+    InterfaceDescriptor, Language, Result, Speed,
 };
 use std::time::Duration;
 
 use usb_ids::{self, FromId};
 
-struct UsbDevice<T: UsbContext> {
-    handle: DeviceHandle<T>,
+struct UsbDevice {
+    handle: DeviceHandle,
     language: Language,
     timeout: Duration,
 }
@@ -78,7 +78,7 @@ fn list_devices() -> Result<()> {
     Ok(())
 }
 
-fn print_device<T: UsbContext>(device_desc: &DeviceDescriptor, handle: &mut Option<UsbDevice<T>>) {
+fn print_device(device_desc: &DeviceDescriptor, handle: &mut Option<UsbDevice>) {
     let vid = device_desc.vendor_id();
     let pid = device_desc.product_id();
 
@@ -145,7 +145,7 @@ fn print_device<T: UsbContext>(device_desc: &DeviceDescriptor, handle: &mut Opti
     );
 }
 
-fn print_config<T: UsbContext>(config_desc: &ConfigDescriptor, handle: &mut Option<UsbDevice<T>>) {
+fn print_config(config_desc: &ConfigDescriptor, handle: &mut Option<UsbDevice>) {
     println!("  Config Descriptor:");
     println!(
         "    bNumInterfaces       {:3}",
@@ -172,9 +172,9 @@ fn print_config<T: UsbContext>(config_desc: &ConfigDescriptor, handle: &mut Opti
     }
 }
 
-fn print_interface<T: UsbContext>(
+fn print_interface(
     interface_desc: &InterfaceDescriptor,
-    handle: &mut Option<UsbDevice<T>>,
+    handle: &mut Option<UsbDevice>,
 ) {
     println!("    Interface Descriptor:");
     println!(

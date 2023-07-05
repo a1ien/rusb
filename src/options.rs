@@ -1,5 +1,6 @@
-use crate::{error, UsbContext};
+use crate::{error, Result, Context};
 use libusb1_sys::{constants::*, libusb_set_option};
+use std::ptr;
 
 /// A `libusb` runtime option that can be enabled for a context.
 pub struct UsbOption {
@@ -19,7 +20,7 @@ impl UsbOption {
         }
     }
 
-    pub(crate) fn apply<T: UsbContext>(&self, ctx: &mut T) -> crate::Result<()> {
+    pub(crate) fn apply(&self, ctx: &mut Context) -> Result<()> {
         match self.inner {
             OptionInner::UseUsbdk => {
                 let err = unsafe { libusb_set_option(ctx.as_raw(), LIBUSB_OPTION_USE_USBDK) };
@@ -48,9 +49,9 @@ enum OptionInner {
 /// The option is useful in combination with [`Context::open_device_with_fd()`],
 /// which can access a device directly without prior device scanning.
 #[cfg(unix)]
-pub fn disable_device_discovery() -> crate::Result<()> {
+pub fn disable_device_discovery() -> Result<()> {
     try_unsafe!(libusb1_sys::libusb_set_option(
-        std::ptr::null_mut(),
+        ptr::null_mut(),
         LIBUSB_OPTION_NO_DEVICE_DISCOVERY
     ));
     Ok(())

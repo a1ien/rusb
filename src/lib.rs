@@ -5,9 +5,10 @@ pub use libusb1_sys::constants;
 
 #[cfg(unix)]
 pub use crate::options::disable_device_discovery;
+
 pub use crate::{
     config_descriptor::{ConfigDescriptor, Interfaces},
-    context::{Context, GlobalContext, LogLevel, UsbContext},
+    context::{Context, LogLevel},
     device::Device,
     device_descriptor::DeviceDescriptor,
     device_handle::DeviceHandle,
@@ -51,39 +52,39 @@ mod options;
 
 /// Tests whether the running `libusb` library supports capability API.
 pub fn has_capability() -> bool {
-    GlobalContext::default().as_raw();
+    Context::global().as_raw();
     unsafe { libusb1_sys::libusb_has_capability(constants::LIBUSB_CAP_HAS_CAPABILITY) != 0 }
 }
 
 /// Tests whether the running `libusb` library supports hotplug.
 pub fn has_hotplug() -> bool {
-    GlobalContext::default().as_raw();
+    Context::global().as_raw();
     unsafe { libusb1_sys::libusb_has_capability(constants::LIBUSB_CAP_HAS_HOTPLUG) != 0 }
 }
 
 /// Tests whether the running `libusb` library has HID access.
 pub fn has_hid_access() -> bool {
-    GlobalContext::default().as_raw();
+    Context::global().as_raw();
     unsafe { libusb1_sys::libusb_has_capability(constants::LIBUSB_CAP_HAS_HID_ACCESS) != 0 }
 }
 
 /// Tests whether the running `libusb` library supports detaching the kernel driver.
 pub fn supports_detach_kernel_driver() -> bool {
-    GlobalContext::default().as_raw();
+    Context::global().as_raw();
     unsafe {
         libusb1_sys::libusb_has_capability(constants::LIBUSB_CAP_SUPPORTS_DETACH_KERNEL_DRIVER) != 0
     }
 }
 
 /// Returns a list of the current USB devices. Using global context
-pub fn devices() -> crate::Result<DeviceList<GlobalContext>> {
-    GlobalContext::default().devices()
+pub fn devices() -> crate::Result<DeviceList> {
+    Context::global().devices()
 }
 
 /// Sets the log level of a `libusb` global context.
 pub fn set_log_level(level: LogLevel) {
     unsafe {
-        libusb1_sys::libusb_set_debug(GlobalContext::default().as_raw(), level.as_c_int());
+        libusb1_sys::libusb_set_debug(Context::global().as_raw(), level.as_c_int());
     }
 }
 
@@ -99,10 +100,10 @@ pub fn set_log_level(level: LogLevel) {
 pub fn open_device_with_vid_pid(
     vendor_id: u16,
     product_id: u16,
-) -> Option<DeviceHandle<GlobalContext>> {
+) -> Option<DeviceHandle> {
     let handle = unsafe {
         libusb1_sys::libusb_open_device_with_vid_pid(
-            GlobalContext::default().as_raw(),
+            Context::global().as_raw(),
             vendor_id,
             product_id,
         )
@@ -113,7 +114,7 @@ pub fn open_device_with_vid_pid(
     } else {
         Some(unsafe {
             DeviceHandle::from_libusb(
-                GlobalContext::default(),
+                Context::global(),
                 std::ptr::NonNull::new_unchecked(handle),
             )
         })

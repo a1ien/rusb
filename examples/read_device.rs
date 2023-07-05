@@ -1,7 +1,7 @@
 use std::time::Duration;
 
 use rusb::{
-    Context, Device, DeviceDescriptor, DeviceHandle, Direction, Result, TransferType, UsbContext,
+    Context, Device, DeviceDescriptor, DeviceHandle, Direction, Result, TransferType,
 };
 
 #[derive(Debug)]
@@ -42,11 +42,11 @@ fn main() {
     }
 }
 
-fn open_device<T: UsbContext>(
-    context: &mut T,
+fn open_device(
+    context: &mut Context,
     vid: u16,
     pid: u16,
-) -> Option<(Device<T>, DeviceDescriptor, DeviceHandle<T>)> {
+) -> Option<(Device, DeviceDescriptor, DeviceHandle)> {
     let devices = match context.devices() {
         Ok(d) => d,
         Err(_) => return None,
@@ -69,10 +69,10 @@ fn open_device<T: UsbContext>(
     None
 }
 
-fn read_device<T: UsbContext>(
-    device: &mut Device<T>,
+fn read_device(
+    device: &mut Device,
     device_desc: &DeviceDescriptor,
-    handle: &mut DeviceHandle<T>,
+    handle: &mut DeviceHandle,
 ) -> Result<()> {
     handle.reset()?;
 
@@ -118,8 +118,8 @@ fn read_device<T: UsbContext>(
     Ok(())
 }
 
-fn find_readable_endpoint<T: UsbContext>(
-    device: &mut Device<T>,
+fn find_readable_endpoint(
+    device: &mut Device,
     device_desc: &DeviceDescriptor,
     transfer_type: TransferType,
 ) -> Option<Endpoint> {
@@ -150,8 +150,8 @@ fn find_readable_endpoint<T: UsbContext>(
     None
 }
 
-fn read_endpoint<T: UsbContext>(
-    handle: &mut DeviceHandle<T>,
+fn read_endpoint(
+    handle: &mut DeviceHandle,
     endpoint: Endpoint,
     transfer_type: TransferType,
 ) {
@@ -198,8 +198,8 @@ fn read_endpoint<T: UsbContext>(
     }
 }
 
-fn configure_endpoint<T: UsbContext>(
-    handle: &mut DeviceHandle<T>,
+fn configure_endpoint(
+    handle: &mut DeviceHandle,
     endpoint: &Endpoint,
 ) -> Result<()> {
     handle.set_active_configuration(endpoint.config)?;

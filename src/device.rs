@@ -12,17 +12,17 @@ use crate::{
     device_handle::DeviceHandle,
     error,
     fields::{self, Speed},
-    Error, UsbContext,
+    Error, Result, Context,
 };
 
 /// A reference to a USB device.
 #[derive(Eq, PartialEq)]
-pub struct Device<T: UsbContext> {
-    context: T,
+pub struct Device {
+    context: Context,
     device: NonNull<libusb_device>,
 }
 
-impl<T: UsbContext> Drop for Device<T> {
+impl Drop for Device {
     /// Releases the device reference.
     fn drop(&mut self) {
         unsafe {
@@ -31,16 +31,16 @@ impl<T: UsbContext> Drop for Device<T> {
     }
 }
 
-impl<T: UsbContext> Clone for Device<T> {
+impl Clone for Device {
     fn clone(&self) -> Self {
         unsafe { Self::from_libusb(self.context.clone(), self.device) }
     }
 }
 
-unsafe impl<T: UsbContext> Send for Device<T> {}
-unsafe impl<T: UsbContext> Sync for Device<T> {}
+unsafe impl Send for Device {}
+unsafe impl Sync for Device {}
 
-impl<T: UsbContext> Debug for Device<T> {
+impl Debug for Device {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let descriptor = match self.device_descriptor() {
             Ok(descriptor) => descriptor,
@@ -59,29 +59,28 @@ impl<T: UsbContext> Debug for Device<T> {
     }
 }
 
-impl<T: UsbContext> Device<T> {
+impl Device {
     /// Get the raw libusb_device pointer, for advanced use in unsafe code
     pub fn as_raw(&self) -> *mut libusb_device {
         self.device.as_ptr()
     }
 
     /// Get the context associated with this device
-    pub fn context(&self) -> &T {
+    pub fn context(&self) -> &Context {
         &self.context
     }
 
     /// # Safety
     ///
-    /// Converts an existing `libusb_device` pointer into a `Device<T>`.
+    /// Converts an existing `libusb_device` pointer into a `Device`.
     /// `device` must be a pointer to a valid `libusb_device`. Rusb increments refcount.
-    pub unsafe fn from_libusb(context: T, device: NonNull<libusb_device>) -> Device<T> {
+    pub unsafe fn from_libusb(context: Context, device: NonNull<libusb_device>) -> Self {
         libusb_ref_device(device.as_ptr());
-
-        Device { context, device }
+        Self { context, device }
     }
 
     /// Reads the device descriptor.
-    pub fn device_descriptor(&self) -> crate::Result<DeviceDescriptor> {
+    pub fn device_descriptor(&self) -> Result<DeviceDescriptor> {
         let mut descriptor = mem::MaybeUninit::<libusb_device_descriptor>::uninit();
 
         // since libusb 1.0.16, this function always succeeds
@@ -96,7 +95,7 @@ impl<T: UsbContext> Device<T> {
     }
 
     /// Reads a configuration descriptor.
-    pub fn config_descriptor(&self, config_index: u8) -> crate::Result<ConfigDescriptor> {
+    pub fn config_descriptor(&self, config_index: u8) -> Result<ConfigDescriptor> {
         let mut config = mem::MaybeUninit::<*const libusb_config_descriptor>::uninit();
 
         try_unsafe!(libusb_get_config_descriptor(
@@ -109,7 +108,7 @@ impl<T: UsbContext> Device<T> {
     }
 
     /// Reads the configuration descriptor for the current configuration.
-    pub fn active_config_descriptor(&self) -> crate::Result<ConfigDescriptor> {
+    pub fn active_config_descriptor(&self) -> Result<ConfigDescriptor> {
         let mut config = mem::MaybeUninit::<*const libusb_config_descriptor>::uninit();
 
         try_unsafe!(libusb_get_active_config_descriptor(
@@ -136,7 +135,7 @@ impl<T: UsbContext> Device<T> {
     }
 
     /// Opens the device.
-    pub fn open(&self) -> crate::Result<DeviceHandle<T>> {
+    pub fn open(&self) -> Result<DeviceHandle> {
         let mut handle = mem::MaybeUninit::<*mut libusb_device_handle>::uninit();
 
         try_unsafe!(libusb_open(self.device.as_ptr(), handle.as_mut_ptr()));
@@ -160,7 +159,7 @@ impl<T: UsbContext> Device<T> {
     }
 
     ///  Get the list of all port numbers from root for the specified device
-    pub fn port_numbers(&self) -> Result<Vec<u8>, Error> {
+    pub fn port_numbers(&self) -> Result<Vec<u8>> {
         // As per the USB 3.0 specs, the current maximum limit for the depth is 7.
         let mut ports = [0; 7];
 
