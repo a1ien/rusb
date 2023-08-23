@@ -1,5 +1,15 @@
 # Changes
 
+## 0.9.3
+* impl serde::{Serialize, Deserialize} for public enums [#167]
+* Update deprecated doc link about language identifiers [#165]
+* Fix changelog URLs for 0.9.2 [#164]
+
+
+[#167]: https://github.com/a1ien/rusb/pull/167
+[#165]: https://github.com/a1ien/rusb/pull/165
+[#164]: https://github.com/a1ien/rusb/pull/164
+
 ## 0.9.2
 * Random corrections around the code [#127]
 * examples: list_devices: Add vendor and product name [#128]
