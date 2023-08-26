@@ -19,21 +19,6 @@ pub fn link_framework(name: &str) {
     println!("cargo:rustc-link-lib=framework={}", name);
 }
 
-#[cfg(target_env = "msvc")]
-fn find_libusb_pkg(_statik: bool) -> bool {
-    match vcpkg::Config::new().find_package("libusb") {
-        Ok(_) => true,
-        Err(e) => {
-            if pkg_config::probe_library("libusb-1.0").is_ok() {
-                true
-            } else {
-                println!("Can't find libusb pkg: {:?}", e);
-                false
-            }
-        }
-    }
-}
-
 fn get_macos_major_version() -> Option<usize> {
     if !cfg!(target_os = "macos") {
         return None;
@@ -49,8 +34,21 @@ fn get_macos_major_version() -> Option<usize> {
     Some(major)
 }
 
-#[cfg(not(target_env = "msvc"))]
 fn find_libusb_pkg(statik: bool) -> bool {
+    if std::env::var("CARGO_CFG_TARGET_ENV") == Ok("msvc".into()) {
+        #[cfg(target_os = "windows")]
+        return match vcpkg::Config::new().find_package("libusb") {
+            Ok(_) => true,
+            Err(e) => {
+                if pkg_config::probe_library("libusb-1.0").is_ok() {
+                    true
+                } else {
+                    println!("Can't find libusb pkg: {:?}", e);
+                    false
+                }
+            }
+        };
+    }
     // https://github.com/rust-lang/rust/issues/96943
     let needs_rustc_issue_96943_workaround: bool = get_macos_major_version()
         .map(|major| major >= 11)
@@ -175,8 +173,9 @@ fn make_source() {
     }
 
     if std::env::var("CARGO_CFG_TARGET_OS") == Ok("windows".into()) {
-        #[cfg(target_env = "msvc")]
-        base_config.flag("/source-charset:utf-8");
+        if std::env::var("CARGO_CFG_TARGET_ENV") == Ok("msvc".into()) {
+            base_config.flag("/source-charset:utf-8");
+        }
 
         base_config.warnings(false);
         base_config.define("OS_WINDOWS", Some("1"));
