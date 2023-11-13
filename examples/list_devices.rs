@@ -94,6 +94,8 @@ fn print_device<T: UsbContext>(device_desc: &DeviceDescriptor, handle: &mut Opti
         };
 
     println!("Device Descriptor:");
+    println!("  bLength              {:3}", device_desc.length());
+    println!("  bDescriptorType      {:3}", device_desc.descriptor_type());
     println!(
         "  bcdUSB             {:2}.{}{}",
         device_desc.usb_version().major(),
@@ -147,6 +149,12 @@ fn print_device<T: UsbContext>(device_desc: &DeviceDescriptor, handle: &mut Opti
 
 fn print_config<T: UsbContext>(config_desc: &ConfigDescriptor, handle: &mut Option<UsbDevice<T>>) {
     println!("  Config Descriptor:");
+    println!("    bLength              {:3}", config_desc.length());
+    println!(
+        "    bDescriptorType      {:3}",
+        config_desc.descriptor_type()
+    );
+    println!("    wTotalLength      {:#06x}", config_desc.total_length());
     println!(
         "    bNumInterfaces       {:3}",
         config_desc.num_interfaces()
@@ -177,6 +185,11 @@ fn print_interface<T: UsbContext>(
     handle: &mut Option<UsbDevice<T>>,
 ) {
     println!("    Interface Descriptor:");
+    println!("      bLength              {:3}", interface_desc.length());
+    println!(
+        "      bDescriptorType      {:3}",
+        interface_desc.descriptor_type()
+    );
     println!(
         "      bInterfaceNumber     {:3}",
         interface_desc.interface_number()
@@ -219,6 +232,11 @@ fn print_interface<T: UsbContext>(
 
 fn print_endpoint(endpoint_desc: &EndpointDescriptor) {
     println!("      Endpoint Descriptor:");
+    println!("        bLength              {:3}", endpoint_desc.length());
+    println!(
+        "        bDescriptorType      {:3}",
+        endpoint_desc.descriptor_type()
+    );
     println!(
         "        bEndpointAddress    {:#04x} EP {} {:?}",
         endpoint_desc.address(),

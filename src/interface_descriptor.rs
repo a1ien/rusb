@@ -51,6 +51,16 @@ pub struct InterfaceDescriptor<'a> {
 }
 
 impl<'a> InterfaceDescriptor<'a> {
+    /// Returns the size of the descriptor in bytes
+    pub fn length(&self) -> u8 {
+        self.descriptor.bLength
+    }
+
+    /// Returns the descriptor type
+    pub fn descriptor_type(&self) -> u8 {
+        self.descriptor.bDescriptorType
+    }
+
     /// Returns the interface's number.
     pub fn interface_number(&self) -> u8 {
         self.descriptor.bInterfaceNumber
