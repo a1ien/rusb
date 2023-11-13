@@ -10,6 +10,16 @@ pub struct EndpointDescriptor<'a> {
 }
 
 impl<'a> EndpointDescriptor<'a> {
+    /// Returns the size of the descriptor in bytes
+    pub fn length(&self) -> u8 {
+        self.descriptor.bLength
+    }
+
+    /// Returns the descriptor type
+    pub fn descriptor_type(&self) -> u8 {
+        self.descriptor.bDescriptorType
+    }
+
     /// Returns the endpoint's address.
     pub fn address(&self) -> u8 {
         self.descriptor.bEndpointAddress

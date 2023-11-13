@@ -10,6 +10,16 @@ pub struct DeviceDescriptor {
 }
 
 impl DeviceDescriptor {
+    /// Returns the size of the descriptor in bytes
+    pub fn length(&self) -> u8 {
+        self.descriptor.bLength
+    }
+
+    /// Returns the descriptor type
+    pub fn descriptor_type(&self) -> u8 {
+        self.descriptor.bDescriptorType
+    }
+
     /// Returns the device's maximum supported USB version.
     pub fn usb_version(&self) -> Version {
         Version::from_bcd(self.descriptor.bcdUSB)

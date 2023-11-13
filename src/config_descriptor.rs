@@ -21,6 +21,21 @@ unsafe impl Sync for ConfigDescriptor {}
 unsafe impl Send for ConfigDescriptor {}
 
 impl ConfigDescriptor {
+    /// Returns the size of the descriptor in bytes
+    pub fn length(&self) -> u8 {
+        unsafe { (*self.descriptor).bLength }
+    }
+
+    /// Returns the total length in bytes of data returned for this configuration: all interfaces and endpoints
+    pub fn total_length(&self) -> u16 {
+        unsafe { (*self.descriptor).wTotalLength }
+    }
+
+    /// Returns the descriptor type
+    pub fn descriptor_type(&self) -> u8 {
+        unsafe { (*self.descriptor).bDescriptorType }
+    }
+
     /// Returns the configuration number.
     pub fn number(&self) -> u8 {
         unsafe { (*self.descriptor).bConfigurationValue }
