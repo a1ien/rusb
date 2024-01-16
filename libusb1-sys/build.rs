@@ -24,8 +24,12 @@ fn find_libusb_pkg(_statik: bool) -> bool {
     match vcpkg::Config::new().find_package("libusb") {
         Ok(_) => true,
         Err(e) => {
-            println!("Can't find libusb pkg: {:?}", e);
-            false
+            if pkg_config::probe_library("libusb-1.0").is_ok() {
+                true
+            } else {
+                println!("Can't find libusb pkg: {:?}", e);
+                false
+            }
         }
     }
 }
