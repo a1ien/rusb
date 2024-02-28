@@ -1,6 +1,9 @@
-use libc::{c_int, timeval};
+use libc::{c_char, c_int, c_void, timeval};
 
-use std::{cmp::Ordering, mem, ptr, sync::Arc, sync::Once, time::Duration};
+use std::{
+    cmp::Ordering, ffi::CStr, mem, ptr, sync::Arc, sync::Mutex, sync::Once, sync::OnceLock,
+    time::Duration,
+};
 
 #[cfg(unix)]
 use std::os::unix::io::RawFd;
@@ -44,6 +47,43 @@ impl Drop for ContextInner {
 
 unsafe impl Sync for Context {}
 unsafe impl Send for Context {}
+
+type LogCallback = Box<dyn Fn(LogLevel, String)>;
+
+struct LogCallbackMap {
+    map: std::collections::HashMap<*mut libusb_context, LogCallback>,
+}
+
+unsafe impl Sync for LogCallbackMap {}
+unsafe impl Send for LogCallbackMap {}
+
+impl LogCallbackMap {
+    pub fn new() -> Self {
+        Self {
+            map: std::collections::HashMap::new(),
+        }
+    }
+}
+
+static LOG_CALLBACK_MAP: OnceLock<Mutex<LogCallbackMap>> = OnceLock::new();
+
+extern "system" fn static_log_callback(
+    context: *mut libusb_context,
+    level: c_int,
+    text: *mut c_void,
+) {
+    if let Some(log_callback_map) = LOG_CALLBACK_MAP.get() {
+        if let Ok(locked_table) = log_callback_map.lock() {
+            if let Some(logger) = locked_table.map.get(&context) {
+                let c_str: &CStr = unsafe { CStr::from_ptr(text as *const c_char) };
+                let str_slice: &str = c_str.to_str().unwrap_or("");
+                let log_message = str_slice.to_owned();
+
+                logger(LogLevel::from_c_int(level), log_message);
+            }
+        }
+    }
+}
 
 pub trait UsbContext: Clone + Sized + Send + Sync {
     /// Get the raw libusb_context pointer, for advanced use in unsafe code.
@@ -101,6 +141,17 @@ pub trait UsbContext: Clone + Sized + Send + Sync {
     fn set_log_level(&mut self, level: LogLevel) {
         unsafe {
             libusb_set_debug(self.as_raw(), level.as_c_int());
+        }
+    }
+
+    fn set_log_callback(&mut self, log_callback: LogCallback, mode: LogCallbackMode) {
+        let log_callback_map = LOG_CALLBACK_MAP.get_or_init(|| Mutex::new(LogCallbackMap::new()));
+        if let Ok(mut locked_table) = log_callback_map.lock() {
+            locked_table.map.insert(self.as_raw(), log_callback);
+        }
+
+        unsafe {
+            libusb_set_log_cb(self.as_raw(), Some(static_log_callback), mode.as_c_int());
         }
     }
 
@@ -290,6 +341,33 @@ impl LogLevel {
             LogLevel::Warning => LIBUSB_LOG_LEVEL_WARNING,
             LogLevel::Info => LIBUSB_LOG_LEVEL_INFO,
             LogLevel::Debug => LIBUSB_LOG_LEVEL_DEBUG,
+        }
+    }
+
+    fn from_c_int(value: c_int) -> LogLevel {
+        match value {
+            LIBUSB_LOG_LEVEL_ERROR => LogLevel::Error,
+            LIBUSB_LOG_LEVEL_WARNING => LogLevel::Warning,
+            LIBUSB_LOG_LEVEL_INFO => LogLevel::Info,
+            LIBUSB_LOG_LEVEL_DEBUG => LogLevel::Debug,
+            _ => LogLevel::None,
+        }
+    }
+}
+
+pub enum LogCallbackMode {
+    /// Callback function handling all log messages.
+    Global,
+
+    /// Callback function handling context related log messages.
+    Context,
+}
+
+impl LogCallbackMode {
+    fn as_c_int(&self) -> c_int {
+        match *self {
+            LogCallbackMode::Global => LIBUSB_LOG_CB_GLOBAL,
+            LogCallbackMode::Context => LIBUSB_LOG_CB_CONTEXT,
         }
     }
 }
