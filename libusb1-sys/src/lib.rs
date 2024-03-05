@@ -126,6 +126,7 @@ pub struct libusb_bos_dev_capability_descriptor {
     pub bLength: u8,
     pub bDescriptorType: u8,
     pub bDevCapabilityType: u8,
+    pub dev_capability_data: [u8; 0],
 }
 
 #[allow(non_snake_case)]
@@ -135,6 +136,7 @@ pub struct libusb_bos_descriptor {
     pub bDescriptorType: u8,
     pub wTotalLength: u16,
     pub bNumDeviceCaps: u8,
+    pub dev_capability: [libusb_bos_dev_capability_descriptor; 0],
 }
 
 #[allow(non_snake_case)]
