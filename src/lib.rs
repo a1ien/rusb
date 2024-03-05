@@ -7,7 +7,7 @@ pub use libusb1_sys::constants;
 pub use crate::options::disable_device_discovery;
 pub use crate::{
     config_descriptor::{ConfigDescriptor, Interfaces},
-    context::{Context, GlobalContext, LogLevel, UsbContext},
+    context::{Context, GlobalContext, LogCallbackMode, LogLevel, UsbContext},
     device::Device,
     device_descriptor::DeviceDescriptor,
     device_handle::DeviceHandle,
