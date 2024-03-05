@@ -1,0 +1,26 @@
+[package]
+name = "rusb-async"
+version = "0.0.1-alpha-2"
+edition = "2021"
+authors = [
+"Ilya Averyanov <a1ien.n3t@gmail.com>",
+"Ryan Butler <thebutlah@gmail.com>",
+"Kevin Mehall <km@kevinmehall.net>",
+]
+
+description = "Rust library for accessing USB devices."
+license = "MIT"
+homepage = "https://github.com/a1ien/rusb"
+repository = "https://github.com/a1ien/rusb.git"
+keywords = ["usb", "libusb", "async"]
+
+[features]
+vendored = [ "rusb/vendored" ]
+
+[dependencies]
+async-trait = "0.1"
+rusb = { path = "..", version = "0.9.1" }
+libc = "0.2"
+
+[dev-dependencies]
+tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
