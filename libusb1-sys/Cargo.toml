@@ -39,7 +39,7 @@ vendored = []
 [dependencies]
 libc = "0.2"
 
-[target.'cfg(target_env = "msvc")'.build-dependencies]
+[target.'cfg(target_os = "windows")'.build-dependencies]
 vcpkg = "0.2"
 
 [build-dependencies]

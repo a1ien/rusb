@@ -101,11 +101,9 @@ impl<'a> InterfaceDescriptor<'a> {
 
     /// Returns an iterator over the interface's endpoint descriptors.
     pub fn endpoint_descriptors(&self) -> EndpointDescriptors<'a> {
-        let endpoints = unsafe {
-            slice::from_raw_parts(
-                self.descriptor.endpoint,
-                self.descriptor.bNumEndpoints as usize,
-            )
+        let endpoints = match self.descriptor.bNumEndpoints {
+            0 => &[],
+            n => unsafe { slice::from_raw_parts(self.descriptor.endpoint, n as usize) },
         };
 
         EndpointDescriptors {
