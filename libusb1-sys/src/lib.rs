@@ -446,6 +446,7 @@ extern "system" {
         removed_cb: Option<libusb_pollfd_removed_cb>,
         user_data: *mut c_void,
     );
+    pub fn libusb_free_pollfds(pollfds: *const *mut libusb_pollfd);
     pub fn libusb_hotplug_register_callback(
         ctx: *mut libusb_context,
         events: c_int,
