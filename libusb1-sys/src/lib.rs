@@ -658,10 +658,7 @@ pub unsafe fn libusb_fill_iso_transfer(
 #[inline]
 pub unsafe fn libusb_set_iso_packet_lengths(transfer: *mut libusb_transfer, length: c_uint) {
     for i in 0..(*transfer).num_iso_packets {
-        (*transfer)
-            .iso_packet_desc
-            .get_unchecked_mut(i as usize)
-            .length = length;
+        (*(*transfer).iso_packet_desc.as_mut_ptr().add(i as usize)).length = length;
     }
 }
 
@@ -675,10 +672,7 @@ pub unsafe fn libusb_get_iso_packet_buffer(
     }
     let mut offset = 0;
     for i in 0..packet {
-        offset += (*transfer)
-            .iso_packet_desc
-            .get_unchecked_mut(i as usize)
-            .length;
+        offset += (*(*transfer).iso_packet_desc.as_mut_ptr().add(i as usize)).length;
     }
 
     (*transfer).buffer.add(offset as usize)
@@ -695,5 +689,5 @@ pub unsafe fn libusb_get_iso_packet_buffer_simple(
 
     (*transfer)
         .buffer
-        .add(((*transfer).iso_packet_desc.get_unchecked_mut(0).length * packet) as usize)
+        .add(((*(*transfer).iso_packet_desc.as_mut_ptr().add(0)).length * packet) as usize)
 }
