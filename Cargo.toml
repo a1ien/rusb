@@ -1,6 +1,6 @@
 [package]
 name = "rusb"
-version = "0.9.3"
+version = "0.9.4"
 authors = ["David Cuddeback <david.cuddeback@gmail.com>", "Ilya Averyanov <a1ien.n3t@gmail.com>"]
 description = "Rust library for accessing USB devices."
 license = "MIT"
@@ -21,7 +21,7 @@ vendored = [ "libusb1-sys/vendored" ]
 members = ["libusb1-sys"]
 
 [dependencies]
-libusb1-sys = { path = "libusb1-sys", version = "0.6.4" }
+libusb1-sys = { path = "libusb1-sys", version = "0.7" }
 libc = "0.2"
 serde = { version = "1.0", features = ["derive"], optional = true }
 
