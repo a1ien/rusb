@@ -542,7 +542,7 @@ pub unsafe fn libusb_fill_control_setup(
     wIndex: u16,
     wLength: u16,
 ) {
-    let mut setup: *mut libusb_control_setup = buffer as *mut _;
+    let setup: *mut libusb_control_setup = buffer as *mut _;
     (*setup).bmRequestType = bmRequestType;
     (*setup).bRequest = bRequest;
     (*setup).wValue = wValue.to_le();
