@@ -1,5 +1,19 @@
 # Changes
 
+## 0.9.4
+
+* bLength, bDescriptorType and wTotalLength to descriptors [#185]
+* Use &self reference for all DeviceHandle methods [#186]
+* fix: panic when trying to iterate over an interface with zero endpoints [#195]
+* Log callback API added [#194]
+* Bump libusb1-sys 0.7.0 [#205]
+
+[#185]: https://github.com/a1ien/rusb/pull/185
+[#186]: https://github.com/a1ien/rusb/pull/186
+[#195]: https://github.com/a1ien/rusb/pull/195
+[#194]: https://github.com/a1ien/rusb/pull/194
+[#205]: https://github.com/a1ien/rusb/pull/205
+
 ## 0.9.3
 * impl serde::{Serialize, Deserialize} for public enums [#167]
 * Update deprecated doc link about language identifiers [#165]
