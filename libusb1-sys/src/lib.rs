@@ -204,6 +204,88 @@ pub struct libusb_pollfd {
     pub events: c_short,
 }
 
+#[repr(C)]
+pub union libusb_init_option__value {
+    pub ival: c_int,
+    pub log_cbval: libusb_log_cb,
+}
+
+#[repr(C)]
+pub enum libusb_option {
+    /** Set the log message verbosity.
+     *
+     * This option must be provided an argument of type \ref libusb_log_level.
+     * The default level is LIBUSB_LOG_LEVEL_NONE, which means no messages are ever
+     * printed. If you choose to increase the message verbosity level, ensure
+     * that your application does not close the stderr file descriptor.
+     *
+     * You are advised to use level LIBUSB_LOG_LEVEL_WARNING. libusb is conservative
+     * with its message logging and most of the time, will only log messages that
+     * explain error conditions and other oddities. This will help you debug
+     * your software.
+     *
+     * If the LIBUSB_DEBUG environment variable was set when libusb was
+     * initialized, this option does nothing: the message verbosity is fixed
+     * to the value in the environment variable.
+     *
+     * If libusb was compiled without any message logging, this option does
+     * nothing: you'll never get any messages.
+     *
+     * If libusb was compiled with verbose debug message logging, this option
+     * does nothing: you'll always get messages from all levels.
+     */
+    LIBUSB_OPTION_LOG_LEVEL = 0,
+
+    /** Use the UsbDk backend for a specific context, if available.
+     *
+     * This option should be set at initialization with libusb_init_context()
+     * otherwise unspecified behavior may occur.
+     *
+     * Only valid on Windows. Ignored on all other platforms.
+     */
+    LIBUSB_OPTION_USE_USBDK = 1,
+
+    /** Do not scan for devices
+     *
+     * With this option set, libusb will skip scanning devices in
+     * libusb_init_context().
+     *
+     * Hotplug functionality will also be deactivated.
+     *
+     * The option is useful in combination with libusb_wrap_sys_device(),
+     * which can access a device directly without prior device scanning.
+     *
+     * This is typically needed on Android, where access to USB devices
+     * is limited.
+     *
+     * This option should only be used with libusb_init_context()
+     * otherwise unspecified behavior may occur.
+     *
+     * Only valid on Linux. Ignored on all other platforms.
+     */
+    LIBUSB_OPTION_NO_DEVICE_DISCOVERY = 2,
+
+    //LIBUSB_OPTION_WEAK_AUTHORITY = LIBUSB_OPTION_NO_DEVICE_DISCOVERY as isize,
+    /** Set the context log callback function.
+     *
+     * Set the log callback function either on a context or globally. This
+     * option must be provided an argument of type \ref libusb_log_cb.
+     * Using this option with a NULL context is equivalent to calling
+     * libusb_set_log_cb() with mode \ref LIBUSB_LOG_CB_GLOBAL.
+     * Using it with a non-NULL context is equivalent to calling
+     * libusb_set_log_cb() with mode \ref LIBUSB_LOG_CB_CONTEXT.
+     */
+    LIBUSB_OPTION_LOG_CB = 3,
+
+    LIBUSB_OPTION_MAX = 4,
+}
+
+#[repr(C)]
+pub struct libusb_init_option {
+    pub option: libusb_option,
+    pub value: libusb_init_option__value,
+}
+
 pub type libusb_hotplug_callback_handle = c_int;
 pub type libusb_hotplug_flag = c_int;
 pub type libusb_hotplug_event = c_int;
@@ -230,6 +312,11 @@ extern "system" {
     pub fn libusb_strerror(errcode: c_int) -> *const c_char;
 
     pub fn libusb_init(context: *mut *mut libusb_context) -> c_int;
+    pub fn libusb_init_context(
+        context: *mut *mut libusb_context,
+        options: *mut libusb_init_option,
+        num_options: c_int,
+    ) -> c_int;
     pub fn libusb_exit(context: *mut libusb_context);
     pub fn libusb_set_debug(context: *mut libusb_context, level: c_int);
     pub fn libusb_set_log_cb(context: *mut libusb_context, cb: Option<libusb_log_cb>, mode: c_int);
