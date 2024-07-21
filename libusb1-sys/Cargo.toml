@@ -43,5 +43,6 @@ libc = "0.2"
 vcpkg = "0.2"
 
 [build-dependencies]
+build-target = "0.4.0"
 cc = "1.0"
 pkg-config = "0.3"
