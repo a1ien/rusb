@@ -158,7 +158,7 @@ fn make_source() {
             Some("__attribute__((visibility(\"default\")))"),
         );
 
-        if build_target::target_os().unwrap().to_string() != "android" {
+        if std::env::var("CARGO_CFG_TARGET_OS") != Ok("android".into()) {
             if let Ok(lib) = pkg_config::probe_library("libudev") {
                 base_config.define("USE_UDEV", Some("1"));
                 base_config.define("HAVE_LIBUDEV", Some("1"));
