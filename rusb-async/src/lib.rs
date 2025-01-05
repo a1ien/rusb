@@ -1,8 +1,10 @@
-use rusb::ffi::{self, constants::*};
+use rusb::ffi::{self, constants::*, libusb_iso_packet_descriptor};
 
+use std::collections::VecDeque;
 use std::convert::TryInto;
 use std::ptr::NonNull;
 
+use std::slice;
 use std::sync::atomic::{AtomicBool, Ordering};
 
 mod error;
@@ -215,6 +217,15 @@ impl Transfer {
     fn swap_buffer(&mut self, new_buf: Vec<u8>) -> Vec<u8> {
         let transfer_struct = unsafe { self.ptr.as_mut() };
 
+        unsafe {
+            self.buffer
+                .set_len(if self.transfer().num_iso_packets == 0 {
+                    self.transfer().actual_length
+                } else {
+                    self.transfer().length
+                } as usize);
+        }
+
         let data = std::mem::replace(&mut self.buffer, new_buf);
 
         // Update transfer struct for new buffer
@@ -250,16 +261,43 @@ impl Transfer {
         }
     }
 
-    fn handle_completed(&mut self) -> Result<Vec<u8>> {
+    fn get_iso_packet_descriptors(&self) -> &[libusb_iso_packet_descriptor] {
+        unsafe {
+            slice::from_raw_parts(
+                &self.transfer().iso_packet_desc as *const libusb_iso_packet_descriptor,
+                self.transfer().num_iso_packets as usize,
+            )
+        }
+    }
+
+    fn handle_completed(&mut self) -> Result<VecDeque<Vec<u8>>> {
         assert!(self.completed_flag().load(Ordering::Relaxed));
         let err = match self.transfer().status {
             LIBUSB_TRANSFER_COMPLETED => {
                 debug_assert!(self.transfer().length >= self.transfer().actual_length);
-                unsafe {
-                    self.buffer.set_len(self.transfer().actual_length as usize);
+
+                let buffer = self.swap_buffer(Vec::new());
+                let mut buffers = VecDeque::new();
+
+                if self.transfer().num_iso_packets == 0 {
+                    buffers.push_back(buffer);
+                } else {
+                    let mut buffer_start = 0;
+
+                    for iso_packet_descriptor in self.get_iso_packet_descriptors() {
+                        if iso_packet_descriptor.status == LIBUSB_TRANSFER_COMPLETED {
+                            buffers.push_back(
+                                buffer[buffer_start
+                                    ..buffer_start + iso_packet_descriptor.actual_length as usize]
+                                    .to_vec(),
+                            );
+                        }
+
+                        buffer_start += iso_packet_descriptor.length as usize;
+                    }
                 }
-                let data = self.swap_buffer(Vec::new());
-                return Ok(data);
+
+                return Ok(buffers);
             }
             LIBUSB_TRANSFER_CANCELLED => Error::Cancelled,
             LIBUSB_TRANSFER_ERROR => Error::Other("Error occurred during transfer execution"),

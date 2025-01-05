@@ -11,14 +11,16 @@ use std::sync::atomic::{AtomicBool, Ordering};
 /// Represents a pool of asynchronous transfers, that can be polled to completion
 pub struct TransferPool<C: UsbContext> {
     device: Arc<DeviceHandle<C>>,
-    pending: VecDeque<Transfer>,
+    pending_transfer: VecDeque<Transfer>,
+    pending_packet: VecDeque<Vec<u8>>,
 }
 
 impl<C: UsbContext> TransferPool<C> {
     pub fn new(device: Arc<DeviceHandle<C>>) -> Result<Self> {
         Ok(Self {
             device,
-            pending: VecDeque::new(),
+            pending_transfer: VecDeque::new(),
+            pending_packet: VecDeque::new(),
         })
     }
 
@@ -28,7 +30,7 @@ impl<C: UsbContext> TransferPool<C> {
         unsafe {
             let mut transfer = Transfer::bulk(self.device.as_raw(), endpoint, buf);
             transfer.submit()?;
-            self.pending.push_back(transfer);
+            self.pending_transfer.push_back(transfer);
             Ok(())
         }
     }
@@ -53,7 +55,7 @@ impl<C: UsbContext> TransferPool<C> {
                 data,
             );
             transfer.submit()?;
-            self.pending.push_back(transfer);
+            self.pending_transfer.push_back(transfer);
             Ok(())
         }
     }
@@ -64,7 +66,7 @@ impl<C: UsbContext> TransferPool<C> {
         unsafe {
             let mut transfer = Transfer::control_raw(self.device.as_raw(), buffer);
             transfer.submit()?;
-            self.pending.push_back(transfer);
+            self.pending_transfer.push_back(transfer);
             Ok(())
         }
     }
@@ -75,7 +77,7 @@ impl<C: UsbContext> TransferPool<C> {
         unsafe {
             let mut transfer = Transfer::interrupt(self.device.as_raw(), endpoint, buf);
             transfer.submit()?;
-            self.pending.push_back(transfer);
+            self.pending_transfer.push_back(transfer);
             Ok(())
         }
     }
@@ -86,34 +88,53 @@ impl<C: UsbContext> TransferPool<C> {
         unsafe {
             let mut transfer = Transfer::iso(self.device.as_raw(), endpoint, buf, iso_packets);
             transfer.submit()?;
-            self.pending.push_back(transfer);
+            self.pending_transfer.push_back(transfer);
             Ok(())
         }
     }
 
     pub fn poll(&mut self, timeout: Duration) -> Result<Vec<u8>> {
-        let next = self.pending.front().ok_or(Error::NoTransfersPending)?;
-        if poll_completed(self.device.context(), timeout, next.completed_flag()) {
-            let mut transfer = self.pending.pop_front().unwrap();
-            let res = transfer.handle_completed();
-            res
-        } else {
-            Err(Error::PollTimeout)
+        if self.pending_packet.is_empty() {
+            let next = self
+                .pending_transfer
+                .front()
+                .ok_or(Error::NoTransfersPending)?;
+            if poll_completed(self.device.context(), timeout, next.completed_flag()) {
+                let mut transfer = self.pending_transfer.pop_front().unwrap();
+
+                self.pending_packet = transfer.handle_completed()?;
+            } else {
+                return Err(Error::PollTimeout);
+            }
         }
+
+        self.pending_packet
+            .pop_front()
+            .ok_or(Error::NoTransfersPending)
     }
 
     pub fn cancel_all(&mut self) {
         // Cancel in reverse order to avoid a race condition in which one
         // transfer is cancelled but another submitted later makes its way onto
         // the bus.
-        for transfer in self.pending.iter_mut().rev() {
+        for transfer in self.pending_transfer.iter_mut().rev() {
             transfer.cancel();
         }
     }
 
+    /// Returns if there are pending transfers or packets
+    pub fn pending(&self) -> bool {
+        self.pending_transfer.len() + self.pending_packet.len() > 0
+    }
+
     /// Returns the number of async transfers pending
-    pub fn pending(&self) -> usize {
-        self.pending.len()
+    pub fn pending_transfer(&self) -> usize {
+        self.pending_transfer.len()
+    }
+
+    /// Returns the number of packets pending
+    pub fn pending_packet(&self) -> usize {
+        self.pending_packet.len()
     }
 }
 
@@ -123,7 +144,7 @@ unsafe impl<C: UsbContext> Sync for TransferPool<C> {}
 impl<C: UsbContext> Drop for TransferPool<C> {
     fn drop(&mut self) {
         self.cancel_all();
-        while self.pending() > 0 {
+        while self.pending_transfer() > 0 {
             self.poll(Duration::from_secs(1)).ok();
         }
     }
