@@ -31,6 +31,22 @@ impl Language {
     pub fn sub_language(self) -> SubLanguage {
         SubLanguage::from_raw(self.primary_language(), self.raw)
     }
+    /// Creates a new `Language` from a raw 16-bit `LANGID`.
+    ///
+    /// The `LANGID` should follow the USB forum's language identifier specification, where
+    /// the lower 10 bits represent the sub language and the upper 6 bits represent the primary language.
+    ///
+    /// # Examples
+    /// ```
+    /// use rusb::{Language,SubLanguage,PrimaryLanguage};
+    /// // Create English (United States) language
+    /// let lang = Language::new(0x0409);
+    /// assert_eq!(lang.primary_language(), PrimaryLanguage::English);
+    /// assert_eq!(lang.sub_language(), SubLanguage::UnitedStates);
+    /// ```
+    pub fn new(raw: u16) -> Self {
+        Language { raw }
+    }
 }
 
 #[doc(hidden)]
@@ -2554,5 +2570,21 @@ mod test {
             super::from_lang_id(0xFFFF).sub_language(),
             SubLanguage::Other(SUB_LANGUAGE_MASK)
         );
+    }
+
+    #[test]
+    fn it_creates_arabic_from_egypt_with_correct_language_id() {
+        let arabic_egypt = super::Language::new(ARABIC_EGYPT);
+        assert_eq!(arabic_egypt.primary_language(), PrimaryLanguage::Arabic);
+        assert_eq!(arabic_egypt.lang_id(), ARABIC_EGYPT);
+        assert_eq!(arabic_egypt.sub_language(), SubLanguage::Egypt);
+    }
+
+    #[test]
+    fn it_creates_language_from_hex_english() {
+        let english = super::Language::new(0x0409); // English (United States)
+        assert_eq!(english.primary_language(), PrimaryLanguage::English);
+        assert_eq!(english.lang_id(), 0x0409);
+        assert_eq!(english.sub_language(), SubLanguage::UnitedStates);
     }
 }
