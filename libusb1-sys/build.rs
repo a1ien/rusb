@@ -148,6 +148,10 @@ fn make_source() {
         base_config.file(libusb_source.join("libusb/os/linux_usbfs.c"));
     }
 
+    if std::env::var("CARGO_CFG_TARGET_OS") == Ok("netbsd".into()) {
+        base_config.file(libusb_source.join("libusb/os/netbsd_usb.c"));
+    }
+
     if std::env::var("CARGO_CFG_TARGET_FAMILY") == Ok("unix".into()) {
         base_config.define("HAVE_SYS_TIME_H", Some("1"));
         base_config.define("HAVE_NFDS_T", Some("1"));
