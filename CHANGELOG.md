@@ -1,6 +1,52 @@
 # Changes
 
-## unreleased
+## 0.9.4
+
+* bLength, bDescriptorType and wTotalLength to descriptors [#185]
+* Use &self reference for all DeviceHandle methods [#186]
+* fix: panic when trying to iterate over an interface with zero endpoints [#195]
+* Log callback API added [#194]
+* Bump libusb1-sys 0.7.0 [#205]
+
+[#185]: https://github.com/a1ien/rusb/pull/185
+[#186]: https://github.com/a1ien/rusb/pull/186
+[#195]: https://github.com/a1ien/rusb/pull/195
+[#194]: https://github.com/a1ien/rusb/pull/194
+[#205]: https://github.com/a1ien/rusb/pull/205
+
+## 0.9.3
+* impl serde::{Serialize, Deserialize} for public enums [#167]
+* Update deprecated doc link about language identifiers [#165]
+* Fix changelog URLs for 0.9.2 [#164]
+
+
+[#167]: https://github.com/a1ien/rusb/pull/167
+[#165]: https://github.com/a1ien/rusb/pull/165
+[#164]: https://github.com/a1ien/rusb/pull/164
+
+## 0.9.2
+* Random corrections around the code [#127]
+* examples: list_devices: Add vendor and product name [#128]
+* examples: read_devices: Improve usage [#125]
+* context: create rusb `Context` from existing `libusb_context` [#135]
+* `new` now uses `from_raw` [#135]
+* Fix stack use after scope in tests [#138]
+* Fix United Kingdom misspelling in languages docs [#137]
+* fields.rs: Make request_type function a const fn [#142]
+* Increase endpoint descriptor's lifetime [#149]
+* Fix timeout documentation [#151]
+
+[#127]: https://github.com/a1ien/rusb/pull/127
+[#128]: https://github.com/a1ien/rusb/pull/128
+[#125]: https://github.com/a1ien/rusb/pull/125
+[#135]: https://github.com/a1ien/rusb/pull/135
+[#138]: https://github.com/a1ien/rusb/pull/135
+[#137]: https://github.com/a1ien/rusb/pull/137
+[#142]: https://github.com/a1ien/rusb/pull/142
+[#149]: https://github.com/a1ien/rusb/pull/149
+[#151]: https://github.com/a1ien/rusb/pull/151
+
+## 0.9.1
 * impl Ord and PartialOrd for Version [#116]
 
 [#116]: https://github.com/a1ien/rusb/pull/116

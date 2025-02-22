@@ -32,7 +32,7 @@ fn main() {
             let mut i = 0u8;
 
             loop {
-                let mut buf = if write_pool.pending() < 8 {
+                let mut buf = if write_pool.pending_transfer() < 8 {
                     Vec::with_capacity(64)
                 } else {
                     write_pool
@@ -55,7 +55,7 @@ fn main() {
 
     let mut read_pool = TransferPool::new(device).expect("Failed to create async pool!");
 
-    while read_pool.pending() < 8 {
+    while read_pool.pending_transfer() < 8 {
         read_pool
             .submit_bulk(in_endpoint, Vec::with_capacity(1024))
             .expect("Failed to submit IN transfer");

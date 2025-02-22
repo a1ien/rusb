@@ -2,6 +2,7 @@ use std::{
     fmt::{self, Debug},
     mem,
     ptr::NonNull,
+    sync::Mutex,
     time::Duration,
 };
 
@@ -109,18 +110,18 @@ impl<'a> Iterator for ClaimedInterfacesIter<'a> {
 }
 
 /// A handle to an open USB device.
-#[derive(Eq, PartialEq)]
 pub struct DeviceHandle<T: UsbContext> {
     context: T,
     handle: Option<NonNull<libusb_device_handle>>,
-    interfaces: ClaimedInterfaces,
+    interfaces: Mutex<ClaimedInterfaces>,
 }
 
 impl<T: UsbContext> Drop for DeviceHandle<T> {
     /// Closes the device.
     fn drop(&mut self) {
         unsafe {
-            for iface in self.interfaces.iter() {
+            let interfaces = self.interfaces.lock().unwrap();
+            for iface in interfaces.iter() {
                 libusb_release_interface(self.as_raw(), iface as c_int);
             }
 
@@ -139,10 +140,20 @@ impl<T: UsbContext> Debug for DeviceHandle<T> {
         f.debug_struct("DeviceHandle")
             .field("device", &self.device())
             .field("handle", &self.handle)
-            .field("interfaces", &self.interfaces)
+            .field("interfaces", &*self.interfaces.lock().unwrap())
             .finish()
     }
 }
+
+impl<T: UsbContext + PartialEq> PartialEq for DeviceHandle<T> {
+    fn eq(&self, other: &Self) -> bool {
+        self.context == other.context
+            && self.handle == other.handle
+            && *self.interfaces.lock().unwrap() == *other.interfaces.lock().unwrap()
+    }
+}
+
+impl<T: UsbContext + PartialEq> Eq for DeviceHandle<T> {}
 
 impl<T: UsbContext> DeviceHandle<T> {
     /// Get the raw libusb_device_handle pointer, for advanced use in unsafe code.
@@ -164,7 +175,7 @@ impl<T: UsbContext> DeviceHandle<T> {
     ///
     /// Panics if you have any claimed interfaces on this handle.
     pub fn into_raw(mut self) -> *mut libusb_device_handle {
-        assert_eq!(self.interfaces.size(), 0);
+        assert_eq!(self.interfaces.lock().unwrap().size(), 0);
         match self.handle.take() {
             Some(it) => it.as_ptr(),
             _ => unreachable!(),
@@ -197,7 +208,7 @@ impl<T: UsbContext> DeviceHandle<T> {
         DeviceHandle {
             context,
             handle: Some(handle),
-            interfaces: ClaimedInterfaces::new(),
+            interfaces: Mutex::new(ClaimedInterfaces::new()),
         }
     }
 
@@ -210,25 +221,25 @@ impl<T: UsbContext> DeviceHandle<T> {
     }
 
     /// Sets the device's active configuration.
-    pub fn set_active_configuration(&mut self, config: u8) -> crate::Result<()> {
+    pub fn set_active_configuration(&self, config: u8) -> crate::Result<()> {
         try_unsafe!(libusb_set_configuration(self.as_raw(), c_int::from(config)));
         Ok(())
     }
 
     /// Puts the device in an unconfigured state.
-    pub fn unconfigure(&mut self) -> crate::Result<()> {
+    pub fn unconfigure(&self) -> crate::Result<()> {
         try_unsafe!(libusb_set_configuration(self.as_raw(), -1));
         Ok(())
     }
 
     /// Resets the device.
-    pub fn reset(&mut self) -> crate::Result<()> {
+    pub fn reset(&self) -> crate::Result<()> {
         try_unsafe!(libusb_reset_device(self.as_raw()));
         Ok(())
     }
 
     /// Clear the halt/stall condition for an endpoint.
-    pub fn clear_halt(&mut self, endpoint: u8) -> crate::Result<()> {
+    pub fn clear_halt(&self, endpoint: u8) -> crate::Result<()> {
         try_unsafe!(libusb_clear_halt(self.as_raw(), endpoint));
         Ok(())
     }
@@ -247,7 +258,7 @@ impl<T: UsbContext> DeviceHandle<T> {
     /// Detaches an attached kernel driver from the device.
     ///
     /// This method is not supported on all platforms.
-    pub fn detach_kernel_driver(&mut self, iface: u8) -> crate::Result<()> {
+    pub fn detach_kernel_driver(&self, iface: u8) -> crate::Result<()> {
         try_unsafe!(libusb_detach_kernel_driver(
             self.as_raw(),
             c_int::from(iface)
@@ -258,7 +269,7 @@ impl<T: UsbContext> DeviceHandle<T> {
     /// Attaches a kernel driver to the device.
     ///
     /// This method is not supported on all platforms.
-    pub fn attach_kernel_driver(&mut self, iface: u8) -> crate::Result<()> {
+    pub fn attach_kernel_driver(&self, iface: u8) -> crate::Result<()> {
         try_unsafe!(libusb_attach_kernel_driver(
             self.as_raw(),
             c_int::from(iface)
@@ -275,7 +286,7 @@ impl<T: UsbContext> DeviceHandle<T> {
     /// On platforms which do not have support, this function will
     /// return `Error::NotSupported`, and rusb will continue as if
     /// this function was never called.
-    pub fn set_auto_detach_kernel_driver(&mut self, auto_detach: bool) -> crate::Result<()> {
+    pub fn set_auto_detach_kernel_driver(&self, auto_detach: bool) -> crate::Result<()> {
         try_unsafe!(libusb_set_auto_detach_kernel_driver(
             self.as_raw(),
             auto_detach.into()
@@ -287,21 +298,21 @@ impl<T: UsbContext> DeviceHandle<T> {
     ///
     /// An interface must be claimed before operating on it. All claimed interfaces are released
     /// when the device handle goes out of scope.
-    pub fn claim_interface(&mut self, iface: u8) -> crate::Result<()> {
+    pub fn claim_interface(&self, iface: u8) -> crate::Result<()> {
         try_unsafe!(libusb_claim_interface(self.as_raw(), c_int::from(iface)));
-        self.interfaces.insert(iface);
+        self.interfaces.lock().unwrap().insert(iface);
         Ok(())
     }
 
     /// Releases a claimed interface.
-    pub fn release_interface(&mut self, iface: u8) -> crate::Result<()> {
+    pub fn release_interface(&self, iface: u8) -> crate::Result<()> {
         try_unsafe!(libusb_release_interface(self.as_raw(), c_int::from(iface)));
-        self.interfaces.remove(iface);
+        self.interfaces.lock().unwrap().remove(iface);
         Ok(())
     }
 
     /// Sets an interface's active setting.
-    pub fn set_alternate_setting(&mut self, iface: u8, setting: u8) -> crate::Result<()> {
+    pub fn set_alternate_setting(&self, iface: u8, setting: u8) -> crate::Result<()> {
         try_unsafe!(libusb_set_interface_alt_setting(
             self.as_raw(),
             c_int::from(iface),
@@ -314,7 +325,8 @@ impl<T: UsbContext> DeviceHandle<T> {
     ///
     /// This function attempts to read from the interrupt endpoint with the address given by the
     /// `endpoint` parameter and fills `buf` with any data received from the endpoint. The function
-    /// blocks up to the amount of time specified by `timeout`. Minimal `timeout` is 1 microseconds.
+    /// blocks up to the amount of time specified by `timeout`. Minimal `timeout` is 1 milliseconds,
+    /// anything smaller will result in an infinite block.
     ///
     /// If the return value is `Ok(n)`, then `buf` is populated with `n` bytes of data received
     /// from the endpoint.
@@ -369,7 +381,8 @@ impl<T: UsbContext> DeviceHandle<T> {
     ///
     /// This function attempts to write the contents of `buf` to the interrupt endpoint with the
     /// address given by the `endpoint` parameter. The function blocks up to the amount of time
-    /// specified by `timeout`. Minimal `timeout` is 1 microseconds.
+    /// specified by `timeout`. Minimal `timeout` is 1 milliseconds, anything smaller will
+    /// result in an infinite block.
     ///
     /// If the return value is `Ok(n)`, then `n` bytes of `buf` were written to the endpoint.
     ///
@@ -422,7 +435,8 @@ impl<T: UsbContext> DeviceHandle<T> {
     ///
     /// This function attempts to read from the bulk endpoint with the address given by the
     /// `endpoint` parameter and fills `buf` with any data received from the endpoint. The function
-    /// blocks up to the amount of time specified by `timeout`. Minimal `timeout` is 1 microseconds.
+    /// blocks up to the amount of time specified by `timeout`. Minimal `timeout` is 1 milliseconds,
+    /// anything smaller will result in an infinite block.
     ///
     /// If the return value is `Ok(n)`, then `buf` is populated with `n` bytes of data received
     /// from the endpoint.
@@ -477,7 +491,8 @@ impl<T: UsbContext> DeviceHandle<T> {
     ///
     /// This function attempts to write the contents of `buf` to the bulk endpoint with the address
     /// given by the `endpoint` parameter. The function blocks up to the amount of time specified
-    /// by `timeout`. Minimal `timeout` is 1 microseconds.
+    /// by `timeout`. Minimal `timeout` is 1 milliseconds, anything smaller will result in an
+    /// infinite block.
     ///
     /// If the return value is `Ok(n)`, then `n` bytes of `buf` were written to the endpoint.
     ///
@@ -525,7 +540,8 @@ impl<T: UsbContext> DeviceHandle<T> {
     ///
     /// This function attempts to read data from the device using a control transfer and fills
     /// `buf` with any data received during the transfer. The function blocks up to the amount of
-    /// time specified by `timeout`. Minimal `timeout` is 1 microseconds.
+    /// time specified by `timeout`. Minimal `timeout` is 1 milliseconds, anything smaller will
+    /// result in an infinite block.
     ///
     /// The parameters `request_type`, `request`, `value`, and `index` specify the fields of the
     /// control transfer setup packet (`bmRequestType`, `bRequest`, `wValue`, and `wIndex`
@@ -584,7 +600,7 @@ impl<T: UsbContext> DeviceHandle<T> {
     ///
     /// This function attempts to write the contents of `buf` to the device using a control
     /// transfer. The function blocks up to the amount of time specified by `timeout`.
-    /// Minimal `timeout` is 1 microseconds.
+    /// Minimal `timeout` is 1 milliseconds, anything smaller will result in an infinite block.
     ///
     /// The parameters `request_type`, `request`, `value`, and `index` specify the fields of the
     /// control transfer setup packet (`bmRequestType`, `bRequest`, `wValue`, and `wIndex`

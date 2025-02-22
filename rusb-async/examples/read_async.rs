@@ -37,7 +37,7 @@ fn main() {
 
     let mut async_pool = TransferPool::new(device).expect("Failed to create async pool!");
 
-    while async_pool.pending() < NUM_TRANSFERS {
+    while async_pool.pending_transfer() < NUM_TRANSFERS {
         async_pool
             .submit_bulk(endpoint, Vec::with_capacity(BUF_SIZE))
             .expect("Failed to submit transfer");

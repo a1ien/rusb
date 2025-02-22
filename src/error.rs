@@ -1,5 +1,8 @@
 use std::{fmt, result};
 
+#[cfg(feature = "serde")]
+use serde::{Deserialize, Serialize};
+
 use libusb1_sys::constants::*;
 
 /// A result of a function that may return a `Error`.
@@ -7,6 +10,7 @@ pub type Result<T> = result::Result<T, Error>;
 
 /// Errors returned by the `libusb` library.
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum Error {
     /// Input/output error.
     Io,

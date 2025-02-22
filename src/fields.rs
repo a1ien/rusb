@@ -1,10 +1,14 @@
 use libc::c_int;
 use libusb1_sys::constants::*;
 
+#[cfg(feature = "serde")]
+use serde::{Deserialize, Serialize};
+
 /// Device speeds. Indicates the speed at which a device is operating.
 /// - [libusb_supported_speed](http://libusb.sourceforge.net/api-1.0/group__libusb__dev.html#ga1454797ecc0de4d084c1619c420014f6)
 /// - [USB release versions](https://en.wikipedia.org/wiki/USB#Release_versions)
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[non_exhaustive]
 pub enum Speed {
     /// The operating system doesn't know the device speed.
@@ -41,6 +45,7 @@ pub(crate) fn speed_from_libusb(n: c_int) -> Speed {
 
 /// Transfer and endpoint directions.
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum Direction {
     /// Direction for read (device to host) transfers.
     In,
@@ -51,6 +56,7 @@ pub enum Direction {
 
 /// An endpoint's transfer type.
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum TransferType {
     /// Control endpoint.
     Control,
@@ -67,6 +73,7 @@ pub enum TransferType {
 
 /// Isochronous synchronization mode.
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum SyncType {
     /// No synchronisation.
     NoSync,
@@ -83,6 +90,7 @@ pub enum SyncType {
 
 /// Isochronous usage type.
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum UsageType {
     /// Data endpoint.
     Data,
@@ -99,6 +107,7 @@ pub enum UsageType {
 
 /// Types of control transfers.
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum RequestType {
     /// Requests that are defined by the USB standard.
     Standard,
@@ -115,6 +124,7 @@ pub enum RequestType {
 
 /// Recipients of control transfers.
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum Recipient {
     /// The recipient is a device.
     Device,
@@ -144,6 +154,7 @@ pub enum Recipient {
 /// The intended use case of `Version` is to extract meaning from the version fields in USB
 /// descriptors, such as `bcdUSB` and `bcdDevice` in device descriptors.
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Hash, PartialOrd, Ord)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Version(pub u8, pub u8, pub u8);
 
 impl Version {
@@ -206,7 +217,11 @@ impl std::fmt::Display for Version {
 ///
 /// rusb::request_type(Direction::In, RequestType::Standard, Recipient::Device);
 /// ```
-pub fn request_type(direction: Direction, request_type: RequestType, recipient: Recipient) -> u8 {
+pub const fn request_type(
+    direction: Direction,
+    request_type: RequestType,
+    recipient: Recipient,
+) -> u8 {
     let mut value: u8 = match direction {
         Direction::Out => LIBUSB_ENDPOINT_OUT,
         Direction::In => LIBUSB_ENDPOINT_IN,

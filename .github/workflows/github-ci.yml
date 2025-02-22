@@ -2,9 +2,9 @@ name: Rust
 
 on:
   push:
-    branches: [ master ]
+    branches: [master]
   pull_request:
-    branches: [ master ]
+    branches: [master]
 
 env:
   CARGO_TERM_COLOR: always
@@ -13,18 +13,18 @@ jobs:
   check-code:
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout
-      uses: actions/checkout@v2
-      with:
-        submodules: true
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          submodules: true
 
-    - name: Install
-      run: sudo apt-get update && sudo apt-get install --no-install-recommends -y libusb-1.0-0-dev
+      - name: Install
+        run: sudo apt-get update && sudo apt-get install --no-install-recommends -y libusb-1.0-0-dev
 
-    - name: Run check and format
-      run: |
-        cargo check --all-targets --examples
-        cargo fmt --check
+      - name: Run check and format
+        run: |
+          cargo check --all-targets --examples
+          cargo fmt --check
 
   build:
     needs: [check-code]
@@ -34,12 +34,12 @@ jobs:
       matrix:
         include:
           - os: ubuntu-latest
-            apt: 'libusb-1.0-0-dev'
+            apt: "libusb-1.0-0-dev"
             experimental: false
             features: ""
 
           - os: ubuntu-latest
-            apt: 'libudev-dev'
+            apt: "libudev-dev"
             experimental: false
             features: ""
 
@@ -67,7 +67,7 @@ jobs:
             features: ""
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           submodules: true
 

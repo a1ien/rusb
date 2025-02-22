@@ -21,6 +21,21 @@ unsafe impl Sync for ConfigDescriptor {}
 unsafe impl Send for ConfigDescriptor {}
 
 impl ConfigDescriptor {
+    /// Returns the size of the descriptor in bytes
+    pub fn length(&self) -> u8 {
+        unsafe { (*self.descriptor).bLength }
+    }
+
+    /// Returns the total length in bytes of data returned for this configuration: all interfaces and endpoints
+    pub fn total_length(&self) -> u16 {
+        unsafe { (*self.descriptor).wTotalLength }
+    }
+
+    /// Returns the descriptor type
+    pub fn descriptor_type(&self) -> u8 {
+        unsafe { (*self.descriptor).bDescriptorType }
+    }
+
     /// Returns the configuration number.
     pub fn number(&self) -> u8 {
         unsafe { (*self.descriptor).bConfigurationValue }
@@ -214,5 +229,27 @@ mod test {
 
             assert_eq!(vec![1], interface_numbers);
         });
+    }
+
+    // Successful compilation shows that the lifetime of the endpoint descriptor(s) is the same
+    // as the lifetime of the config descriptor.
+    #[test]
+    fn it_had_interfaces_with_endpoints() {
+        let endpoint1 = endpoint_descriptor!(bEndpointAddress: 0x81);
+        let endpoint2 = endpoint_descriptor!(bEndpointAddress: 0x01);
+        let endpoint3 = endpoint_descriptor!(bEndpointAddress: 0x02);
+        let interface1 = interface!(interface_descriptor!(endpoint1, endpoint2));
+        let interface2 = interface!(interface_descriptor!(endpoint3));
+
+        with_config!(config: config_descriptor!(interface1, interface2) => {
+            // Exists only to name config's lifetime.
+            fn named_lifetime<'a>(config: &'a super::ConfigDescriptor) {
+                let addresses: Vec<_> = config.interfaces().flat_map(|intf| intf.descriptors()).flat_map(|desc| desc.endpoint_descriptors()).map(|ep| ep.address()).collect();
+                assert_eq!(addresses, &[0x81, 0x01, 0x02]);
+                let desc: crate::InterfaceDescriptor<'a> = config.interfaces().flat_map(|intf| intf.descriptors()).next().expect("There's one interface");
+                let _: crate::EndpointDescriptor<'a> = desc.endpoint_descriptors().next().expect("There's one endpoint");
+            }
+            named_lifetime(&*config);
+        })
     }
 }
