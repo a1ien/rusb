@@ -8,7 +8,7 @@ use std::sync::atomic::{AtomicBool, Ordering};
 mod error;
 mod pool;
 
-use error::{Error, Result};
+pub use error::{Error, Result};
 
 pub use pool::TransferPool;
 
