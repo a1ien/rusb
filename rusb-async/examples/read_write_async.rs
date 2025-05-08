@@ -1,5 +1,3 @@
-use rusb_async::TransferPool;
-
 use rusb::{Context, UsbContext};
 
 use std::time::Duration;
