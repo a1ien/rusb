@@ -15,11 +15,11 @@ pub struct TransferPool<C: UsbContext> {
 }
 
 impl<C: UsbContext> TransferPool<C> {
-    pub fn new(device: Arc<DeviceHandle<C>>) -> Result<Self> {
-        Ok(Self {
+    pub fn new(device: Arc<DeviceHandle<C>>) -> Self {
+        Self {
             device,
             pending: VecDeque::new(),
-        })
+        }
     }
 
     pub fn submit_bulk(&mut self, endpoint: u8, buf: Vec<u8>) -> Result<()> {
