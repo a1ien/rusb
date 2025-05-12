@@ -7,9 +7,12 @@ use crate::{
     transfer::{FillTransfer, SingleBufferTransfer, Transfer, TransferState, TransferUserData},
 };
 
+/// Control transfer.
 pub type ControlTransfer<C> = Transfer<C, Control>;
+/// Raw control transfer.
 pub type RawControlTransfer<C> = Transfer<C, RawControl>;
 
+/// Control transfer kind.
 #[allow(missing_copy_implementations)]
 #[derive(Debug)]
 pub struct Control {
@@ -23,7 +26,11 @@ impl<C> ControlTransfer<C>
 where
     C: UsbContext,
 {
+    /// Constructs and allocates a new [`ControlTransfer`].
+    ///
     /// # Errors
+    ///
+    /// Returns an error if allocating the transfer fails.
     pub fn new(
         dev_handle: Arc<DeviceHandle<C>>,
         request_type: u8,
@@ -43,7 +50,12 @@ where
         Transfer::alloc(dev_handle, 0, buffer, kind, 0)
     }
 
+    /// Sets the transfer in the correct state to be reused. After
+    /// calling this function, the transfer can be awaited again.
+    ///
     /// # Errors
+    ///
+    /// Returns an error if replacing the transfer buffer fails.
     pub fn reuse(
         &mut self,
         request_type: u8,
@@ -105,6 +117,7 @@ where
 
 impl SingleBufferTransfer for Control {}
 
+/// Raw control transfer kind.
 #[allow(missing_copy_implementations)]
 #[derive(Debug)]
 pub struct RawControl(());
@@ -113,12 +126,21 @@ impl<C> RawControlTransfer<C>
 where
     C: UsbContext,
 {
+    /// Constructs and allocates a new [`RawControlTransfer`].
+    ///
     /// # Errors
+    ///
+    /// Returns an error if allocating the transfer fails.
     pub fn new(dev_handle: Arc<DeviceHandle<C>>, buffer: Vec<u8>) -> Result<Self> {
         Transfer::alloc(dev_handle, 0, buffer, RawControl(()), 0)
     }
 
+    /// Sets the transfer in the correct state to be reused. After
+    /// calling this function, the transfer can be awaited again.
+    ///
     /// # Errors
+    ///
+    /// Returns an error if replacing the transfer buffer fails.
     pub fn reuse(&mut self, buffer: Vec<u8>) -> Result<()> {
         self.swap_buffer(buffer)?;
         self.state = TransferState::Allocated;

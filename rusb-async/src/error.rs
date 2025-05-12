@@ -29,6 +29,9 @@ pub enum Error {
 
     /// Transfer was cancelled
     Cancelled,
+
+    /// Transfer already completed
+    AlreadyCompleted,
 }
 
 impl fmt::Display for Error {
@@ -42,6 +45,9 @@ impl fmt::Display for Error {
             Error::Other(s) => write!(fmt, "Other Error: {s}"),
             Error::Errno(s, n) => write!(fmt, "{s} ERRNO: {n}"),
             Error::Cancelled => fmt.write_str("Transfer was cancelled"),
+            Error::AlreadyCompleted => {
+                fmt.write_str("Transfer already completed; Call `reuse()` before awaiting again")
+            }
         }
     }
 }

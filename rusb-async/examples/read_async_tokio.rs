@@ -109,6 +109,7 @@ async fn main() {
             let mut bulk_transfer =
                 BulkTransfer::new(device, endpoint, Vec::with_capacity(BUF_SIZE))
                     .expect("Failed to submit transfer");
+
             loop {
                 let data = (&mut bulk_transfer).await.expect("Transfer failed");
                 println!(

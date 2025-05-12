@@ -11,8 +11,10 @@ use crate::{
     transfer::{CompleteTransfer, FillTransfer, Transfer, TransferState, TransferUserData},
 };
 
+/// Isochronous transfer.
 pub type IsochronousTransfer<C> = Transfer<C, Isochronous>;
 
+/// Isochronous transfer kind.
 #[allow(missing_copy_implementations)]
 #[derive(Debug)]
 pub struct Isochronous {
@@ -23,7 +25,11 @@ impl<C> IsochronousTransfer<C>
 where
     C: UsbContext,
 {
+    /// Constructs and allocates a new [`IsochronousTransfer`].
+    ///
     /// # Errors
+    ///
+    /// Returns an error if allocating the transfer fails.
     pub fn new(
         dev_handle: Arc<DeviceHandle<C>>,
         endpoint: u8,
@@ -39,7 +45,16 @@ where
         )
     }
 
+    /// Sets the transfer in the correct state to be reused. After
+    /// calling this function, the transfer can be awaited again.
+    ///
     /// # Errors
+    ///
+    /// Returns an error if replacing the transfer buffer fails.
+    //
+    // NOTE: Since the transfer gets allocated with a given number of
+    //       iso packets, I assume the number of iso packets does not
+    //       change when reusing the transfer, right?
     pub fn reuse(&mut self, endpoint: u8, buffer: Vec<u8>) -> Result<()> {
         self.endpoint = endpoint;
         self.swap_buffer(buffer)?;
@@ -100,6 +115,12 @@ where
     }
 }
 
+/// Separate implementation for [`IsochronousTransfer`] since
+/// the buffer represents multiple packets.
+///
+/// As opposed to other transfers, this returns an iterator of
+/// [`Result`], one per isochronous packet, each containing a
+/// slice of the buffer representing the packet data.
 impl<C> CompleteTransfer for IsochronousTransfer<C>
 where
     C: UsbContext,
@@ -107,7 +128,6 @@ where
     type Output = IsochronousBuffer;
 
     fn consume_buffer(&mut self, mut buffer: Vec<u8>) -> Result<Self::Output> {
-        debug_assert!(self.transfer().length >= self.transfer().actual_length);
         let len = self.transfer().length.try_into().unwrap();
         unsafe { buffer.set_len(len) };
 
@@ -124,6 +144,7 @@ where
     }
 }
 
+/// Isochronous packet descriptor.
 #[derive(Debug, Copy, Clone)]
 struct IsochronousPacketDescriptor {
     length: usize,
@@ -131,6 +152,8 @@ struct IsochronousPacketDescriptor {
     status: libc::c_int,
 }
 
+/// We convert from a reference because that's what we can safely get
+/// from the underlying transfer pointer.
 impl TryFrom<&libusb_iso_packet_descriptor> for IsochronousPacketDescriptor {
     type Error = Error;
 
@@ -152,6 +175,10 @@ impl TryFrom<&libusb_iso_packet_descriptor> for IsochronousPacketDescriptor {
     }
 }
 
+/// The output of an isochronous transfer.
+///
+/// This type implements [`IntoIterator`] for iterating over
+/// slices, each representing the transfer of an isochronous packet.
 #[derive(Clone, Debug)]
 pub struct IsochronousBuffer {
     packet_descriptors: Vec<IsochronousPacketDescriptor>,
@@ -166,7 +193,7 @@ impl IsochronousBuffer {
 }
 
 impl<'a> IntoIterator for &'a IsochronousBuffer {
-    type Item = &'a [u8];
+    type Item = Result<&'a [u8]>;
 
     type IntoIter = IsoBufIter<'a>;
 
@@ -179,6 +206,8 @@ impl<'a> IntoIterator for &'a IsochronousBuffer {
     }
 }
 
+/// Iterator of [`Result`] items, one for each transfer of
+/// an isochronous packet.
 #[derive(Clone, Debug)]
 pub struct IsoBufIter<'a> {
     packet_descriptors_iter: slice::Iter<'a, IsochronousPacketDescriptor>,
@@ -187,7 +216,7 @@ pub struct IsoBufIter<'a> {
 }
 
 impl<'a> Iterator for IsoBufIter<'a> {
-    type Item = &'a [u8];
+    type Item = Result<&'a [u8]>;
 
     fn next(&mut self) -> Option<Self::Item> {
         loop {
@@ -195,9 +224,11 @@ impl<'a> Iterator for IsoBufIter<'a> {
             let packet_start = self.offset;
             self.offset += packet_desc.length;
 
+            // TODO: Proper error handling here?
+            //       Or is it not worth returning results?
             if packet_desc.status == LIBUSB_TRANSFER_COMPLETED {
                 let packet_end = packet_start + packet_desc.actual_length;
-                return Some(&self.buffer[packet_start..packet_end]);
+                return Some(Ok(&self.buffer[packet_start..packet_end]));
             }
         }
     }

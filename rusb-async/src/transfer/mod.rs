@@ -39,6 +39,10 @@ use crate::{
     transfer::ops::{CompleteTransfer, FillTransfer, SingleBufferTransfer},
 };
 
+/// Generic transfer.
+///
+/// Rather than interacting with this type directly, choose to use
+/// the convenience aliases provided for each transfer type.
 #[derive(Debug)]
 pub struct Transfer<C, K>
 where
@@ -64,8 +68,6 @@ where
         kind: K,
         iso_packets: libc::c_int,
     ) -> Result<Self> {
-        // non-isochronous endpoints (e.g. control, bulk, interrupt) specify a value of 0
-
         let Some(ptr) = NonNull::new(unsafe { ffi::libusb_alloc_transfer(iso_packets) }) else {
             return Err(Error::TransferAlloc);
         };
@@ -80,7 +82,7 @@ where
         })
     }
 
-    // Step 3 of async API
+    /// Step 3 of async API
     fn submit(&mut self) -> Result<()> {
         let errno = unsafe { ffi::libusb_submit_transfer(self.ptr.as_ptr()) };
 
@@ -98,14 +100,23 @@ where
         }
     }
 
-    // Part of step 4 of async API the transfer is finished being handled when
-    // `poll()` is called.
+    /// Part of step 4 of async API.
+    ///
+    /// When event handling is being performed and this transfer completes,
+    /// this function gets called.
+    ///
+    /// This function handles two cases.
+    /// 1) It notifies the async runtime through the provided waker that this transfer completed.
+    ///    This can happen mean that the transfer was successful, errored out or, on Darwin based systems,
+    ///    that it got cancelled because another transfer on the same endpoint got cancelled.
+    ///
+    /// 2) It frees the transfer if it was cancelled by dropping it while it was still pending.
+    ///    Because it was dropped, the transfer won't be used anywhere else anymore.
     extern "system" fn transfer_cb(transfer: *mut ffi::libusb_transfer) {
-        // Safety: transfer is still valid because libusb just completed
-        // it but we haven't told anyone yet. user_data remains valid
-        // because it is freed only with the transfer.
-        // After the store to completed, these may no longer be valid if
-        // the polling thread freed it after seeing it completed.
+        // SAFETY: Transfer is still valid because libusb just completed
+        //         it but we haven't told anyone yet. `user_data` remains
+        //         valid because it is only freed here or when the transfer gets
+        //         dropped.
         unsafe {
             let transfer = &mut *transfer;
 
@@ -138,11 +149,12 @@ where
     }
 
     fn transfer(&self) -> &ffi::libusb_transfer {
-        // Safety: transfer remains valid as long as self
+        // SAFETY: Transfer remains valid as long as self.
         unsafe { self.ptr.as_ref() }
     }
 
     fn cancel(&mut self) {
+        // SAFETY: Transfer remains valid as long as self.
         unsafe {
             ffi::libusb_cancel_transfer(self.ptr.as_ptr());
 
@@ -169,6 +181,9 @@ where
     C: UsbContext,
     Self: CompleteTransfer,
 {
+    /// The other part of step 4 of the async API.
+    ///
+    /// Checks the status transfer and returns the output on success.
     fn complete(&mut self) -> Result<<Self as CompleteTransfer>::Output> {
         let err = match self.transfer().status {
             LIBUSB_TRANSFER_COMPLETED => return self.swap_buffer(Vec::new()),
@@ -185,6 +200,9 @@ where
         Err(err)
     }
 
+    /// Replaces the internal transfer buffer so it can be consumed and
+    /// the output returned to the caller.
+    ///
     /// Prerequisite: self.buffer ans self.ptr are both correctly set
     fn swap_buffer(&mut self, buffer: Vec<u8>) -> Result<<Self as CompleteTransfer>::Output> {
         debug_assert!(self.transfer().length >= self.transfer().actual_length);
@@ -202,7 +220,8 @@ where
 }
 
 // Transfer kinds are not complex types that should require pin projections.
-// It's thus much simpler to require that they implement [`Unpin`].
+// It's thus much simpler to require that they implement [`Unpin`],
+// thus allowing the entire [`Transfer`] to be [`Unpin`].
 impl<C, K> Future for Transfer<C, K>
 where
     C: UsbContext,
@@ -216,25 +235,28 @@ where
         cx: &mut std::task::Context<'_>,
     ) -> Poll<Self::Output> {
         match self.state {
+            // Fill transfer
             TransferState::Allocated => {
                 self.fill(cx.waker().clone())?;
                 self.state = TransferState::Filled;
                 // Re-poll to submit the transfer
                 self.poll(cx)
             }
+            // Submit transfer and pend until event handling
+            // calls the transfer callback that wakes us.
             TransferState::Filled => {
                 self.submit()?;
                 self.state = TransferState::Submitted;
                 Poll::Pending
             }
+            // Complete transfer.
             TransferState::Submitted => {
                 self.state = TransferState::Completed;
                 Poll::Ready(self.complete())
             }
-            // NOTE: Maybe return an error here instead?
-            //       Might make sense since a transfer
-            //       could be refilled and polled again.
-            TransferState::Completed => Poll::Pending,
+            // The transfer was polled after already completing
+            // but without calling `reuse()`.
+            TransferState::Completed => Poll::Ready(Err(Error::AlreadyCompleted)),
         }
     }
 }
@@ -265,6 +287,8 @@ where
     }
 }
 
+/// SAFETY: The inner transfer pointer gets a fixed address
+///         and the other parts of [`Transfer`] are [`Send`].
 unsafe impl<C, K> Send for Transfer<C, K>
 where
     C: UsbContext,
@@ -272,6 +296,9 @@ where
 {
 }
 
+/// SAFETY: The inner transfer pointer is only mutated through
+///         a mutable reference to [`Transfer`] and the other
+///         parts of [`Transfer`] are [`Sync`].
 unsafe impl<C, K> Sync for Transfer<C, K>
 where
     C: UsbContext,
@@ -279,6 +306,8 @@ where
 {
 }
 
+/// Type that encapsulates user data passed to the
+/// transfer completion callback.
 struct TransferUserData {
     waker: Waker,
     cancelled_itself: AtomicBool,

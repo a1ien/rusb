@@ -10,8 +10,10 @@ use crate::{
     transfer::{FillTransfer, SingleBufferTransfer, Transfer, TransferState, TransferUserData},
 };
 
+/// Bulk transfer.
 pub type BulkTransfer<C> = Transfer<C, Bulk>;
 
+/// Bulk transfer kind.
 #[allow(missing_copy_implementations)]
 #[derive(Debug)]
 pub struct Bulk(());
@@ -20,12 +22,21 @@ impl<C> BulkTransfer<C>
 where
     C: UsbContext,
 {
+    /// Constructs and allocates a new [`BulkTransfer`].
+    ///
     /// # Errors
+    ///
+    /// Returns an error if allocating the transfer fails.
     pub fn new(dev_handle: Arc<DeviceHandle<C>>, endpoint: u8, buffer: Vec<u8>) -> Result<Self> {
         Transfer::alloc(dev_handle, endpoint, buffer, Bulk(()), 0)
     }
 
+    /// Sets the transfer in the correct state to be reused. After
+    /// calling this function, the transfer can be awaited again.
+    ///
     /// # Errors
+    ///
+    /// Returns an error if replacing the transfer buffer fails.
     pub fn reuse(&mut self, endpoint: u8, buffer: Vec<u8>) -> Result<()> {
         self.endpoint = endpoint;
         self.swap_buffer(buffer)?;
