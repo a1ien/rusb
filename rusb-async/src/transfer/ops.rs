@@ -5,7 +5,7 @@ use std::task::Waker;
 
 pub trait FillTransfer {
     /// Step 2 of the async API.
-    /// 
+    ///
     /// Fills the transfer in preparation for submitting it. Apart
     /// from transfer specific setup, this method will also pass
     /// the [`Waker`] obtained when the transfer gets polled first.
