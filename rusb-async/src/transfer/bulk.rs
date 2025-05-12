@@ -7,7 +7,7 @@ use rusb::{
 
 use crate::{
     error::{Error, Result},
-    transfer::{FillTransfer, SingleBufferTransfer, Transfer, TransferState},
+    transfer::{FillTransfer, SingleBufferTransfer, Transfer, TransferState, TransferUserData},
 };
 
 pub type BulkTransfer<C> = Transfer<C, Bulk>;
@@ -51,7 +51,7 @@ where
             .try_into()
             .map_err(|_| Error::Other("Invalid buffer length"))?;
 
-        let user_data = Box::into_raw(Box::new(waker)).cast();
+        let user_data = Box::into_raw(Box::new(TransferUserData::new(waker))).cast();
 
         unsafe {
             ffi::libusb_fill_bulk_transfer(

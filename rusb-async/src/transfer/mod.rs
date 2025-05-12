@@ -8,7 +8,10 @@ use std::{
     convert::TryInto,
     future::Future,
     ptr::NonNull,
-    sync::Arc,
+    sync::{
+        atomic::{AtomicBool, Ordering},
+        Arc,
+    },
     task::{Poll, Waker},
 };
 
@@ -26,6 +29,7 @@ use rusb::{
             LIBUSB_TRANSFER_NO_DEVICE, LIBUSB_TRANSFER_OVERFLOW, LIBUSB_TRANSFER_STALL,
             LIBUSB_TRANSFER_TIMED_OUT,
         },
+        libusb_transfer,
     },
     DeviceHandle, UsbContext,
 };
@@ -105,10 +109,30 @@ where
         unsafe {
             let transfer = &mut *transfer;
 
-            if transfer.status == LIBUSB_TRANSFER_CANCELLED {
-                ffi::libusb_free_transfer(transfer);
+            let user_data = &*transfer.user_data.cast::<TransferUserData>();
+
+            // Check that the transfer was cancelled.
+            let transfer_cancelled = transfer.status == LIBUSB_TRANSFER_CANCELLED;
+
+            // Did this transfer trigger its own cancellation (was it dropped)?
+            //
+            // This is important on Darwin based systems where cancelling a transfer will
+            // also cancel all other transfers on the same endpoint.
+            //
+            // See: <https://libusb.sourceforge.io/api-1.0/group__libusb__asyncio.html#ga685eb7731f9a0593f75beb99727bbe54>.
+            let cancelled_itself = user_data.cancelled_itself.load(Ordering::SeqCst);
+
+            // This is true only when a submitted transfer was dropped,
+            // so destroying it is fine here as it will never get accessed again.
+            //
+            // Otherwise, even if the transfer is cancelled, we'll wake the future
+            // associated with it so that it gets polled to completion (and errors out).
+            //
+            // The transfer will then get freed on drop.
+            if transfer_cancelled && cancelled_itself {
+                Self::free(transfer);
             } else {
-                Box::from_raw(transfer.user_data.cast::<Waker>()).wake();
+                user_data.waker.wake_by_ref();
             }
         };
     }
@@ -119,7 +143,24 @@ where
     }
 
     fn cancel(&mut self) {
-        unsafe { ffi::libusb_cancel_transfer(self.ptr.as_ptr()) };
+        unsafe {
+            ffi::libusb_cancel_transfer(self.ptr.as_ptr());
+
+            // Take note that this transfer cancelled itself.
+            // This is important on Darwin based systems since cancelling a transfer will cancel
+            // all other transfers on the same endpoint.
+            //
+            // See: <https://libusb.sourceforge.io/api-1.0/group__libusb__asyncio.html#ga685eb7731f9a0593f75beb99727bbe54>.
+            let user_data = &*self.transfer().user_data.cast::<TransferUserData>();
+            user_data.cancelled_itself.store(true, Ordering::SeqCst);
+        };
+    }
+
+    /// Frees the transfer as well as dropping the user data.
+    unsafe fn free(transfer: *mut libusb_transfer) {
+        let transfer = &mut *transfer;
+        let _ = Box::from_raw(transfer.user_data.cast::<TransferUserData>());
+        ffi::libusb_free_transfer(transfer);
     }
 }
 
@@ -174,27 +215,26 @@ where
         mut self: std::pin::Pin<&mut Self>,
         cx: &mut std::task::Context<'_>,
     ) -> Poll<Self::Output> {
-        loop {
-            break match self.state {
-                TransferState::Allocated => {
-                    self.fill(cx.waker().clone())?;
-                    self.state = TransferState::Filled;
-                    continue;
-                }
-                TransferState::Filled => {
-                    self.submit()?;
-                    self.state = TransferState::Submitted;
-                    Poll::Pending
-                }
-                TransferState::Submitted => {
-                    self.state = TransferState::Completed;
-                    Poll::Ready(self.complete())
-                }
-                // NOTE: Maybe return an error here instead?
-                //       Might make sense since a transfer
-                //       could be refilled and polled again.
-                TransferState::Completed => Poll::Pending,
-            };
+        match self.state {
+            TransferState::Allocated => {
+                self.fill(cx.waker().clone())?;
+                self.state = TransferState::Filled;
+                // Re-poll to submit the transfer
+                self.poll(cx)
+            }
+            TransferState::Filled => {
+                self.submit()?;
+                self.state = TransferState::Submitted;
+                Poll::Pending
+            }
+            TransferState::Submitted => {
+                self.state = TransferState::Completed;
+                Poll::Ready(self.complete())
+            }
+            // NOTE: Maybe return an error here instead?
+            //       Might make sense since a transfer
+            //       could be refilled and polled again.
+            TransferState::Completed => Poll::Pending,
         }
     }
 }
@@ -206,9 +246,20 @@ where
 {
     fn drop(&mut self) {
         match self.state {
+            // If the transfer was submitted, we cancel it instead of dropping it.
+            //
+            // The transfer callback function ([`Transfer::transfer_cb`]) will
+            // then free the transfer if it was cancelled. That's safe since
+            // we're dropping the transfer here, so nothing else will access
+            // it after it's freed in the callback.
+            //
+            // NOTE: On Darwin based systems this would cancel all transfers on the endpoint.
+            //
+            // See: <https://libusb.sourceforge.io/api-1.0/group__libusb__asyncio.html#ga685eb7731f9a0593f75beb99727bbe54>.
             TransferState::Submitted => self.cancel(),
+            // The transfer was not submitted, so we can safely free it.
             TransferState::Allocated | TransferState::Filled | TransferState::Completed => unsafe {
-                ffi::libusb_free_transfer(self.ptr.as_ptr());
+                Self::free(self.ptr.as_ptr())
             },
         }
     }
@@ -226,6 +277,20 @@ where
     C: UsbContext,
     K: Sync,
 {
+}
+
+struct TransferUserData {
+    waker: Waker,
+    cancelled_itself: AtomicBool,
+}
+
+impl TransferUserData {
+    fn new(waker: Waker) -> Self {
+        Self {
+            waker,
+            cancelled_itself: AtomicBool::new(false),
+        }
+    }
 }
 
 #[derive(Debug)]

@@ -8,7 +8,7 @@ use rusb::{
 
 use crate::{
     error::{Error, Result},
-    transfer::{CompleteTransfer, FillTransfer, Transfer, TransferState},
+    transfer::{CompleteTransfer, FillTransfer, Transfer, TransferState, TransferUserData},
 };
 
 pub type IsochronousTransfer<C> = Transfer<C, Isochronous>;
@@ -78,7 +78,7 @@ where
             .try_into()
             .map_err(|_| Error::Other("Invalid iso packets length"))?;
 
-        let user_data = Box::into_raw(Box::new(waker)).cast();
+        let user_data = Box::into_raw(Box::new(TransferUserData::new(waker))).cast();
 
         unsafe {
             ffi::libusb_fill_iso_transfer(

@@ -12,6 +12,9 @@ use std::str::FromStr;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
+#[cfg(not(unix))]
+compile_error!("File descriptor event loop integrations are only supported on UNIX-like systems");
+
 struct TokioFdCallbacks {
     context: Context,
     fd_handle_map: Mutex<BTreeMap<RawFd, JoinHandle<()>>>,
@@ -108,7 +111,11 @@ async fn main() {
                     .expect("Failed to submit transfer");
             loop {
                 let data = (&mut bulk_transfer).await.expect("Transfer failed");
-                println!("Transfer id {transfer_id} got data: {} {:?}", data.len(), data);
+                println!(
+                    "Transfer id {transfer_id} got data: {} {:?}",
+                    data.len(),
+                    data
+                );
 
                 bulk_transfer
                     .reuse(endpoint, data)
