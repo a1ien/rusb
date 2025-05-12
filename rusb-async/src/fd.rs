@@ -5,6 +5,9 @@ use std::{
 
 use rusb::{ffi, UsbContext};
 
+// NOTE: Should the fd methods get mutabable access to `self`?
+//       It would make things easier, especially since polling should technically only
+//       be allowed by libusb in a single thread at a time.
 pub trait FdCallbacks {
     type Context: UsbContext;
 
@@ -16,18 +19,18 @@ pub trait FdCallbacks {
 }
 
 #[derive(Debug)]
-pub struct FdEventHandler<C, M>(*mut M)
+pub struct FdEventHandler<C, T>(*mut T)
 where
     C: UsbContext,
-    M: FdCallbacks<Context = C>;
+    T: FdCallbacks<Context = C>;
 
-impl<C, M> FdEventHandler<C, M>
+impl<C, T> FdEventHandler<C, T>
 where
     C: UsbContext,
-    M: FdCallbacks<Context = C>,
+    T: FdCallbacks<Context = C>,
 {
-    pub fn new(fd_monitor: M) -> Self {
-        let context = fd_monitor.context().as_raw();
+    pub fn new(fd_callbacks: T) -> Self {
+        let context = fd_callbacks.context().as_raw();
 
         unsafe {
             let pollfds_opt_ptr = NonNull::new(ffi::libusb_get_pollfds(context).cast_mut());
@@ -36,12 +39,12 @@ where
                     let fd = pollfd.as_ref().fd;
                     let events = pollfd.as_ref().events;
 
-                    fd_monitor.fd_added(fd, events);
+                    fd_callbacks.fd_added(fd, events);
                     pollfds_ptr = pollfds_ptr.add(1);
                 }
             }
 
-            let fd_monitor_ptr = Box::into_raw(Box::new(fd_monitor));
+            let fd_monitor_ptr = Box::into_raw(Box::new(fd_callbacks));
             let user_data = fd_monitor_ptr.cast();
 
             ffi::libusb_set_pollfd_notifiers(
@@ -56,32 +59,32 @@ where
     }
 
     extern "system" fn fd_added_cb(fd: libc::c_int, events: libc::c_short, user_data: *mut libc::c_void) {
-        unsafe { &*user_data.cast::<M>() }.fd_added(fd, events);
+        unsafe { &*user_data.cast::<T>() }.fd_added(fd, events);
     }
 
     extern "system" fn fd_removed_cb(fd: libc::c_int, user_data: *mut libc::c_void) {
-        unsafe { &*user_data.cast::<M>() }.fd_removed(fd);
+        unsafe { &*user_data.cast::<T>() }.fd_removed(fd);
     }
 }
 
-unsafe impl<C, M> Send for FdEventHandler<C, M>
+unsafe impl<C, T> Send for FdEventHandler<C, T>
 where
     C: UsbContext,
-    M: FdCallbacks<Context = C> + Send,
+    T: FdCallbacks<Context = C> + Send,
 {
 }
 
-unsafe impl<C, M> Sync for FdEventHandler<C, M>
+unsafe impl<C, T> Sync for FdEventHandler<C, T>
 where
     C: UsbContext,
-    M: FdCallbacks<Context = C> + Sync,
+    T: FdCallbacks<Context = C> + Sync,
 {
 }
 
-impl<C, M> Drop for FdEventHandler<C, M>
+impl<C, T> Drop for FdEventHandler<C, T>
 where
     C: UsbContext,
-    M: FdCallbacks<Context = C>,
+    T: FdCallbacks<Context = C>,
 {
     fn drop(&mut self) {
         unsafe {

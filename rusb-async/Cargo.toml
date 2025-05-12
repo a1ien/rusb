@@ -3,9 +3,9 @@ name = "rusb-async"
 version = "0.0.1"
 edition = "2021"
 authors = [
-"Ilya Averyanov <a1ien.n3t@gmail.com>",
-"Ryan Butler <thebutlah@gmail.com>",
-"Kevin Mehall <km@kevinmehall.net>",
+    "Ilya Averyanov <a1ien.n3t@gmail.com>",
+    "Ryan Butler <thebutlah@gmail.com>",
+    "Kevin Mehall <km@kevinmehall.net>",
 ]
 
 description = "Rust library for accessing USB devices."
@@ -15,7 +15,7 @@ repository = "https://github.com/a1ien/rusb.git"
 keywords = ["usb", "libusb", "async"]
 
 [features]
-vendored = [ "rusb/vendored" ]
+vendored = ["rusb/vendored"]
 
 [dependencies]
 rusb = { path = "..", version = "0.9.1" }
@@ -23,4 +23,3 @@ libc = "0.2"
 
 [dev-dependencies]
 tokio = { version = "1", features = ["full"] }
-mio = { version = "1", features = ["os-poll"] }

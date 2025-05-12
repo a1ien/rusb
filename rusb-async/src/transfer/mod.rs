@@ -214,6 +214,20 @@ where
     }
 }
 
+unsafe impl<C, K> Send for Transfer<C, K>
+where
+    C: UsbContext,
+    K: Send,
+{
+}
+
+unsafe impl<C, K> Sync for Transfer<C, K>
+where
+    C: UsbContext,
+    K: Sync,
+{
+}
+
 #[derive(Debug)]
 enum TransferState {
     Allocated,
