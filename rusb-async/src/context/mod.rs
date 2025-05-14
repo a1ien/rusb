@@ -21,7 +21,7 @@ pub struct AsyncContext {
 /// TODO: This ends up being double Arc'ed :(.
 ///
 ///       Probably the best way to get rid of this is
-///       by integrating `rust-async` into `rusb`, thus
+///       by integrating `rusb-async` into `rusb`, thus
 ///       having access to all the internals.
 ///
 ///       Another option would be having a common crate
