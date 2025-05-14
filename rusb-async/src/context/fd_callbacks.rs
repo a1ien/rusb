@@ -19,7 +19,7 @@ pub enum FdEvents {
 }
 
 impl FdEvents {
-    fn from_libc(events: libc::c_short) -> Self {
+    fn from_libusb(events: libc::c_short) -> Self {
         match events {
             x if x & (libc::POLLIN | libc::POLLOUT) != 0 => FdEvents::ReadWrite,
             x if x & libc::POLLIN != 0 => FdEvents::Read,
@@ -67,7 +67,7 @@ extern "system" fn fd_added_cb<C, T>(
         fd_callbacks,
     } = unsafe { &*user_data.cast() };
 
-    fd_callbacks.fd_added(context.clone(), fd, FdEvents::from_libc(events));
+    fd_callbacks.fd_added(context.clone(), fd, FdEvents::from_libusb(events));
 }
 
 /// The FFI wrapper callback over [`FdCallbacks::fd_removed`].
@@ -141,7 +141,7 @@ where
             if let Some(mut pollfds_ptr) = pollfds_opt_ptr {
                 while let Some(pollfd) = NonNull::new(*pollfds_ptr.as_ptr()) {
                     let fd = pollfd.as_ref().fd;
-                    let events = FdEvents::from_libc(pollfd.as_ref().events);
+                    let events = FdEvents::from_libusb(pollfd.as_ref().events);
 
                     self.fd_callbacks.fd_added(context.clone(), fd, events);
 
