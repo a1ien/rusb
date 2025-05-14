@@ -8,7 +8,7 @@ fn main() {
 async fn main() {
     use rusb::UsbContext;
     use rusb_async::{
-        AsyncContext, AsyncUsbContext, BulkTransfer, FdCallbackRegistration, FdCallbacks, FdEvents,
+        AsyncContext, AsyncUsbContext, BulkTransfer, FdCallbacks, FdCallbacksEventHandler, FdEvents,
     };
     use tokio::io::unix::AsyncFd;
     use tokio::io::Interest;
@@ -68,7 +68,7 @@ async fn main() {
     let out_endpoint = u8::from_str_radix(args[3].as_ref(), 16).unwrap();
     let in_endpoint = u8::from_str_radix(args[4].as_ref(), 16).unwrap();
 
-    let register_event_handler = FdCallbackRegistration::new(TokioFdCallbacks::default());
+    let register_event_handler = FdCallbacksEventHandler::new(TokioFdCallbacks::default());
     let ctx = AsyncContext::new(register_event_handler).expect("Could not initialize libusb");
 
     let device = Arc::new(

@@ -30,7 +30,7 @@ impl FdEvents {
 }
 
 /// Trait for setting callbacks that get called on file descriptor actions.
-/// This should be used for constructing a [`FdCallbackRegistration`], which
+/// This should be used for constructing a [`FdCallbacksEventHandler`], which
 /// implements [`EventHandler`].
 // NOTE: Should the fd methods get mutabable access to `self`?
 //       It would make things easier, especially since event handling should
@@ -99,7 +99,7 @@ where
 /// complain that an implementation of `FdCallbacks` might be added by
 /// an upstream crate.
 #[derive(Debug)]
-pub struct FdCallbackRegistration<C, T>
+pub struct FdCallbacksEventHandler<C, T>
 where
     C: AsyncUsbContext,
     T: FdCallbacks<C>,
@@ -108,7 +108,7 @@ where
     marker: PhantomData<fn() -> C>,
 }
 
-impl<C, T> FdCallbackRegistration<C, T>
+impl<C, T> FdCallbacksEventHandler<C, T>
 where
     C: AsyncUsbContext,
     T: FdCallbacks<C>,
@@ -121,7 +121,7 @@ where
     }
 }
 
-impl<C, T> EventHandler<C> for FdCallbackRegistration<C, T>
+impl<C, T> EventHandler<C> for FdCallbacksEventHandler<C, T>
 where
     C: AsyncUsbContext,
     T: FdCallbacks<C>,
