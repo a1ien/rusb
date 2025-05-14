@@ -19,15 +19,15 @@ pub struct AsyncContext {
 }
 
 /// TODO: This ends up being double Arc'ed :(.
-/// 
-///       Probably the best way to get rid of this is 
-///       by integrating `rust-async` into `rusb`, thus 
+///
+///       Probably the best way to get rid of this is
+///       by integrating `rust-async` into `rusb`, thus
 ///       having access to all the internals.
-/// 
+///
 ///       Another option would be having a common crate
 ///       to construct something of a [`ContextInner`],
 ///       but that would have to be published as well.
-/// 
+///
 ///       Alternatively, some code copying code be done
 ///       to replicate the [`ContextInner`] type, but
 ///       that also implies `rusb::Error::from_libusb`
