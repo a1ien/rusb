@@ -2,12 +2,13 @@ use std::{sync::Arc, task::Waker};
 
 use rusb::{
     constants::{LIBUSB_ENDPOINT_DIR_MASK, LIBUSB_ENDPOINT_OUT},
-    ffi, DeviceHandle, UsbContext,
+    ffi, DeviceHandle,
 };
 
 use crate::{
     error::{Error, Result},
     transfer::{FillTransfer, SingleBufferTransfer, Transfer, TransferState, TransferUserData},
+    AsyncUsbContext,
 };
 
 /// Bulk transfer.
@@ -20,7 +21,7 @@ pub struct Bulk(());
 
 impl<C> BulkTransfer<C>
 where
-    C: UsbContext,
+    C: AsyncUsbContext,
 {
     /// Constructs and allocates a new [`BulkTransfer`].
     ///
@@ -37,7 +38,7 @@ where
     /// # Errors
     ///
     /// Returns an error if replacing the transfer buffer fails.
-    pub fn reuse(&mut self, endpoint: u8, buffer: Vec<u8>) -> Result<()> {
+    pub fn renew(&mut self, endpoint: u8, buffer: Vec<u8>) -> Result<()> {
         self.endpoint = endpoint;
         self.swap_buffer(buffer)?;
         self.state = TransferState::Allocated;
@@ -47,7 +48,7 @@ where
 
 impl<C> FillTransfer for BulkTransfer<C>
 where
-    C: UsbContext,
+    C: AsyncUsbContext,
 {
     fn fill(&mut self, waker: Waker) -> Result<()> {
         let length = if self.endpoint & LIBUSB_ENDPOINT_DIR_MASK == LIBUSB_ENDPOINT_OUT {

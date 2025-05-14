@@ -1,4 +1,4 @@
-use rusb::UsbContext;
+use crate::AsyncUsbContext;
 
 use crate::{error::Result, transfer::Transfer};
 use std::task::Waker;
@@ -43,7 +43,7 @@ pub trait SingleBufferTransfer {}
 /// transfer output will be the data buffer itself.
 impl<C, K> CompleteTransfer for Transfer<C, K>
 where
-    C: UsbContext,
+    C: AsyncUsbContext,
     K: SingleBufferTransfer + Unpin,
     Self: FillTransfer,
 {

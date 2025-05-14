@@ -46,7 +46,7 @@ impl fmt::Display for Error {
             Error::Errno(s, n) => write!(fmt, "{s} ERRNO: {n}"),
             Error::Cancelled => fmt.write_str("Transfer was cancelled"),
             Error::AlreadyCompleted => {
-                fmt.write_str("Transfer already completed; Call `reuse()` before awaiting again")
+                fmt.write_str("Transfer already completed; Call `renew()` before awaiting again")
             }
         }
     }

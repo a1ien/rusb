@@ -31,12 +31,13 @@ use rusb::{
         },
         libusb_transfer,
     },
-    DeviceHandle, UsbContext,
+    DeviceHandle,
 };
 
 use crate::{
     error::{Error, Result},
     transfer::ops::{CompleteTransfer, FillTransfer, SingleBufferTransfer},
+    AsyncUsbContext,
 };
 
 /// Generic transfer.
@@ -46,7 +47,7 @@ use crate::{
 #[derive(Debug)]
 pub struct Transfer<C, K>
 where
-    C: UsbContext,
+    C: AsyncUsbContext,
 {
     dev_handle: Arc<DeviceHandle<C>>,
     endpoint: u8,
@@ -58,7 +59,7 @@ where
 
 impl<C, K> Transfer<C, K>
 where
-    C: UsbContext,
+    C: AsyncUsbContext,
 {
     /// This is step 1 of async API.
     fn alloc(
@@ -178,7 +179,7 @@ where
 
 impl<C, K> Transfer<C, K>
 where
-    C: UsbContext,
+    C: AsyncUsbContext,
     Self: CompleteTransfer,
 {
     /// The other part of step 4 of the async API.
@@ -224,7 +225,7 @@ where
 // thus allowing the entire [`Transfer`] to be [`Unpin`].
 impl<C, K> Future for Transfer<C, K>
 where
-    C: UsbContext,
+    C: AsyncUsbContext,
     K: Unpin,
     Self: CompleteTransfer,
 {
@@ -255,7 +256,7 @@ where
                 Poll::Ready(self.complete())
             }
             // The transfer was polled after already completing
-            // but without calling `reuse()`.
+            // but without calling `renew()`.
             TransferState::Completed => Poll::Ready(Err(Error::AlreadyCompleted)),
         }
     }
@@ -264,7 +265,7 @@ where
 /// Step 5 of the async API.
 impl<C, K> Drop for Transfer<C, K>
 where
-    C: UsbContext,
+    C: AsyncUsbContext,
 {
     fn drop(&mut self) {
         match self.state {
@@ -291,7 +292,7 @@ where
 ///         and the other parts of [`Transfer`] are [`Send`].
 unsafe impl<C, K> Send for Transfer<C, K>
 where
-    C: UsbContext,
+    C: AsyncUsbContext,
     K: Send,
 {
 }
@@ -301,7 +302,7 @@ where
 ///         parts of [`Transfer`] are [`Sync`].
 unsafe impl<C, K> Sync for Transfer<C, K>
 where
-    C: UsbContext,
+    C: AsyncUsbContext,
     K: Sync,
 {
 }

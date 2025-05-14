@@ -3,12 +3,13 @@ use std::{slice, sync::Arc, task::Waker};
 use rusb::{
     constants::{LIBUSB_ENDPOINT_DIR_MASK, LIBUSB_ENDPOINT_OUT, LIBUSB_TRANSFER_COMPLETED},
     ffi::{self, libusb_iso_packet_descriptor},
-    DeviceHandle, UsbContext,
+    DeviceHandle,
 };
 
 use crate::{
     error::{Error, Result},
     transfer::{CompleteTransfer, FillTransfer, Transfer, TransferState, TransferUserData},
+    AsyncUsbContext,
 };
 
 /// Isochronous transfer.
@@ -23,7 +24,7 @@ pub struct Isochronous {
 
 impl<C> IsochronousTransfer<C>
 where
-    C: UsbContext,
+    C: AsyncUsbContext,
 {
     /// Constructs and allocates a new [`IsochronousTransfer`].
     ///
@@ -55,7 +56,7 @@ where
     // NOTE: Since the transfer gets allocated with a given number of
     //       iso packets, I assume the number of iso packets does not
     //       change when reusing the transfer, right?
-    pub fn reuse(&mut self, endpoint: u8, buffer: Vec<u8>) -> Result<()> {
+    pub fn renew(&mut self, endpoint: u8, buffer: Vec<u8>) -> Result<()> {
         self.endpoint = endpoint;
         self.swap_buffer(buffer)?;
         self.state = TransferState::Allocated;
@@ -74,7 +75,7 @@ where
 
 impl<C> FillTransfer for IsochronousTransfer<C>
 where
-    C: UsbContext,
+    C: AsyncUsbContext,
 {
     fn fill(&mut self, waker: Waker) -> Result<()> {
         let length = if self.endpoint & LIBUSB_ENDPOINT_DIR_MASK == LIBUSB_ENDPOINT_OUT {
@@ -123,7 +124,7 @@ where
 /// slice of the buffer representing the packet data.
 impl<C> CompleteTransfer for IsochronousTransfer<C>
 where
-    C: UsbContext,
+    C: AsyncUsbContext,
 {
     type Output = IsochronousBuffer;
 

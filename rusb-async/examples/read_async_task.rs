@@ -2,18 +2,42 @@
 //! the event loop it takes a generic approach of a background task that handles immediate
 //! events and then sleeps. This could very well be a background thread instead.
 
-use rusb::{Context, UsbContext};
-use rusb_async::transfer::BulkTransfer;
-use tokio::task::JoinSet;
+use rusb::UsbContext;
+use rusb_async::{
+    AsyncContext, AsyncUsbContext, BulkTransfer, EventHandlerData, RegisterEventHandler,
+};
+use tokio::task::{JoinHandle, JoinSet};
 
 use std::str::FromStr;
 use std::sync::Arc;
 use std::time::Duration;
 
-async fn handle_events(context: Context) {
-    loop {
-        context.handle_events(Some(Duration::ZERO)).unwrap();
-        tokio::time::sleep(Duration::from_millis(10)).await;
+struct TokioEventHandler;
+
+struct TokioEventHandlerData(JoinHandle<()>);
+
+impl<C> EventHandlerData<C> for TokioEventHandlerData
+where
+    C: AsyncUsbContext,
+{
+    fn unregister(self: Box<Self>) {
+        self.0.abort()
+    }
+}
+
+impl<C> RegisterEventHandler<C> for TokioEventHandler
+where
+    C: AsyncUsbContext,
+{
+    fn register(self, context: C) -> rusb_async::Result<Box<dyn EventHandlerData<C> + 'static>> {
+        let join_handle = tokio::spawn(async move {
+            loop {
+                context.handle_events(Some(Duration::ZERO)).unwrap();
+                tokio::time::sleep(Duration::from_millis(10)).await;
+            }
+        });
+
+        Ok(Box::new(TokioEventHandlerData(join_handle)))
     }
 }
 
@@ -30,8 +54,7 @@ async fn main() {
     let pid = u16::from_str_radix(args[2].trim_start_matches("0x"), 16).unwrap();
     let endpoint: u8 = FromStr::from_str(args[3].as_ref()).unwrap();
 
-    let ctx = Context::new().expect("Could not initialize libusb");
-    tokio::spawn(handle_events(ctx.clone()));
+    let ctx = AsyncContext::new(TokioEventHandler).expect("Could not initialize libusb");
 
     let device = Arc::new(
         ctx.open_device_with_vid_pid(vid, pid)
@@ -60,7 +83,7 @@ async fn main() {
                 );
 
                 bulk_transfer
-                    .reuse(endpoint, data)
+                    .renew(endpoint, data)
                     .expect("Reusing allocated transfer failed");
             }
         });

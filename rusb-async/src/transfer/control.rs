@@ -1,10 +1,11 @@
 use std::{sync::Arc, task::Waker};
 
-use rusb::{constants::LIBUSB_CONTROL_SETUP_SIZE, ffi, DeviceHandle, UsbContext};
+use rusb::{constants::LIBUSB_CONTROL_SETUP_SIZE, ffi, DeviceHandle};
 
 use crate::{
     error::{Error, Result},
     transfer::{FillTransfer, SingleBufferTransfer, Transfer, TransferState, TransferUserData},
+    AsyncUsbContext,
 };
 
 /// Control transfer.
@@ -24,7 +25,7 @@ pub struct Control {
 
 impl<C> ControlTransfer<C>
 where
-    C: UsbContext,
+    C: AsyncUsbContext,
 {
     /// Constructs and allocates a new [`ControlTransfer`].
     ///
@@ -56,7 +57,7 @@ where
     /// # Errors
     ///
     /// Returns an error if replacing the transfer buffer fails.
-    pub fn reuse(
+    pub fn renew(
         &mut self,
         request_type: u8,
         request: u8,
@@ -81,7 +82,7 @@ where
 
 impl<C> FillTransfer for ControlTransfer<C>
 where
-    C: UsbContext,
+    C: AsyncUsbContext,
 {
     fn fill(&mut self, waker: Waker) -> Result<()> {
         let length = self.buffer.capacity() - LIBUSB_CONTROL_SETUP_SIZE;
@@ -124,7 +125,7 @@ pub struct RawControl(());
 
 impl<C> RawControlTransfer<C>
 where
-    C: UsbContext,
+    C: AsyncUsbContext,
 {
     /// Constructs and allocates a new [`RawControlTransfer`].
     ///
@@ -141,7 +142,7 @@ where
     /// # Errors
     ///
     /// Returns an error if replacing the transfer buffer fails.
-    pub fn reuse(&mut self, buffer: Vec<u8>) -> Result<()> {
+    pub fn renew(&mut self, buffer: Vec<u8>) -> Result<()> {
         self.swap_buffer(buffer)?;
         self.state = TransferState::Allocated;
         Ok(())
@@ -150,7 +151,7 @@ where
 
 impl<C> FillTransfer for RawControlTransfer<C>
 where
-    C: UsbContext,
+    C: AsyncUsbContext,
 {
     fn fill(&mut self, waker: Waker) -> Result<()> {
         let user_data = Box::into_raw(Box::new(TransferUserData::new(waker))).cast();
