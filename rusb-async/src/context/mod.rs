@@ -26,7 +26,7 @@ impl Drop for AsyncContextInner {
 
         if let Some(map) = EVENT_DATA_HANDLER_MAP.get() {
             if let Some(handler_data) = map.inner.lock().unwrap().remove(&ctx) {
-                handler_data.unregister();
+                handler_data.teardown();
             }
         }
     }
@@ -44,25 +44,51 @@ unsafe impl Send for EventHandlerDataMap {}
 
 static EVENT_DATA_HANDLER_MAP: OnceLock<EventHandlerDataMap> = OnceLock::new();
 
-pub trait RegisterEventHandler<C>
-where
-    C: AsyncUsbContext,
-{
-    fn register(self, context: C) -> crate::Result<Box<dyn EventHandlerData<C> + 'static>>;
-}
-
-pub trait EventHandlerData<C>: Send + Sync
-where
-    C: AsyncUsbContext,
-{
-    // NOTE: Should this be fallible?
-    fn unregister(self: Box<Self>);
-}
-
+/// Trait implemented by contexts that can be used for async transfers.
+///
+/// It is recommended to use an [`AsyncContext`], although the trait is
+/// implemented for [`GlobalContext`] as well. However, the [`GlobalContext`]
+/// needs explicit event handler registration using [`AsyncUsbContext::set_event_handler`]
+/// or manual polling.
 pub trait AsyncUsbContext: UsbContext + 'static {
-    fn register_event_handler<T>(&mut self, register_event_handler: T) -> crate::Result<()>
+    /// Sets an event handler for a given context.
+    ///
+    /// [`AsyncContext`] instances get created with an event handler, and this
+    /// method allows swapping it.
+    ///
+    /// The same applies for [`GlobalContext`], except that it **DOES NOT** start
+    /// with an event handler, therefore one must be set using this method. Failing
+    /// to do so will lead to async transfers never finishing, unless some other kind
+    /// of manual polling is performed.
+    fn set_event_handler<T>(&self, register_event_handler: T) -> crate::Result<()>
     where
-        T: RegisterEventHandler<Self>;
+        T: EventHandler<Self>;
+}
+
+/// Used to initialize custom event handling for a context.
+///
+/// The event handler can be a [`Future`], a background thread or, for UNIX-like systems,
+/// an event loop integration of file descriptor monitoring through [`FdCallbacks`].
+pub trait EventHandler<C>
+where
+    C: AsyncUsbContext,
+{
+    /// Starts the event handling.
+    ///
+    /// Returns a boxed trait object that implements [`EventHandlerData`], which is
+    /// used for stopping the event handler. This allows swapping the event handler
+    /// for a context throughout its lifetime and cleanup of resources.
+    fn setup(self, context: C) -> crate::Result<Box<dyn EventHandlerData<C>>>;
+}
+
+/// Data returned from initializing an event handler.
+pub trait EventHandlerData<C>: Send + Sync + 'static
+where
+    C: AsyncUsbContext,
+{
+    /// Stops the event handler that returned this type, allowing another one to take its place.
+    // NOTE: Should this be fallible?
+    fn teardown(self: Box<Self>);
 }
 
 impl UsbContext for AsyncContext {
@@ -72,9 +98,9 @@ impl UsbContext for AsyncContext {
 }
 
 impl AsyncUsbContext for AsyncContext {
-    fn register_event_handler<T>(&mut self, register_event_handler: T) -> crate::Result<()>
+    fn set_event_handler<T>(&self, register_event_handler: T) -> crate::Result<()>
     where
-        T: RegisterEventHandler<Self>,
+        T: EventHandler<Self>,
     {
         let ctx_ptr = self.as_raw();
 
@@ -85,10 +111,10 @@ impl AsyncUsbContext for AsyncContext {
             .unwrap();
 
         if let Some(handler_data) = map.remove(&ctx_ptr) {
-            handler_data.unregister();
+            handler_data.teardown();
         }
 
-        let handler_data = register_event_handler.register(self.clone())?;
+        let handler_data = register_event_handler.setup(self.clone())?;
         map.insert(ctx_ptr, handler_data);
 
         Ok(())
@@ -96,18 +122,18 @@ impl AsyncUsbContext for AsyncContext {
 }
 
 impl AsyncUsbContext for GlobalContext {
-    fn register_event_handler<T>(&mut self, register_event_handler: T) -> crate::Result<()>
+    fn set_event_handler<T>(&self, register_event_handler: T) -> crate::Result<()>
     where
-        T: RegisterEventHandler<Self>,
+        T: EventHandler<Self>,
     {
         static EVENT_HANDLER: OnceLock<Option<Box<dyn EventHandlerData<GlobalContext>>>> =
             OnceLock::new();
 
         if let Err(Some(handler_data)) = EVENT_HANDLER.set(None) {
-            handler_data.unregister();
+            handler_data.teardown();
         }
 
-        let handler_data = register_event_handler.register(GlobalContext::default())?;
+        let handler_data = register_event_handler.setup(GlobalContext::default())?;
         EVENT_HANDLER.set(Some(handler_data)).ok();
         Ok(())
     }
@@ -116,12 +142,12 @@ impl AsyncUsbContext for GlobalContext {
 impl AsyncContext {
     pub fn new<T>(register_event_handler: T) -> crate::Result<Self>
     where
-        T: RegisterEventHandler<Self>,
+        T: EventHandler<Self>,
     {
         let ctx = Context::new().map_err(|_| Error::Other("Context creation failed"))?;
         let context = Arc::new(AsyncContextInner(ctx));
         let this = Self { context };
-        let handler_data = register_event_handler.register(this.clone())?;
+        let handler_data = register_event_handler.setup(this.clone())?;
 
         EVENT_DATA_HANDLER_MAP
             .get_or_init(EventHandlerDataMap::default)
@@ -136,13 +162,13 @@ impl AsyncContext {
     /// Creates a new `libusb` context and sets runtime options.
     pub fn with_options<T>(register_event_handler: T, opts: &[UsbOption]) -> crate::Result<Self>
     where
-        T: RegisterEventHandler<Self>,
+        T: EventHandler<Self>,
     {
         let ctx =
             Context::with_options(opts).map_err(|_| Error::Other("Context creation failed"))?;
         let context = Arc::new(AsyncContextInner(ctx));
         let this = Self { context };
-        let handler_data = register_event_handler.register(this.clone())?;
+        let handler_data = register_event_handler.setup(this.clone())?;
 
         EVENT_DATA_HANDLER_MAP
             .get_or_init(EventHandlerDataMap::default)

@@ -4,8 +4,8 @@ mod transfer;
 
 pub use crate::{
     context::{
-        AsyncContext, AsyncUsbContext, EventHandlerData, FdCallbackRegistration, FdCallbacks,
-        FdEvents, RegisterEventHandler,
+        AsyncContext, AsyncUsbContext, EventHandler, EventHandlerData, FdCallbackRegistration,
+        FdCallbacks, FdEvents,
     },
     error::{Error, Result},
     transfer::{

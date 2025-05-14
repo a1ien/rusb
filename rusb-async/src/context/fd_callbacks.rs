@@ -4,14 +4,17 @@ use std::{
     ptr::{self, NonNull},
 };
 
-use crate::context::{AsyncUsbContext, EventHandlerData, RegisterEventHandler};
+use crate::context::{AsyncUsbContext, EventHandler, EventHandlerData};
 use rusb::ffi;
 
+/// The kind of event that `libusb` reports that the file descriptor should be monitored for.
+// NOTE: Should this be a full fledget bitmap of flags?
+//       libusb seems to only care about POLLIN and POLLOUT, at least on Linux.
 #[derive(Copy, Clone, Debug)]
 pub enum FdEvents {
     Read,
     Write,
-    ReadWrite,
+    ReadWrite, // Is this necessary?
     Other,
 }
 
@@ -26,30 +29,9 @@ impl FdEvents {
     }
 }
 
-#[derive(Debug)]
-pub struct FdCallbackRegistration<C, T>
-where
-    C: AsyncUsbContext,
-    T: FdCallbacks<C>,
-{
-    fd_callbacks: T,
-    marker: PhantomData<fn() -> C>,
-}
-
-impl<C, T> FdCallbackRegistration<C, T>
-where
-    C: AsyncUsbContext,
-    T: FdCallbacks<C>,
-{
-    pub fn new(fd_callbacks: T) -> Self {
-        Self {
-            fd_callbacks,
-            marker: PhantomData,
-        }
-    }
-}
-
 /// Trait for setting callbacks that get called on file descriptor actions.
+/// This should be used for constructing a [`FdCallbackRegistration`], which
+/// implements [`EventHandler`].
 // NOTE: Should the fd methods get mutabable access to `self`?
 //       It would make things easier, especially since event handling should
 //       technically only be allowed by libusb in a single thread at a time.
@@ -108,12 +90,43 @@ where
     fd_callbacks: T,
 }
 
-impl<C, T> RegisterEventHandler<C> for FdCallbackRegistration<C, T>
+/// Wrapper for implementing [`EventHandler`] for any
+/// type that implements [`FdCallbacks`].
+///
+/// A generic `impl<T: FdCallbacks> EventHandler for T` would be better
+/// but it would prevent downstream clients from coming up with their own
+/// [`EventHandler`] implementations because the compiler will
+/// complain that an implementation of `FdCallbacks` might be added by
+/// an upstream crate.
+#[derive(Debug)]
+pub struct FdCallbackRegistration<C, T>
 where
     C: AsyncUsbContext,
     T: FdCallbacks<C>,
 {
-    fn register(
+    fd_callbacks: T,
+    marker: PhantomData<fn() -> C>,
+}
+
+impl<C, T> FdCallbackRegistration<C, T>
+where
+    C: AsyncUsbContext,
+    T: FdCallbacks<C>,
+{
+    pub fn new(fd_callbacks: T) -> Self {
+        Self {
+            fd_callbacks,
+            marker: PhantomData,
+        }
+    }
+}
+
+impl<C, T> EventHandler<C> for FdCallbackRegistration<C, T>
+where
+    C: AsyncUsbContext,
+    T: FdCallbacks<C>,
+{
+    fn setup(
         self,
         context: C,
     ) -> crate::Result<Box<dyn crate::context::EventHandlerData<C> + 'static>> {
@@ -160,7 +173,7 @@ where
     C: AsyncUsbContext,
     T: FdCallbacks<C>,
 {
-    fn unregister(self: Box<Self>) {
+    fn teardown(self: Box<Self>) {
         unsafe {
             ffi::libusb_set_pollfd_notifiers(self.context.as_raw(), None, None, ptr::null_mut());
         };

@@ -3,9 +3,7 @@
 //! events and then sleeps. This could very well be a background thread instead.
 
 use rusb::UsbContext;
-use rusb_async::{
-    AsyncContext, AsyncUsbContext, BulkTransfer, EventHandlerData, RegisterEventHandler,
-};
+use rusb_async::{AsyncContext, AsyncUsbContext, BulkTransfer, EventHandler, EventHandlerData};
 use tokio::task::{JoinHandle, JoinSet};
 
 use std::str::FromStr;
@@ -16,20 +14,11 @@ struct TokioEventHandler;
 
 struct TokioEventHandlerData(JoinHandle<()>);
 
-impl<C> EventHandlerData<C> for TokioEventHandlerData
+impl<C> EventHandler<C> for TokioEventHandler
 where
     C: AsyncUsbContext,
 {
-    fn unregister(self: Box<Self>) {
-        self.0.abort()
-    }
-}
-
-impl<C> RegisterEventHandler<C> for TokioEventHandler
-where
-    C: AsyncUsbContext,
-{
-    fn register(self, context: C) -> rusb_async::Result<Box<dyn EventHandlerData<C> + 'static>> {
+    fn setup(self, context: C) -> rusb_async::Result<Box<dyn EventHandlerData<C> + 'static>> {
         let join_handle = tokio::spawn(async move {
             loop {
                 context.handle_events(Some(Duration::ZERO)).unwrap();
@@ -38,6 +27,15 @@ where
         });
 
         Ok(Box::new(TokioEventHandlerData(join_handle)))
+    }
+}
+
+impl<C> EventHandlerData<C> for TokioEventHandlerData
+where
+    C: AsyncUsbContext,
+{
+    fn teardown(self: Box<Self>) {
+        self.0.abort()
     }
 }
 
