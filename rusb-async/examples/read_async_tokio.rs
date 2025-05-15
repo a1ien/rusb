@@ -33,8 +33,7 @@ async fn main() {
             let interest = match events {
                 FdEvents::Read => Interest::READABLE,
                 FdEvents::Write => Interest::WRITABLE,
-                FdEvents::ReadWrite => Interest::READABLE.add(Interest::WRITABLE),
-                FdEvents::Other => return,
+                FdEvents::ReadWrite => Interest::READABLE | Interest::WRITABLE,
             };
 
             let async_fd = AsyncFd::with_interest(fd, interest).unwrap();

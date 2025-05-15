@@ -23,3 +23,4 @@ libc = "0.2"
 
 [dev-dependencies]
 tokio = { version = "1", features = ["full"] }
+mio = { version = "1", features = ["os-ext"] }

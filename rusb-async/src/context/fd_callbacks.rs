@@ -14,19 +14,7 @@ use rusb::ffi;
 pub enum FdEvents {
     Read,
     Write,
-    ReadWrite, // Is this necessary?
-    Other,
-}
-
-impl FdEvents {
-    fn from_libusb(events: libc::c_short) -> Self {
-        match events {
-            x if x & (libc::POLLIN | libc::POLLOUT) != 0 => FdEvents::ReadWrite,
-            x if x & libc::POLLIN != 0 => FdEvents::Read,
-            x if x & libc::POLLOUT != 0 => FdEvents::Write,
-            _ => FdEvents::Other,
-        }
-    }
+    ReadWrite,
 }
 
 /// Trait for setting callbacks that get called on file descriptor actions.
@@ -67,7 +55,14 @@ extern "system" fn fd_added_cb<C, T>(
         fd_callbacks,
     } = unsafe { &*user_data.cast() };
 
-    fd_callbacks.fd_added(context.clone(), fd, FdEvents::from_libusb(events));
+    let fd_events = match events {
+        x if x & libc::POLLIN != 0 && x & libc::POLLOUT != 0 => FdEvents::ReadWrite,
+        x if x & libc::POLLIN != 0 => FdEvents::Read,
+        x if x & libc::POLLOUT != 0 => FdEvents::Write,
+        _ => return,
+    };
+
+    fd_callbacks.fd_added(context.clone(), fd, fd_events);
 }
 
 /// The FFI wrapper callback over [`FdCallbacks::fd_removed`].
@@ -141,9 +136,14 @@ where
             if let Some(mut pollfds_ptr) = pollfds_opt_ptr {
                 while let Some(pollfd) = NonNull::new(*pollfds_ptr.as_ptr()) {
                     let fd = pollfd.as_ref().fd;
-                    let events = FdEvents::from_libusb(pollfd.as_ref().events);
+                    let fd_events = match pollfd.as_ref().events {
+                        x if x & libc::POLLIN != 0 && x & libc::POLLOUT != 0 => FdEvents::ReadWrite,
+                        x if x & libc::POLLIN != 0 => FdEvents::Read,
+                        x if x & libc::POLLOUT != 0 => FdEvents::Write,
+                        _ => continue,
+                    };
 
-                    self.fd_callbacks.fd_added(context.clone(), fd, events);
+                    self.fd_callbacks.fd_added(context.clone(), fd, fd_events);
 
                     pollfds_ptr = pollfds_ptr.add(1);
                 }
