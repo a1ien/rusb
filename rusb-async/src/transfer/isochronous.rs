@@ -164,7 +164,7 @@ impl TryFrom<&libusb_iso_packet_descriptor> for IsochronousPacketDescriptor {
             .try_into()
             .map_err(|_| Error::Other("Invalid isochronous packet length"))?;
         let actual_length = value
-            .length
+            .actual_length
             .try_into()
             .map_err(|_| Error::Other("Invalid isochronous packet actual length"))?;
 
