@@ -27,10 +27,11 @@ fn get_macos_major_version() -> Option<usize> {
     let output = std::process::Command::new("sw_vers")
         .args(["-productVersion"])
         .output()
-        .unwrap();
-    let version = std::str::from_utf8(&output.stdout).unwrap().trim_end();
+        .ok()?;
+
+    let version = std::str::from_utf8(&output.stdout).ok()?.trim_end();
     let components: Vec<&str> = version.split('.').collect();
-    let major: usize = components[0].parse().unwrap();
+    let major: usize = components[0].parse().ok()?;
     Some(major)
 }
 
