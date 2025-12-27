@@ -27,7 +27,7 @@ impl<'a> EndpointDescriptor<'a> {
 
     /// Returns the endpoint number.
     pub fn number(&self) -> u8 {
-        self.descriptor.bEndpointAddress & 0x07
+        self.descriptor.bEndpointAddress & 0x0f
     }
 
     /// Returns the endpoint's direction.
