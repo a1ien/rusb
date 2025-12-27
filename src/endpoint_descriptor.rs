@@ -159,7 +159,7 @@ mod test {
     #[test]
     fn it_ignores_reserved_bits_in_address() {
         assert_eq!(
-            0,
+            8,
             super::from_libusb(&endpoint_descriptor!(bEndpointAddress: 0b0000_1000)).number()
         );
         assert_eq!(
@@ -175,7 +175,7 @@ mod test {
             super::from_libusb(&endpoint_descriptor!(bEndpointAddress: 0b0100_0000)).number()
         );
         assert_eq!(
-            7,
+            0x0f,
             super::from_libusb(&endpoint_descriptor!(bEndpointAddress: 0b1111_1111)).number()
         );
     }
